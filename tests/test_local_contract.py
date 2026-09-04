@@ -173,13 +173,30 @@ class IsolatedServer(unittest.TestCase):
         with self.assertRaises(NoServer):
             self.client.session_ids()
 
-    def test_failed_wrapper_token_installation_cleans_its_exact_new_session(self) -> None:
-        """The first token write happens in the holder before parent setup."""
+    def test_early_holder_disappearance_returns_stable_operation_failure(self) -> None:
+        """A holder that disappears before server identity is read has a stable error."""
         original_path = os.environ.get("PATH", "")
         with tempfile.TemporaryDirectory() as directory:
             fake_tmux = Path(directory) / "tmux"
             fake_tmux.write_text(
                 "#!/bin/sh\n"
+                "new_session=0\n"
+                "socket=\n"
+                "previous=\n"
+                'for value in "$@"; do\n'
+                '  [ "$value" = "new-session" ] && new_session=1\n'
+                '  [ "$previous" = "-L" ] && socket="$value"\n'
+                '  previous="$value"\n'
+                "done\n"
+                'if [ "$new_session" = 1 ]; then\n'
+                '  output=$(/usr/bin/tmux "$@") || exit $?\n'
+                '  printf "%s\\n" "$output"\n'
+                '  session_id=$(printf "%s\\n" "$output" | awk \'{print $1}\')\n'
+                '  while /usr/bin/tmux -L "$socket" -f /dev/null has-session -t "$session_id" 2>/dev/null; do\n'
+                "    sleep 0.01\n"
+                "  done\n"
+                "  exit 0\n"
+                "fi\n"
                 'for value in "$@"; do\n'
                 '  [ "$value" = "@rofi_tmux_plus_operation" ] && exit 1\n'
                 "done\n"
@@ -189,7 +206,7 @@ class IsolatedServer(unittest.TestCase):
             fake_tmux.chmod(0o755)
             os.environ["PATH"] = f"{directory}:{original_path}"
             try:
-                with self.assertRaisesRegex(ContractError, "operation token"):
+                with self.assertRaises(ContractError) as raised:
                     self.lifecycle.create(
                         self.host.host_id,
                         None,
@@ -201,6 +218,11 @@ class IsolatedServer(unittest.TestCase):
                         None,
                         False,
                     )
+                self.assertEqual(raised.exception.code, "operation_failed")
+                self.assertEqual(
+                    raised.exception.message,
+                    "holding wrapper did not install its operation token",
+                )
             finally:
                 os.environ["PATH"] = original_path
         with self.assertRaises(NoServer):

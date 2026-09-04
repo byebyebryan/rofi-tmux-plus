@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from .config import Config, has_control, require_clean_text
-from .errors import ContractError, clean_message
+from .errors import ContractError, NoServer, clean_message
 from .host import LocalHost, resolve_local_host
 from .model import Session, SessionReference
 from .tmux import TmuxClient, validate_session_id, validate_user_option
@@ -22,6 +22,7 @@ from .tmux import TmuxClient, validate_session_id, validate_user_option
 _OPERATION_OPTION = "@rofi_tmux_plus_operation"
 _PENDING_OPTION = "@rofi_tmux_plus_pending"
 _RELEASE_OPTION = "@rofi_tmux_plus_release"
+_OPERATION_TOKEN_FAILURE = "holding wrapper did not install its operation token"
 
 
 def now_millis() -> int:
@@ -405,7 +406,16 @@ class LocalLifecycle:
                     ) from error
                 raise
             try:
-                generation = self.tmux.server_generation()
+                try:
+                    generation = self.tmux.server_generation()
+                except NoServer as error:
+                    # The holding wrapper can fail and remove the just-created
+                    # session before tmux returns control from create-detached.
+                    # Normalize that ordering race at the lifecycle boundary;
+                    # there is no stable reference to clean up in this case.
+                    raise ContractError(
+                        "operation_failed", _OPERATION_TOKEN_FAILURE, host.host_id
+                    ) from error
                 reference = SessionReference(host.host_id, generation, session_id, created_at)
                 armed = True
                 self._wait_for_operation_token(reference, token)
@@ -458,7 +468,7 @@ class LocalLifecycle:
             time.sleep(0.025)
         raise ContractError(
             "operation_failed",
-            "holding wrapper did not install its operation token",
+            _OPERATION_TOKEN_FAILURE,
             reference.host_id,
         )
 
