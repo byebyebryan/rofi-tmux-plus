@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 
@@ -181,8 +182,15 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    # Rofi invokes the same executable for the initial script and every
+    # callback, setting ROFI_RETV without command arguments. Keep the
+    # versioned JSON CLI usable when a caller inherited Rofi's environment.
     if argv is None:
         argv = sys.argv[1:]
+    if "ROFI_RETV" in os.environ and not argv:
+        from .rofi import run_rofi
+
+        return run_rofi()
     parser = build_parser()
     try:
         result = dispatch(parser.parse_args(argv))

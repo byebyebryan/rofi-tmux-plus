@@ -1,6 +1,8 @@
 # Design: rofi-tmux-plus
 
-Status: proposed; this repository does not yet contain an implementation.
+Status: local and Host Mesh-backed remote lifecycle and live inventory, the
+private retained remote cache and refresh lifecycle, and the complete Rofi
+browse/open/create/rename/kill UI are implemented.
 
 ## Product boundary
 
@@ -22,7 +24,7 @@ It does not identify Codex, Claude Code, or OpenCode sessions or decide how
 those providers resume. `rofi-agent-plus` owns that policy and consumes the
 generic [Tmux Session Contract v1](TMUX_SESSION_V1.md).
 
-Remote hosts come from the proposed
+Remote hosts come from the implemented
 [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md).
 Tmux Plus does not maintain a second list of aliases or SSH routes. It remains
 useful in local-only mode when SSH Plus is absent; remote capability requires a
@@ -196,14 +198,26 @@ Opening the picker must not wait for every SSH host:
    filter and selection.
 6. Stop polling and clear transient status after completion or timeout.
 
+The private picker model exposes the complete current logical-host catalog in
+Mesh declaration order separately from observed inventory rows. Thus a Host or
+create chooser can offer configured remotes on a cold cache without pretending
+that they were already contacted.
+
 A successful host refresh, including a reachable host with no tmux server or
 no sessions, replaces that host's cached inventory. A transport failure
-retains the previous snapshot and marks it unavailable. A reachable host on
-which tmux is missing is a visible capability error, not an SSH route failure.
+retains the previous snapshot and marks it unavailable; any retained client
+count is cleared because it is no longer a current attachment observation. A
+non-authoritative reached-domain error has the same retained/unavailable
+presentation. A reachable host on which tmux is missing is a visible capability
+error, not an SSH route failure, and authoritatively clears old sessions.
 
-Cache files are private, versioned, fingerprinted by mesh and discovery
-configuration, locked during mutation, and atomically replaced. Cache layout
-is private implementation state and is not an integration contract.
+Cache files are private, versioned, fingerprinted by Mesh revision and cache
+schema, locked during mutation, and atomically replaced. Cache layout
+is private implementation state and is not an integration contract. Refresh
+markers are also revision-scoped: a marker from an old Mesh cannot block or
+surface as the current refresh. The detached inventory owner has a 15-second
+hard deadline; its marker becomes `stalled` only after 20 seconds, so a normal
+bounded refresh is never labelled stalled before its deadline.
 
 The live inventory operation defined by Tmux Session Contract v1 does not
 return cached sessions. The picker and higher-level consumers decide whether
@@ -284,10 +298,9 @@ exit status is kept distinct from displayed diagnostics.
    rollback fixtures for contract consumers.
 3. Add stable local lifecycle operations and isolated tmux integration tests.
 4. Consume Host Mesh v1 for bounded remote inventory and route reporting.
-5. Add the versioned cache and background-refresh lifecycle.
-6. Implement Rofi rows, views, action states, and regression tests.
-7. Integrate Agent Plus only after the contract passes independently.
-8. In a separate chezmoi deployment, install all public commands on `PATH`,
+5. Implement Rofi rows, views, action states, and regression tests.
+6. Integrate Agent Plus only after the contract passes independently.
+7. In a separate chezmoi deployment, install all public commands on `PATH`,
    keep raw Ghostty on `Mod+T`, add
    `Mod+Return` as a second terminal shortcut, cut `Mod+G` over from the DMS
    mux to Tmux Plus, and retain the tmux cheatsheet on `Mod+Shift+G`.
