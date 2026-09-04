@@ -1,0 +1,4 @@
+{
+  "scenario": "successful strict default-shell creation",
+  "response": {"schemaVersion": 1, "ok": true, "meshRevision": null, "session": {"hostId": "local", "serverGeneration": "tmux-v1:1722741000:1234:/run/user/1000/tmux-1000/default", "sessionId": "$7", "createdAt": 1722742007, "name": "new-shell", "activityAt": 1722742007, "lastAttachedAt": null, "attachedClients": 0, "pending": false, "windowCount": 1, "sessionPath": "/home/user", "currentWindow": "shell", "currentPath": "/home/user"}}
+}

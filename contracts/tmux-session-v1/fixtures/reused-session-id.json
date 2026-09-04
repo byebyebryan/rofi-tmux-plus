@@ -1,0 +1,5 @@
+{
+  "scenario": "server restart reuses a tmux session id",
+  "request": {"hostId": "local", "serverGeneration": "tmux-v1:1722741000:1234:/run/user/1000/tmux-1000/default", "sessionId": "$0", "createdAt": 1722742000},
+  "response": {"schemaVersion": 1, "ok": false, "error": {"code": "stale_session", "message": "the selected tmux server changed; refresh and try again", "hostId": "local"}}
+}

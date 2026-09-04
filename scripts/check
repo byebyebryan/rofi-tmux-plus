@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd -- "$repo_root"
+
+PYTHONPATH=. python3 -m unittest discover -s tests -v
+PYTHONPATH=. python3 -m compileall -q rofi_tmux_plus
+PYTHONPATH=. python3 - <<'PY'
+import json
+from pathlib import Path
+
+for root in (
+    Path("contracts/tmux-session-v1/fixtures"),
+    Path("contracts/host-mesh-v1/fixtures"),
+):
+    for fixture in root.glob("*.json"):
+        json.loads(fixture.read_text(encoding="utf-8"))
+PY
+
+command -v ruff >/dev/null
+test "$(ruff --version)" = "ruff 0.16.6"
+ruff check rofi_tmux_plus tests
+ruff format --check rofi_tmux_plus tests
+command -v shellcheck >/dev/null
+shellcheck scripts/check
+
+# git diff --check cannot see untracked files. Scan every tracked or
+# candidate-untracked text file and deliberately skip binary/deleted entries.
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+paths = subprocess.run(
+    ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+    check=True,
+    capture_output=True,
+    text=True,
+).stdout.splitlines()
+problems: list[str] = []
+for name in paths:
+    path = Path(name)
+    if not path.exists():
+        continue
+    try:
+        data = path.read_bytes()
+    except OSError as error:
+        problems.append(f"{name}: cannot read candidate ({error})")
+        continue
+    if b"\0" in data:
+        continue
+    if b"\r\n" in data:
+        problems.append(f"{name}: CRLF line ending")
+    if data and not data.endswith(b"\n"):
+        problems.append(f"{name}: missing final newline")
+    if data.endswith(b"\n\n"):
+        problems.append(f"{name}: blank line at EOF")
+    for number, line in enumerate(data.splitlines(), start=1):
+        if line.endswith((b" ", b"\t")):
+            problems.append(f"{name}:{number}: trailing whitespace")
+
+if problems:
+    print("candidate text-file check failed:", file=sys.stderr)
+    print("\n".join(problems), file=sys.stderr)
+    raise SystemExit(1)
+PY
+
+test -x bin/rofi-tmux-plus
+test -x scripts/check
+test -f pyproject.toml
+test -f docs/TMUX_SESSION_V1.md
+test -f contracts/tmux-session-v1/fixtures/envelopes.json
+test -f contracts/host-mesh-v1/fixtures/consumer-inventory-v1.json
+test -f contracts/host-mesh-v1/fixtures/reached-markers.json
+
+mapfile -t candidate_files < <(git ls-files --cached --others --exclude-standard -- rofi_tmux_plus tests bin scripts contracts)
+forbidden_socket='--sock'"et"
+forbidden_phrase='alternate tmux '"socket"
+if rg -n -- "$forbidden_socket|$forbidden_phrase" "${candidate_files[@]}" 2>/dev/null; then
+  exit 1
+fi
+git diff --check
+git diff --cached --check

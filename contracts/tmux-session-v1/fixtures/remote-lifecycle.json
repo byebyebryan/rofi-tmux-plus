@@ -1,0 +1,36 @@
+{
+  "scenario": "Host Mesh remote lifecycle success and guarded failure envelopes",
+  "meshRevision": "sha256:fixture",
+  "open": {
+    "schemaVersion": 1,
+    "ok": true,
+    "meshRevision": "sha256:fixture",
+    "focused": false,
+    "terminalLaunched": true
+  },
+  "create": {
+    "schemaVersion": 1,
+    "ok": true,
+    "meshRevision": "sha256:fixture",
+    "session": {
+      "hostId": "beta",
+      "serverGeneration": "tmux-v1:1722741000:1234:/run/user/1000/tmux-1000/default",
+      "sessionId": "$7",
+      "createdAt": 1722742007,
+      "name": "new-shell",
+      "activityAt": 1722742007,
+      "lastAttachedAt": null,
+      "attachedClients": 0,
+      "pending": false,
+      "windowCount": 1,
+      "sessionPath": "/home/user",
+      "currentWindow": "shell",
+      "currentPath": "/home/user"
+    }
+  },
+  "errors": {
+    "stale_mesh": {"schemaVersion": 1, "ok": false, "error": {"code": "stale_mesh", "message": "the Host Mesh changed; refresh and try again"}},
+    "session_exists": {"schemaVersion": 1, "ok": false, "error": {"code": "session_exists", "message": "a tmux session with that exact name already exists"}},
+    "stale_session": {"schemaVersion": 1, "ok": false, "error": {"code": "stale_session", "message": "the selected tmux session changed; refresh and try again"}}
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "mesh": {
+    "schemaVersion": 1,
+    "generatedAt": 1722743000123,
+    "meshRevision": "sha256:fixture",
+    "localHostId": "alpha",
+    "sshPolicy": {
+      "executable": "ssh",
+      "connectTimeoutSeconds": 2,
+      "connectionAttempts": 1,
+      "routeHealthTtlSeconds": 300
+    },
+    "hosts": [
+      {"id": "alpha", "display": "Alpha", "local": true, "aliases": ["alpha", "alpha-native"], "routes": []},
+      {"id": "beta", "display": "Beta", "local": false, "aliases": ["beta-native"], "routes": [{"destination": "beta-vpn.test", "configuredIndex": 0, "lastReachableAt": null, "lastUnreachableAt": null}, {"destination": "beta-lan.test", "configuredIndex": 1, "lastReachableAt": null, "lastUnreachableAt": null}]},
+      {"id": "gamma", "display": "Gamma", "local": false, "aliases": [], "routes": [{"destination": "gamma.test", "configuredIndex": 0, "lastReachableAt": null, "lastUnreachableAt": null}]}
+    ]
+  },
+  "nonce": "0123456789abcdef0123456789abcdef",
+  "reports": {"reachable": "reachable", "unreachable": "unreachable", "source": "rofi-tmux-plus"}
+}

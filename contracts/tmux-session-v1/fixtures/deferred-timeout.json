@@ -1,0 +1,4 @@
+{
+  "scenario": "deferred session with no first client expires safely",
+  "assertions": {"pendingBeforeTimeout": true, "sessionRemovedAfterTimeout": true, "requiresPendingToken": true, "doesNotTargetByName": true}
+}

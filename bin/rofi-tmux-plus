@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Source/external-tree entry point; installation exposes the console script."""
+
+from __future__ import annotations
+
+import pathlib
+import sys
+
+# Detached refreshes may start from Rofi or a systemd scope rather than the
+# checkout root.  Resolve this launcher so source and external-tree installs
+# retain their sibling package without relying on inherited PYTHONPATH.
+sys.dont_write_bytecode = True
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from rofi_tmux_plus.cli import main  # noqa: E402
+
+
+raise SystemExit(main())

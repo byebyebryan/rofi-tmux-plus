@@ -1,0 +1,4 @@
+{
+  "scenario": "local default server absent",
+  "response": {"schemaVersion": 1, "generatedAt": 1722743000000, "meshRevision": null, "hosts": [{"hostId": "local", "display": "local", "local": true, "status": "ok", "observedAt": 1722743000000, "nativeHostname": "local.example", "serverGeneration": null, "route": null, "sessions": []}]}
+}

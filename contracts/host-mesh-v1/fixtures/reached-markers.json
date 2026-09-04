@@ -1,0 +1,68 @@
+{
+  "nonce": "0123456789abcdef0123456789abcdef",
+  "cases": [
+    {
+      "name": "valid-zero-exit",
+      "stderr": "\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\n",
+      "exit": 0,
+      "expectedReached": true,
+      "expectedRemainingStderr": ""
+    },
+    {
+      "name": "valid-nonzero-domain-exit",
+      "stderr": "before\n\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\nafter\n",
+      "exit": 42,
+      "expectedReached": true,
+      "expectedRemainingStderr": "before\nafter\n"
+    },
+    {
+      "name": "duplicate-marker",
+      "stderr": "\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\n\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\n",
+      "exit": 0,
+      "expectedReached": false,
+      "expectedRemainingStderr": "\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\n\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f\n"
+    },
+    {
+      "name": "wrong-nonce",
+      "stderr": "\u001eROFI_PLUS_REACHED_V1:fedcba9876543210fedcba9876543210\u001f\n",
+      "exit": 0,
+      "expectedReached": false,
+      "expectedRemainingStderr": "\u001eROFI_PLUS_REACHED_V1:fedcba9876543210fedcba9876543210\u001f\n"
+    },
+    {
+      "name": "wrong-nonce-nonzero-exit",
+      "stderr": "before\n\u001eROFI_PLUS_REACHED_V1:fedcba9876543210fedcba9876543210\u001f\nafter\n",
+      "exit": 42,
+      "expectedReached": false,
+      "expectedRemainingStderr": "before\n\u001eROFI_PLUS_REACHED_V1:fedcba9876543210fedcba9876543210\u001f\nafter\n"
+    },
+    {
+      "name": "incomplete-zero-exit",
+      "stderr": "\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f",
+      "exit": 0,
+      "expectedReached": false,
+      "expectedRemainingStderr": "\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001f"
+    },
+    {
+      "name": "incomplete-nonzero-exit",
+      "stderr": "before\n\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001fafter\n",
+      "exit": 42,
+      "expectedReached": false,
+      "expectedRemainingStderr": "before\n\u001eROFI_PLUS_REACHED_V1:0123456789abcdef0123456789abcdef\u001fafter\n"
+    },
+    {
+      "name": "absent-zero-exit",
+      "stderr": "",
+      "exit": 0,
+      "expectedReached": false,
+      "expectedRemainingStderr": ""
+    },
+    {
+      "name": "absent-nonzero-exit",
+      "stderr": "Connection refused\n",
+      "exit": 255,
+      "expectedReached": false,
+      "expectedRemainingStderr": "Connection refused\n"
+    }
+  ]
+}

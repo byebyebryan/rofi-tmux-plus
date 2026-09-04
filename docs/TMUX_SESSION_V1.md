@@ -1,7 +1,8 @@
 # Tmux Session Contract v1
 
-Status: proposed; no released `rofi-tmux-plus` version implements this
-contract.
+Status: local and Host Mesh-backed remote live inventory and lifecycle
+operations, the private retained remote cache and refresh lifecycle, and the
+complete Rofi browse/open/create/rename/kill UI are implemented.
 
 This is the process boundary between generic tmux lifecycle and consumers such
 as `rofi-agent-plus`. All commands exchange versioned JSON. Consumers do not
