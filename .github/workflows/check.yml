@@ -17,10 +17,14 @@ jobs:
           python -m pip install ruff==0.16.6
           sudo apt-get update
           sudo apt-get install --yes tmux xz-utils
+          shellcheck_tmpdir="$(mktemp -d)"
+          trap 'rm -rf -- "$shellcheck_tmpdir"' EXIT
           curl --fail --location --silent --show-error \
-            --output shellcheck.tar.xz \
+            --output "$shellcheck_tmpdir/shellcheck.tar.xz" \
             https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz
-          tar --extract --file shellcheck.tar.xz
-          sudo install --mode=0755 shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          tar --extract --file "$shellcheck_tmpdir/shellcheck.tar.xz" \
+            --directory "$shellcheck_tmpdir"
+          sudo install --mode=0755 \
+            "$shellcheck_tmpdir/shellcheck-v0.11.0/shellcheck" /usr/local/bin/shellcheck
       - name: Run repository gate
         run: ./scripts/check
