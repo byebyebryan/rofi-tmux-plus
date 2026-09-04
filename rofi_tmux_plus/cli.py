@@ -39,7 +39,15 @@ def _is_rofi_invocation(argv: Sequence[str]) -> bool:
 
     if "ROFI_RETV" not in os.environ:
         return False
-    if not argv or _ROFI_CALLBACK_ENV.intersection(os.environ):
+    if not argv:
+        return True
+    # Agent Plus invokes the public JSON contract from inside its own Rofi
+    # callback, so those child processes inherit ROFI_* variables.  Contract
+    # commands always carry arguments; a Rofi callback supplies the selected
+    # or custom row as one argv item, even when that text names a command.
+    if argv[0] in _JSON_COMMANDS and len(argv) > 1:
+        return False
+    if _ROFI_CALLBACK_ENV.intersection(os.environ):
         return True
     return os.environ.get("ROFI_RETV", "0") != "0" and argv[0] not in _JSON_COMMANDS
 

@@ -980,3 +980,35 @@ class EntryPointTests(unittest.TestCase):
             self.assertEqual(0, cli.main(["inventory", "--json"]))
         run.assert_not_called()
         self.assertEqual([], json.loads(output.getvalue())["hosts"])
+
+    def test_contract_command_wins_over_inherited_rofi_callback_environment(self) -> None:
+        inventory = type(
+            "Inventory",
+            (),
+            {
+                "inventory": lambda self, **_kwargs: {
+                    "schemaVersion": 1,
+                    "generatedAt": 1,
+                    "meshRevision": None,
+                    "hosts": [],
+                }
+            },
+        )()
+        output = io.StringIO()
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "ROFI_RETV": "1",
+                    "ROFI_INFO": '{"type":"session"}',
+                    "ROFI_DATA": '{"schemaVersion":1}',
+                },
+                clear=True,
+            ),
+            patch("rofi_tmux_plus.cli._inventory_service", return_value=inventory),
+            patch("rofi_tmux_plus.rofi.run_rofi") as run,
+            redirect_stdout(output),
+        ):
+            self.assertEqual(0, cli.main(["inventory", "--json"]))
+        run.assert_not_called()
+        self.assertEqual([], json.loads(output.getvalue())["hosts"])
