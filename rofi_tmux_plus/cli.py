@@ -16,6 +16,33 @@ from .picker_model import PickerModelService, RemoteRefresh
 from .remote_cache import RemoteCache
 from .tmux import validate_user_option
 
+_JSON_COMMANDS = {
+    "inventory",
+    "open",
+    "create",
+    "rename",
+    "kill",
+    "_picker-model",
+    "_refresh",
+    "_refresh-status",
+}
+_ROFI_CALLBACK_ENV = {"ROFI_DATA", "ROFI_INFO", "ROFI_INPUT"}
+
+
+def _is_rofi_invocation(argv: Sequence[str]) -> bool:
+    """Recognize initial and callback script-mode invocations.
+
+    Rofi calls a script without arguments initially, but passes the selected
+    row as argv[0] for callbacks.  Explicit JSON commands remain available to
+    processes that merely inherited Rofi's environment.
+    """
+
+    if "ROFI_RETV" not in os.environ:
+        return False
+    if not argv or _ROFI_CALLBACK_ENV.intersection(os.environ):
+        return True
+    return os.environ.get("ROFI_RETV", "0") != "0" and argv[0] not in _JSON_COMMANDS
+
 
 class JsonArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
@@ -182,12 +209,11 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    # Rofi invokes the same executable for the initial script and every
-    # callback, setting ROFI_RETV without command arguments. Keep the
-    # versioned JSON CLI usable when a caller inherited Rofi's environment.
+    # Keep the versioned JSON CLI usable when a caller merely inherited
+    # Rofi's environment while honoring Rofi's selected-row callback argv.
     if argv is None:
         argv = sys.argv[1:]
-    if "ROFI_RETV" in os.environ and not argv:
+    if _is_rofi_invocation(argv):
         from .rofi import run_rofi
 
         return run_rofi()

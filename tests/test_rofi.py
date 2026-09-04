@@ -933,6 +933,30 @@ class EntryPointTests(unittest.TestCase):
             self.assertEqual(7, cli.main([]))
         run.assert_called_once()
 
+    def test_cli_routes_selected_row_callback_argv_to_rofi(self) -> None:
+        with (
+            patch.dict(
+                os.environ,
+                {"ROFI_RETV": "11", "ROFI_INFO": '{"type":"session"}'},
+                clear=True,
+            ),
+            patch("rofi_tmux_plus.rofi.run_rofi", return_value=7) as run,
+        ):
+            self.assertEqual(7, cli.main(["visible row\nsecondary row"]))
+        run.assert_called_once()
+
+    def test_cli_routes_custom_input_matching_json_command_to_rofi(self) -> None:
+        with (
+            patch.dict(
+                os.environ,
+                {"ROFI_RETV": "2", "ROFI_INPUT": "inventory"},
+                clear=True,
+            ),
+            patch("rofi_tmux_plus.rofi.run_rofi", return_value=7) as run,
+        ):
+            self.assertEqual(7, cli.main(["inventory"]))
+        run.assert_called_once()
+
     def test_cli_arguments_remain_json_commands_when_rofi_environment_is_inherited(self) -> None:
         inventory = type(
             "Inventory",
