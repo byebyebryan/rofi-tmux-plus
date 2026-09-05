@@ -1,8 +1,9 @@
 # Design: rofi-tmux-plus
 
-Status: local and Host Mesh-backed remote lifecycle and live inventory, the
-private retained remote cache and refresh lifecycle, and the complete Rofi
-browse/open/create/rename/kill UI are implemented.
+Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
+private retained remote cache and refresh lifecycle, the complete Rofi
+browse/open/create/rename/kill UI, and fail-closed callback recovery are
+implemented.
 
 ## Product boundary
 
@@ -159,6 +160,14 @@ retains its browse meaning and does not ambiguously select a row while editing.
 Rename and kill leave the picker open and refresh the affected host. Opening or
 creating a session closes the picker after focusing or launching the terminal.
 
+Configuration, model, and callback failures are bounded at the Rofi process
+boundary. Root Escape returns no rows before setup, so it closes even when a
+configuration cannot be loaded. Nested Escape clears a pending action or
+returns to the current view root; if the model cannot be read, the callback
+renders that safe root with a bounded diagnostic so a subsequent Escape closes
+the dialog. Ctrl+G remains Rofi's native cancel binding and is never a script
+callback.
+
 Kill confirmation selects `Cancel` by default. Its destructive row names the
 logical host and session and reports how many clients the live observation
 would disconnect.
@@ -300,7 +309,8 @@ exit status is kept distinct from displayed diagnostics.
 4. Consume Host Mesh v1 for bounded remote inventory and route reporting.
 5. Implement Rofi rows, views, action states, and regression tests.
 6. Integrate Agent Plus only after the contract passes independently.
-7. In a separate chezmoi deployment, install all public commands on `PATH`,
-   keep raw Ghostty on `Mod+T`, add
-   `Mod+Return` as a second terminal shortcut, cut `Mod+G` over from the DMS
-   mux to Tmux Plus, and retain the tmux cheatsheet on `Mod+Shift+G`.
+7. The managed Chezmoi source installs all public commands on `PATH`, keeps
+   raw Ghostty on `Mod+T`, adds `Mod+Return` as a second terminal shortcut,
+   cuts `Mod+G` over to Tmux Plus, and retains the tmux cheatsheet on
+   `Mod+Shift+G`. Live focus, attach, and remote acceptance remain
+   host-specific rollout checks.

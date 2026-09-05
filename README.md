@@ -41,6 +41,12 @@ and Shift+Tab remain Rofi's normal row navigation. `Ctrl+B` and `Ctrl+F` move
 the filter cursor. `-eh 2` reserves the two physical Pango display lines used
 by each session row.
 
+The callback boundary fails closed: configuration, model, and callback errors
+are rendered as bounded notices. Root Escape returns no rows before setup, and
+nested Escape recovers to the enclosing browsing root if a model snapshot
+cannot be loaded. Pending actions are cleared on that recovery, while Ctrl+G
+stays Rofi's native unconditional cancel binding.
+
 - [Product and interaction design](docs/DESIGN.md)
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)
 - [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md)

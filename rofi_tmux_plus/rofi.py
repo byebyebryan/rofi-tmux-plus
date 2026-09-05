@@ -1132,6 +1132,32 @@ def _error_state(
     )
 
 
+def _escape_state(state: ContinuationState) -> ContinuationState:
+    """Clear pending work and move Escape to a safe browsing scope."""
+
+    navigation = state.action.origin if state.action is not None else state.navigation.root()
+    return replace(state, navigation=navigation, action=None, blocked_action=False)
+
+
+def _escape_error_output(
+    state: ContinuationState,
+    message: str,
+    *,
+    now: float,
+) -> str:
+    """Recover Escape without requiring config/model data to render."""
+
+    safe = _escape_state(state)
+    if state.action is None and not state.navigation.nested:
+        return ""
+    return _render_state(
+        None,
+        _error_state(safe, message, now=now, key="escape"),
+        preserve=True,
+        now=now,
+    )
+
+
 def _marker_key(marker: Mapping[str, object]) -> str:
     return ":".join(
         (
@@ -1469,6 +1495,15 @@ def run_rofi(
         model_service = model_service or PickerModelService(selected_config)
         lifecycle_service = lifecycle_service or LifecycleService(selected_config)
     except Exception as error:  # noqa: BLE001 - visible Rofi boundary
+        if retv == ROFI_RETV_CUSTOM_6:
+            rendered = _escape_error_output(
+                state,
+                f"Configuration failed: {clean_message(error)}",
+                now=now,
+            )
+            if rendered:
+                print(rendered, end="")
+            return 0
         print(
             _render_state(
                 None,
@@ -1510,15 +1545,13 @@ def run_rofi(
                 model_service, state, start_refresh=False, now=now
             )
         except Exception as error:  # noqa: BLE001 - preserve a visible callback error
-            print(
-                _render_state(
-                    None,
-                    _error_state(state, clean_message(error), now=now, key="callback"),
-                    preserve=True,
-                    now=now,
-                ),
-                end="",
+            rendered = _escape_error_output(
+                state,
+                f"Unable to return to group root: {clean_message(error)}",
+                now=now,
             )
+            if rendered:
+                print(rendered, end="")
             return 0
         next_state = (
             replace(observed, navigation=state.action.origin, action=None, blocked_action=False)

@@ -435,6 +435,79 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertNotIn("element-navigation", backed)
         self.assertNotIn("keep-filter", backed)
 
+    def test_escape_recovers_to_root_when_configuration_or_model_fails(self) -> None:
+        nested = rofi.NavigationState("hosts", "beta")
+        output = io.StringIO()
+        with (
+            patch(
+                "rofi_tmux_plus.rofi.load_config",
+                side_effect=ValueError("bad config"),
+            ),
+            redirect_stdout(output),
+        ):
+            self.assertEqual(
+                0,
+                rofi.run_rofi(
+                    {
+                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
+                        "ROFI_DATA": rofi._navigation_data(nested),
+                    },
+                    model_service=self.model,
+                    lifecycle_service=self.lifecycle,
+                ),
+            )
+        rendered = output.getvalue()
+        self.assertIn("Tmux › Hosts", rendered)
+        self.assertNotIn("Tmux › Hosts › Beta", rendered)
+        self.assertIn("Configuration failed: bad config", rendered)
+
+        broken = FakeModel(self.value)
+
+        def broken_load(*, start_refresh: bool) -> SimpleNamespace:
+            del start_refresh
+            raise RuntimeError("model unavailable")
+
+        broken.load = broken_load
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(
+                0,
+                rofi.run_rofi(
+                    {
+                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
+                        "ROFI_DATA": rofi._navigation_data(nested),
+                    },
+                    model_service=broken,
+                    lifecycle_service=self.lifecycle,
+                    config=Config(),
+                ),
+            )
+        rendered = output.getvalue()
+        self.assertIn("Tmux › Hosts", rendered)
+        self.assertNotIn("Tmux › Hosts › Beta", rendered)
+        self.assertIn("Unable to return to group root: model unavailable", rendered)
+
+        output = io.StringIO()
+        with (
+            patch(
+                "rofi_tmux_plus.rofi.load_config",
+                side_effect=ValueError("bad config"),
+            ),
+            redirect_stdout(output),
+        ):
+            self.assertEqual(
+                0,
+                rofi.run_rofi(
+                    {
+                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
+                        "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
+                    },
+                    model_service=self.model,
+                    lifecycle_service=self.lifecycle,
+                ),
+            )
+        self.assertEqual("", output.getvalue())
+
     def test_open_uses_typed_full_reference_and_revision(self) -> None:
         rendered = rofi.render_snapshot(self.value, now=200, titles=())
         _, rows = rendered_records(rendered)
