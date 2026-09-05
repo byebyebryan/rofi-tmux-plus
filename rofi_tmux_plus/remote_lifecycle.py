@@ -553,7 +553,7 @@ class RemoteLifecycle:
         # remains tmux's literal target rather than remote-shell expansion.
         validate_session_id(session_id)
         remote_command = " ".join(
-            shlex.quote(value) for value in ("tmux", "attach-session", "-t", session_id)
+            shlex.quote(value) for value in ("tmux", "-u", "attach-session", "-t", session_id)
         )
         attach = [policy.executable, "-t", route, remote_command]
         if self._terminal_spawner is not None:

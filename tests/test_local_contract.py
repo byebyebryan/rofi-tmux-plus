@@ -472,6 +472,7 @@ class FocusAndCliTests(unittest.TestCase):
                 "ghostty",
                 "-e",
                 "tmux",
+                "-u",
                 "attach-session",
                 "-t",
                 "$0",
@@ -483,7 +484,8 @@ class FocusAndCliTests(unittest.TestCase):
         ):
             self.lifecycle._spawn_terminal("$1")
         self.assertEqual(
-            spawn.call_args.args[0], ["ghostty", "-e", "tmux", "attach-session", "-t", "$1"]
+            spawn.call_args.args[0],
+            ["ghostty", "-e", "tmux", "-u", "attach-session", "-t", "$1"],
         )
 
     def test_invalid_stable_reference_is_rejected_before_tmux(self) -> None:

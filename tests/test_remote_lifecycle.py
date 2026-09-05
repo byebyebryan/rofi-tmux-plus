@@ -148,7 +148,7 @@ class RemoteLifecycleTests(unittest.TestCase):
         self.assertFalse(result["focused"])
         self.assertEqual(
             launched,
-            [["ssh", "-t", "beta-vpn.test", "tmux attach-session -t '$0'"]],
+            [["ssh", "-t", "beta-vpn.test", "tmux -u attach-session -t '$0'"]],
         )
         self.assertEqual(self.adapter.reports[0]["status"], "reachable")
 
@@ -157,7 +157,7 @@ class RemoteLifecycleTests(unittest.TestCase):
             directory = Path(raw_directory)
             target = directory / "target"
             fake_tmux = directory / "tmux"
-            fake_tmux.write_text(f"#!/bin/sh\nprintf '%s' \"$3\" > {target}\n", encoding="utf-8")
+            fake_tmux.write_text(f"#!/bin/sh\nprintf '%s' \"$4\" > {target}\n", encoding="utf-8")
             fake_tmux.chmod(0o700)
             fake_ssh = directory / "ssh"
             fake_ssh.write_text(

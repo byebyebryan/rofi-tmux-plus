@@ -341,7 +341,7 @@ class LocalLifecycle:
         return focus_session_window(session.name, short_host, niri_command=self._niri_command)
 
     def _spawn_terminal(self, session_id: str) -> None:
-        spawn_terminal_command(self.config, ["tmux", "attach-session", "-t", session_id])
+        spawn_terminal_command(self.config, ["tmux", "-u", "attach-session", "-t", session_id])
 
     def create(
         self,
