@@ -16,7 +16,7 @@ from rofi_tmux_plus import cli
 from rofi_tmux_plus.config import Config, load_config
 from rofi_tmux_plus.errors import ContractError, NoServer
 from rofi_tmux_plus.host import local_host
-from rofi_tmux_plus.lifecycle import LocalLifecycle, _wrapper_command
+from rofi_tmux_plus.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
 from rofi_tmux_plus.model import Session, SessionReference
 from rofi_tmux_plus.tmux import TmuxClient
 
@@ -310,6 +310,15 @@ class UnitContractTests(unittest.TestCase):
         self.assertNotIn("$(not-a-shell-expansion)", argv[2])
         self.assertEqual(argv[-2:], ["program", "$(not-a-shell-expansion)"])
 
+    def test_terminal_argv_disables_systemd_dollar_expansion_for_tmux_ids(self) -> None:
+        argv = _terminal_argv(
+            Config(terminal=("ghostty",)),
+            ["tmux", "-u", "attach-session", "-t", "$3"],
+            systemd_run="/usr/bin/systemd-run",
+        )
+        self.assertIn("--expand-environment=no", argv)
+        self.assertEqual(argv[-5:], ["tmux", "-u", "attach-session", "-t", "$3"])
+
     def test_strict_config_rejects_unknown_key(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             temporary = Path(directory) / "config.toml"
@@ -468,6 +477,7 @@ class FocusAndCliTests(unittest.TestCase):
                 "--scope",
                 "--collect",
                 "--quiet",
+                "--expand-environment=no",
                 "--",
                 "ghostty",
                 "-e",

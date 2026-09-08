@@ -194,23 +194,26 @@ def focus_session_window(
     return False
 
 
+def _terminal_argv(config: Config, command: Sequence[str], *, systemd_run: str | None) -> list[str]:
+    """Build terminal argv without allowing systemd-run to expand ``$N`` IDs."""
+    terminal = [*config.terminal, "-e", *command]
+    if systemd_run is None:
+        return terminal
+    return [
+        systemd_run,
+        "--user",
+        "--scope",
+        "--collect",
+        "--quiet",
+        "--expand-environment=no",
+        "--",
+        *terminal,
+    ]
+
+
 def spawn_terminal_command(config: Config, command: Sequence[str]) -> None:
     """Detach a terminal command in a collectable user scope when available."""
-    terminal = [*config.terminal, "-e", *command]
-    systemd_run = shutil.which("systemd-run")
-    argv = (
-        terminal
-        if systemd_run is None
-        else [
-            systemd_run,
-            "--user",
-            "--scope",
-            "--collect",
-            "--quiet",
-            "--",
-            *terminal,
-        ]
-    )
+    argv = _terminal_argv(config, command, systemd_run=shutil.which("systemd-run"))
     subprocess.Popen(
         argv,
         stdin=subprocess.DEVNULL,
