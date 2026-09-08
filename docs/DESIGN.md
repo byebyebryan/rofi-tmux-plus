@@ -2,8 +2,9 @@
 
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
 private retained remote cache and refresh lifecycle, the complete Rofi
-browse/open/create/rename/kill UI, and fail-closed callback recovery are
-implemented.
+browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
+and operator acceptance are complete. Selection latency remains a documented
+post-P6 performance follow-up rather than a functional blocker.
 
 ## Product boundary
 
@@ -312,5 +313,6 @@ exit status is kept distinct from displayed diagnostics.
 7. The managed Chezmoi source installs all public commands on `PATH`, keeps
    raw Ghostty on `Mod+T`, adds `Mod+Return` as a second terminal shortcut,
    cuts `Mod+G` over to Tmux Plus, and retains the tmux cheatsheet on
-   `Mod+Shift+G`. Live focus, attach, and remote acceptance remain
-   host-specific rollout checks.
+   `Mod+Shift+G`. P6 live focus, attach, and remote acceptance completed for
+   the exercised local and remote paths; those remain host-specific rollout
+   checks for later changes.
