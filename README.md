@@ -25,27 +25,31 @@ rofi -show tmux-plus -modes "tmux-plus:$(pwd)/bin/rofi-tmux-plus" \
   -kb-custom-1 Alt+r -kb-custom-2 Right -kb-custom-3 Left \
   -kb-custom-4 F2 -kb-delete-entry Shift+Delete \
   -kb-accept-custom Control+Return \
-  -kb-custom-6 Escape \
-  -kb-cancel Control+g \
+  -kb-cancel Escape,Control+g \
   -kb-move-char-forward Control+f -kb-move-char-back Control+b \
   -eh 2
 ```
 
 Rofi must invoke the executable as a script mode and provide the callbacks
-above. `Alt+R` is a bounded foreground refresh; Right and Left wrap the
-`Recent` and `Hosts` roots; Enter drills into a host or opens a session;
-`Ctrl+Enter` creates/opens a named session or commits a rename; F2 begins a
-rename; Shift+Delete asks for kill confirmation; Escape backs out of a host
-layer or pending action and exits at a root; and `Ctrl+G` always exits. Tab
-and Shift+Tab remain Rofi's normal row navigation. `Ctrl+B` and `Ctrl+F` move
-the filter cursor. `-eh 2` reserves the two physical Pango display lines used
-by each session row.
+above. `Alt+R` is a bounded foreground refresh; Right and Left wrap the flat
+`All`, `Local`, and Host Mesh remote scopes; Enter opens a session;
+`Ctrl+Enter` creates/opens a named session on a concrete host scope or commits
+a rename; F2 begins a rename; and Shift+Delete asks for kill confirmation.
+Escape and `Ctrl+G` use Rofi's native cancel action and always close the
+picker. Tab and Shift+Tab remain Rofi's normal row navigation. `Ctrl+B` and
+`Ctrl+F` move the filter cursor. `-eh 2` reserves the two physical Pango
+display lines used by each session row.
 
 The callback boundary fails closed: configuration, model, and callback errors
-are rendered as bounded notices. Root Escape returns no rows before setup, and
-nested Escape recovers to the enclosing browsing root if a model snapshot
-cannot be loaded. Pending actions are cleared on that recovery, while Ctrl+G
-stays Rofi's native unconditional cancel binding.
+are rendered as bounded notices. Legacy callback number 15 is an immediate
+no-op for stale pre-P8 invocations; current Escape and `Ctrl+G` never enter the
+script callback path. Pending rename or kill actions are discarded when native
+cancel closes the picker.
+
+Each model render is retained in a private content-addressed snapshot cache so
+Left/Right callbacks can switch scopes without reading Host Mesh or local tmux.
+The cache keeps the newest 256 owned snapshots and fails closed if the exact
+snapshot in `ROFI_DATA` is missing or corrupt.
 
 - [Product and interaction design](docs/DESIGN.md)
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)

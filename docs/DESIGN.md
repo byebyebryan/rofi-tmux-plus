@@ -3,16 +3,16 @@
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
 private retained remote cache and refresh lifecycle, the complete Rofi
 browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
-and operator acceptance are complete. P7 removes the redundant
+and operator acceptance are complete. P7 removed the redundant
 picker-model read before a successful typed open; lifecycle still revalidates
 the current Mesh and exact stable reference. Managed publication and deployment
-are coordinated through chezmoi. P8 flat-scope navigation is an accepted design
-target, not an implemented runtime claim.
+are coordinated through chezmoi. P8 flat-scope navigation is implemented in
+this repository; the coordinated suite cutover remains a cross-repository gate.
 
-## P8 flat-scope target
+## P8 flat-scope implementation
 
-P8 replaces the `Recent` / `Hosts` root pair and per-host child layers
-described below with leaf-only peer views:
+P8 replaces the previously deployed `Recent` / `Hosts` root pair and per-host
+child layers with leaf-only peer views:
 
 ```text
 Tmux › All
@@ -33,15 +33,21 @@ Tab and Shift+Tab retain native row navigation. Enter opens the selected
 session. Escape and Ctrl+G always close through Rofi's native cancel action and
 are never script callbacks.
 
-Ctrl+Enter creates or opens a typed session only from a concrete host scope.
-From `All`, it renders a bounded instruction to choose a host view rather than
-guessing a host or entering a chooser layer. Rename and kill confirmation stay
-transient action states; Left and Right do nothing there, and Escape closes the
-picker without committing the action. Host Mesh v1 and Tmux Session v1 do not
-change.
+Each model render is also written as a private, content-addressed presentation
+snapshot. The continuation state carries only its opaque snapshot key. Left and
+Right callbacks load that exact key and do not construct configuration, read
+Host Mesh, inspect local tmux, or call lifecycle code. A missing, corrupt, or
+unsafe snapshot fails closed with a bounded notice so the picker can be reopened.
+The cache retains the newest 256 owned snapshots (plus the snapshot being
+written), which bounds disk growth while leaving room for concurrent and
+long-lived picker windows.
 
-The following Views and Navigation sections describe the currently deployed P7
-interface until the coordinated P8 cutover.
+Ctrl+Enter creates or opens a typed session only from a concrete host scope.
+From `All`, it renders the bounded instruction `Choose a concrete host view
+before creating a session.` rather than guessing a host or entering a chooser
+layer. Rename and kill confirmation stay transient action states; Left and
+Right do nothing there, and native Escape closes the picker without committing
+the action. Host Mesh v1 and Tmux Session v1 do not change.
 
 ## Product boundary
 
@@ -108,21 +114,23 @@ incidental current directory.
 
 ## Views and rows
 
-The initial picker has two top-level views:
+The picker has leaf-only peer views:
 
 ```text
-Tmux › Recent
-Tmux › Hosts
-Tmux › Hosts › Desktop B
+Tmux › All
+Tmux › Local
+Tmux › <remote host in Host Mesh order>
 ```
 
-`Recent` is a mixed list across live hosts ordered by tmux session activity.
-Live sessions precede retained stale sessions. `Hosts` puts the local host
-first and remote hosts in configured mesh order. Entering a host shows its
-sessions.
+`All` is the mixed list across live hosts, ordered by the existing session
+recency rules. `Local` follows, and remote scopes follow in the stable order
+provided by Host Mesh. Availability, activity, and session age never reorder
+the scope ring. Empty and unavailable authoritative hosts retain their scope;
+the view is not removed merely because it has no current rows. With no remote
+hosts, `All` and `Local` collapse to one concrete `Local` scope.
 
-There is intentionally no third view in version 1. Attachment status and
-alphabetical ordering do not yet justify another navigation surface.
+Every normal browsing row is a tmux session. Host rows are not an intermediate
+chooser layer.
 
 Session rows reserve two physical lines:
 
@@ -131,7 +139,7 @@ rofi-tmux-plus
 Desktop B · ~/code/rofi-tmux-plus · 2 windows · open here · activity 4m
 ```
 
-Inside a host layer, the redundant host label is omitted. The working
+In a concrete host scope, the redundant host label is omitted. The working
 directory is shortened for display only. Search metadata retains the logical
 host ID, display label, complete path, session name, current window, and
 status. Selection identity always comes from typed JSON in `ROFI_INFO`, never
@@ -155,60 +163,55 @@ Browsing follows the suite-wide Rofi contract:
 | Key | Behavior |
 | --- | --- |
 | Tab / Shift+Tab | Move to the next or previous row |
-| Left / Right | Switch `Recent` and `Hosts`, returning to a view root |
-| Enter | Enter a host or open a session |
-| Escape | Return one layer; exit from a browsing root |
-| Ctrl+G | Exit unconditionally |
+| Left / Right | Wrap through the `All`, `Local`, and remote scopes |
+| Enter | Open the selected session |
+| Escape | Close Rofi through its native cancel action |
+| Ctrl+G | Close Rofi through the same native cancel action |
 | Alt+R | Perform a bounded refresh |
-| Typed name + Ctrl+Enter | Create or open a named session |
+| Typed name + Ctrl+Enter | Create or open on a concrete host scope |
 | F2 | Begin renaming the selected session; Ctrl+Enter commits |
 | Shift+Delete | Enter kill confirmation for the selected session |
 
 Ctrl+B and Ctrl+F replace the text cursor actions displaced by Left and Right.
 Rofi's default Ctrl+N remains row-down and is not reused for session creation.
 
-The managed invocation assigns Alt+R, Right, Left, F2, and Escape to script
-callbacks 1, 2, 3, 4, and 6; Shift+Delete uses the delete-entry callback;
-Ctrl+G remains Rofi's unconditional cancel binding; and Ctrl+Enter remains the
-custom-input binding. `ROFI_RETV=2` therefore means create/open while browsing
-and commit while in rename state. `ROFI_DATA` carries the typed state and
-originating view across callbacks.
+The managed invocation assigns Alt+R, Right, Left, and F2 to script callbacks
+1, 2, 3, and 4; Shift+Delete uses the delete-entry callback; and Ctrl+Enter
+remains the custom-input binding. Escape and Ctrl+G are Rofi's native cancel
+bindings and never enter the script callback path. `ROFI_RETV=2` therefore
+means create/open while browsing and commit while in rename state. `ROFI_DATA`
+carries typed scope and action state across callbacks.
 
-Custom creation is enabled in `Recent` and in a host's session list. From
-`Recent`, the typed name is carried into a host chooser. Inside a host, it is
-created or opened on that host. Custom input is disabled at the `Hosts` root;
-the user enters a host first.
+Custom creation is enabled only in a concrete host scope. From `All`, Tmux
+Plus renders `Choose a concrete host view before creating a session.` and does
+not open a host chooser, guess a destination, or invoke lifecycle code.
 
 The non-browsing states are explicit:
 
 ```text
-browse root ──Enter host──────> host sessions
-      │                              │
-      └─Ctrl+Enter name─> choose host│
-                                     └─Ctrl+Enter name─> create/open
-
-session ──F2────────────> rename input
-session ──Shift+Delete──> kill confirmation
+concrete scope ──Ctrl+Enter name──> create/open
+session ────────F2───────────────> rename input
+session ────────Shift+Delete─────> kill confirmation
 ```
 
-Left and Right do nothing in choose-host, rename, and confirmation states so a
-pending operation cannot be discarded accidentally. Escape cancels to the
-originating list. Rename input is submitted only with Ctrl+Enter; plain Enter
-retains its browse meaning and does not ambiguously select a row while editing.
-Rename and kill leave the picker open and refresh the affected host. Opening or
-creating a session closes the picker after focusing or launching the terminal.
-A selected session is handed directly to the lifecycle service from its typed
-Rofi metadata. The picker model is reloaded only when an open fails and the
-dialog must reconcile visible state; the lifecycle service independently
-revalidates Mesh authority and the full stable reference before acting.
+Left and Right do nothing in rename and confirmation states so a pending
+operation cannot be changed accidentally. Native Escape closes the picker from
+every state, discarding an uncommitted action. Rename input is submitted only
+with Ctrl+Enter; plain Enter retains its browse meaning and does not
+ambiguously select a row while editing. Rename and kill leave the picker open
+and refresh the affected host. Opening or creating a session closes the picker
+after focusing or launching the terminal. A selected session is handed
+directly to the lifecycle service from its typed Rofi metadata. The picker
+model is reloaded only when an open fails and the dialog must reconcile visible
+state; the lifecycle service independently revalidates Mesh authority and the
+full stable reference before acting.
 
 Configuration, model, and callback failures are bounded at the Rofi process
-boundary. Root Escape returns no rows before setup, so it closes even when a
-configuration cannot be loaded. Nested Escape clears a pending action or
-returns to the current view root; if the model cannot be read, the callback
-renders that safe root with a bounded diagnostic so a subsequent Escape closes
-the dialog. Ctrl+G remains Rofi's native cancel binding and is never a script
-callback.
+boundary. Escape and Ctrl+G remain native cancel actions even when a
+configuration, model, callback state, or companion contract is malformed. The
+legacy callback number 15 is an immediate no-op for stale pre-P8 invocations;
+it never renders state or performs an action. Arrow callback failures render a
+bounded diagnostic while retaining a safe picker state.
 
 Kill confirmation selects `Cancel` by default. Its destructive row names the
 logical host and session and reports how many clients the live observation
@@ -250,8 +253,8 @@ Opening the picker must not wait for every SSH host:
 6. Stop polling and clear transient status after completion or timeout.
 
 The private picker model exposes the complete current logical-host catalog in
-Mesh declaration order separately from observed inventory rows. Thus a Host or
-create chooser can offer configured remotes on a cold cache without pretending
+Mesh declaration order separately from observed inventory rows. Thus the flat
+scope ring can offer configured remotes on a cold cache without pretending
 that they were already contacted.
 
 A successful host refresh, including a reachable host with no tmux server or
@@ -262,9 +265,13 @@ non-authoritative reached-domain error has the same retained/unavailable
 presentation. A reachable host on which tmux is missing is a visible capability
 error, not an SSH route failure, and authoritatively clears old sessions.
 
-Cache files are private, versioned, fingerprinted by Mesh revision and cache
-schema, locked during mutation, and atomically replaced. Cache layout
-is private implementation state and is not an integration contract. Refresh
+Remote cache files are private, versioned, fingerprinted by Mesh revision and
+cache schema, locked during mutation, and atomically replaced. Presentation
+snapshots use a separate private cache with 0700 directories, 0600 regular
+files, content-addressed names, bounded payloads, and atomic writes; garbage
+collection only considers owned regular files matching the exact snapshot-name
+shape. Cache layout is private implementation state and is not an integration
+contract. Refresh
 markers are also revision-scoped: a marker from an old Mesh cannot block or
 surface as the current refresh. The detached inventory owner has a 15-second
 hard deadline; its marker becomes `stalled` only after 20 seconds, so a normal

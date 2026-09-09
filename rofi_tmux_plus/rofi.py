@@ -23,6 +23,7 @@ from .config import Config, has_control, load_config
 from .errors import ContractError, clean_message
 from .lifecycle_service import LifecycleService
 from .picker_model import PickerModelService
+from .presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache, valid_snapshot_key
 from .tmux import validate_session_id
 
 ROFI_RETV_SELECTED = 1
@@ -32,7 +33,10 @@ ROFI_RETV_CUSTOM_1 = 10  # Alt+R
 ROFI_RETV_CUSTOM_2 = 11  # Right
 ROFI_RETV_CUSTOM_3 = 12  # Left
 ROFI_RETV_CUSTOM_4 = 13  # F2
-ROFI_RETV_CUSTOM_6 = 15  # Escape
+# Kept only as a migration guard for pre-P8 invocations which still assign
+# Escape to this callback.  Managed P8 invocations bind Escape directly to
+# Rofi's native cancel action, so this path must never render state.
+ROFI_RETV_CUSTOM_6 = 15  # legacy Escape callback; native cancellation is preferred
 ROFI_RETV_CUSTOM_19 = 28  # timeout callback
 
 MAX_MESSAGE_LENGTH = 360
@@ -46,6 +50,8 @@ _MAX_ACTION_STATE_LENGTH = MAX_DATA_LENGTH - _ACTION_STATE_RESERVE
 ERROR_NOTICE_SECONDS = 3
 AUTO_REFRESH_POLL_SECONDS = 1
 AUTO_REFRESH_MAX_SECONDS = 30
+CHOOSE_CONCRETE_HOST_MESSAGE = "Choose a concrete host view before creating a session."
+CACHED_SNAPSHOT_UNAVAILABLE_MESSAGE = "Cached tmux snapshot unavailable; reopen the picker."
 
 ROW_SEPARATOR = "\n"
 # Rofi remembers this delimiter after the initial invocation. Use the same
@@ -55,16 +61,15 @@ ROFI_RECORD_SEPARATOR = "\x1e"
 ROFI_DELIMITER_VALUE = r"\x1e"
 ROFI_INFO_KEY = "info"
 
-VIEW_RECENT = "recent"
-VIEW_HOSTS = "hosts"
-_VIEWS = (VIEW_RECENT, VIEW_HOSTS)
+VIEW_ALL = "all"
+VIEW_LOCAL = "local"
+VIEW_HOST = "host"
+_CONCRETE_VIEWS = frozenset({VIEW_LOCAL, VIEW_HOST})
 _SESSION_ID = re.compile(r"^\$[0-9]+$")
 _HOST_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", re.ASCII)
 
-# Generic icon-theme names: host and terminal are intentionally the only
-# semantic categories in this generic multiplexer picker.
+# Generic icon-theme name for the tmux session rows.
 TERMINAL_ICON = "utilities-terminal-symbolic"
-HOST_ICON = "network-server-symbolic"
 
 
 def sanitize(value: object) -> str:
@@ -77,6 +82,12 @@ def sanitize(value: object) -> str:
 def _notice(value: object) -> str:
     text = sanitize(value)
     return text if len(text) <= MAX_MESSAGE_LENGTH else text[: MAX_MESSAGE_LENGTH - 1] + "…"
+
+
+def _error_message(error: object) -> str:
+    """Return the bounded message for a structured or ordinary exception."""
+
+    return error.message if isinstance(error, ContractError) else clean_message(error)
 
 
 def _pango_escape(value: object) -> str:
@@ -146,15 +157,17 @@ def _typed_name(value: object) -> str:
 
 @dataclass(frozen=True, slots=True)
 class NavigationState:
-    """Current root and optional logical host layer."""
+    """Current flat scope and optional concrete Host Mesh host."""
 
-    view: str = VIEW_RECENT
+    view: str = VIEW_ALL
     host_id: str | None = None
 
     def __post_init__(self) -> None:
-        view = self.view if isinstance(self.view, str) and self.view in _VIEWS else VIEW_RECENT
+        view = self.view if isinstance(self.view, str) else VIEW_ALL
+        if view not in {VIEW_ALL, VIEW_LOCAL, VIEW_HOST}:
+            view = VIEW_ALL
         host_id = self.host_id
-        if view != VIEW_HOSTS or not isinstance(host_id, str) or not host_id:
+        if view not in _CONCRETE_VIEWS or not isinstance(host_id, str) or not host_id:
             host_id = None
         else:
             try:
@@ -165,11 +178,12 @@ class NavigationState:
         object.__setattr__(self, "host_id", host_id)
 
     @property
-    def nested(self) -> bool:
-        return self.view == VIEW_HOSTS and self.host_id is not None
+    def concrete(self) -> bool:
+        return self.view in _CONCRETE_VIEWS and self.host_id is not None
 
-    def root(self) -> NavigationState:
-        return NavigationState(self.view)
+    @property
+    def is_all(self) -> bool:
+        return self.view == VIEW_ALL
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,11 +196,10 @@ class ActionState:
 
     kind: str
     origin: NavigationState
-    name: str = ""
     selection: Mapping[str, object] | None = None
 
 
-_ACTION_KINDS = frozenset({"choose-host", "rename", "confirm-kill"})
+_ACTION_KINDS = frozenset({"rename", "confirm-kill"})
 _INVALID_ACTION = object()
 
 
@@ -222,8 +235,6 @@ def _action_payload(action: ActionState) -> dict[str, object]:
         "kind": action.kind,
         "origin": _navigation_payload(action.origin),
     }
-    if action.name:
-        value["name"] = action.name
     if action.selection is not None:
         value["selection"] = dict(action.selection)
     return value
@@ -233,13 +244,13 @@ def _strict_navigation_payload(value: object) -> NavigationState | None:
     if not isinstance(value, Mapping) or set(value) - {"view", "hostId"}:
         return None
     view = value.get("view")
-    if not isinstance(view, str) or view not in _VIEWS:
+    if not isinstance(view, str) or view not in {VIEW_ALL, VIEW_LOCAL, VIEW_HOST}:
         return None
     host_id = value.get("hostId")
-    if view != VIEW_HOSTS:
+    if view == VIEW_ALL:
         return NavigationState(view) if host_id is None else None
-    if host_id is None:
-        return NavigationState(view)
+    if not isinstance(host_id, str):
+        return None
     try:
         return NavigationState(view, _clean_id(host_id, "host id"))
     except ContractError:
@@ -254,15 +265,9 @@ def _parse_action_payload(value: object) -> ActionState | object:
         return _INVALID_ACTION
     kind = str(value["kind"])
     try:
-        if kind == "choose-host":
-            if set(value) != {"kind", "origin", "name"}:
-                return _INVALID_ACTION
-            name = _typed_name(value.get("name"))
-            action = ActionState(kind, origin, name=name)
-        else:
-            if set(value) != {"kind", "origin", "selection"}:
-                return _INVALID_ACTION
-            action = ActionState(kind, origin, selection=_action_selection(value.get("selection")))
+        if set(value) != {"kind", "origin", "selection"}:
+            return _INVALID_ACTION
+        action = ActionState(kind, origin, selection=_action_selection(value.get("selection")))
         _validate_action_state(action)
         return action
     except ContractError:
@@ -274,6 +279,7 @@ class ContinuationState:
     """The complete typed state carried between script-mode callbacks."""
 
     navigation: NavigationState = NavigationState()
+    snapshot_key: str | None = None
     refresh_deadline: float | None = None
     error_deadline: float | None = None
     error_message: str = ""
@@ -309,7 +315,7 @@ class ContinuationState:
 
 def _navigation_payload(navigation: NavigationState) -> dict[str, object]:
     result: dict[str, object] = {"view": navigation.view}
-    if navigation.nested:
+    if navigation.concrete:
         result["hostId"] = navigation.host_id
     return result
 
@@ -319,6 +325,8 @@ def _state_payload(state: ContinuationState) -> dict[str, object]:
         "version": 1,
         "navigation": _navigation_payload(state.navigation),
     }
+    if valid_snapshot_key(state.snapshot_key):
+        payload["snapshotKey"] = state.snapshot_key
     if state.refresh_deadline is not None:
         payload["refreshDeadline"] = max(0, int(state.refresh_deadline))
     if state.error_deadline is not None:
@@ -342,8 +350,14 @@ def _state_data(state: ContinuationState) -> str:
 
 
 def _validate_action_state(action: ActionState) -> None:
+    if action.kind not in _ACTION_KINDS:
+        raise ContractError("invalid_input", "Rofi pending action kind is invalid")
+    if action.selection is None:
+        raise ContractError("invalid_input", "Rofi pending action selection is missing")
     encoded = json.dumps(
-        _state_payload(ContinuationState(action=action)), ensure_ascii=True, separators=(",", ":")
+        _state_payload(ContinuationState(action=action, snapshot_key="0" * SNAPSHOT_KEY_LENGTH)),
+        ensure_ascii=True,
+        separators=(",", ":"),
     )
     if len(encoded) > _MAX_ACTION_STATE_LENGTH:
         raise ContractError("invalid_input", "Rofi pending action is too large")
@@ -353,10 +367,9 @@ def _new_action(
     kind: str,
     origin: NavigationState,
     *,
-    name: str = "",
     selection: Mapping[str, object] | None = None,
 ) -> ActionState:
-    action = ActionState(kind, origin, name=name, selection=selection)
+    action = ActionState(kind, origin, selection=selection)
     _validate_action_state(action)
     return action
 
@@ -398,11 +411,8 @@ def _parse_deadline(value: object) -> float | None:
 
 
 def _parse_navigation_payload(value: object) -> NavigationState:
-    if not isinstance(value, Mapping):
-        return NavigationState()
-    view = value.get("view")
-    host_id = value.get("hostId")
-    return NavigationState(view, host_id if isinstance(host_id, str) else None)
+    parsed = _strict_navigation_payload(value)
+    return parsed if parsed is not None else NavigationState()
 
 
 def _parse_continuation_state(value: object) -> ContinuationState:
@@ -439,6 +449,9 @@ def _parse_continuation_state(value: object) -> ContinuationState:
         action = None
     return ContinuationState(
         navigation=_parse_navigation_payload(payload.get("navigation")),
+        snapshot_key=payload.get("snapshotKey")
+        if valid_snapshot_key(payload.get("snapshotKey"))
+        else None,
         refresh_deadline=_parse_deadline(payload.get("refreshDeadline")),
         error_deadline=_parse_deadline(payload.get("errorDeadline")),
         error_message=_notice(payload.get("errorMessage"))
@@ -524,6 +537,71 @@ def _host_catalog(payload: Mapping[str, object] | None) -> list[dict[str, object
         seen.add(host_id.casefold())
         result.append({"hostId": host_id, "display": display, "local": item["local"]})
     return result
+
+
+def _scope_ring(payload: Mapping[str, object] | None) -> tuple[NavigationState, ...]:
+    """Return the stable, authoritative host-scope ring for one snapshot.
+
+    ``hostCatalog`` is deliberately separate from observed inventory.  A
+    remote with a cold or unavailable cache therefore remains a peer scope,
+    even when it contributes no session rows to the current render.
+    """
+
+    catalog = _host_catalog(payload)
+    local = next((host for host in catalog if host["local"]), None)
+    if local is None:
+        # A malformed model must still have one bounded, non-networked root.
+        return (NavigationState(VIEW_ALL),)
+    local_scope = NavigationState(VIEW_LOCAL, str(local["hostId"]))
+    remotes = [host for host in catalog if not host["local"]]
+    if not remotes:
+        return (local_scope,)
+    return (
+        NavigationState(VIEW_ALL),
+        local_scope,
+        *(NavigationState(VIEW_HOST, str(host["hostId"])) for host in remotes),
+    )
+
+
+def _normalize_navigation(
+    payload: Mapping[str, object] | None, navigation: NavigationState
+) -> NavigationState:
+    """Keep continuation state within the current authoritative scope ring."""
+
+    ring = _scope_ring(payload)
+    return navigation if navigation in ring else ring[0]
+
+
+def _cycle_scope(
+    payload: Mapping[str, object] | None, navigation: NavigationState, direction: int
+) -> NavigationState:
+    ring = _scope_ring(payload)
+    current = _normalize_navigation(payload, navigation)
+    index = ring.index(current)
+    return ring[(index + direction) % len(ring)]
+
+
+def _scope_host_id(payload: Mapping[str, object] | None, navigation: NavigationState) -> str | None:
+    if not navigation.concrete or navigation not in _scope_ring(payload):
+        return None
+    for host in _host_catalog(payload):
+        if host["hostId"].casefold() != navigation.host_id.casefold():
+            continue
+        if navigation.view == VIEW_LOCAL and host["local"]:
+            return str(host["hostId"])
+        if navigation.view == VIEW_HOST and not host["local"]:
+            return str(host["hostId"])
+        return None
+    return None
+
+
+def _scope_label(payload: Mapping[str, object] | None, navigation: NavigationState) -> str:
+    normalized = _normalize_navigation(payload, navigation)
+    if normalized.view == VIEW_LOCAL:
+        return "Local"
+    if normalized.view == VIEW_HOST:
+        return _host_display(payload, normalized.host_id)
+    return "All"
 
 
 def _host_rows(payload: Mapping[str, object] | None) -> list[dict[str, object]]:
@@ -825,53 +903,6 @@ def _session_display(
     )
 
 
-def _host_group_display(
-    host: Mapping[str, object], sessions: Sequence[Mapping[str, object]], *, now: float
-) -> str:
-    label = sanitize(host.get("display") or host.get("hostId") or "host")
-    count = len(sessions)
-    noun = "session" if count == 1 else "sessions"
-    row = host.get("_row")
-    host_row = row if isinstance(row, Mapping) else {}
-    if host_row.get("status") in {"unreachable", "error"} or host_row.get("unavailable"):
-        suffix = f"{count} {noun}  ·  unavailable"
-    elif host_row.get("status") == "tmux_missing":
-        suffix = f"{count} {noun}  ·  tmux unavailable"
-    elif sessions:
-        newest = max((_recency(item) or 0 for item in sessions), default=0)
-        suffix = f"{count} {noun}  ·  newest {_age(newest, now)}"
-    else:
-        suffix = f"{count} {noun}  ·  no sessions"
-    return (
-        f'<b>{_pango_escape(label)}</b><span alpha="60%">  ›</span>'
-        f'{ROW_SEPARATOR}<span size="smaller" alpha="78%">'
-        f"{_pango_escape(suffix)}</span>"
-    )
-
-
-def _host_rows_render(payload: Mapping[str, object] | None, *, now: float) -> list[str]:
-    rows: list[str] = []
-    for host in _host_catalog(payload):
-        host_id = str(host["hostId"])
-        sessions = _session_rows(payload, host_id=host_id)
-        row_host = {**host, "_row": _host_for(payload, host_id)}
-        info = json.dumps(_host_info(host), ensure_ascii=True, separators=(",", ":"))
-        metadata = " ".join((host_id, sanitize(host["display"]), "host", "tmux"))
-        label = sanitize(host["display"])
-        rows.append(
-            label
-            + _row_options(
-                (
-                    (ROFI_INFO_KEY, info),
-                    ("meta", metadata),
-                    ("icon", HOST_ICON),
-                    ("display", _host_group_display(row_host, sessions, now=now)),
-                )
-            )
-        )
-    return rows
-
-
 def _session_rows_render(
     payload: Mapping[str, object] | None,
     navigation: NavigationState,
@@ -879,18 +910,19 @@ def _session_rows_render(
     now: float,
     titles: Sequence[str],
 ) -> list[str]:
+    navigation = _normalize_navigation(payload, navigation)
     catalog = _host_catalog(payload)
     candidate_revision = payload.get("meshRevision") if isinstance(payload, Mapping) else None
     mesh_revision = candidate_revision if isinstance(candidate_revision, str) else None
     order = {str(host["hostId"]).casefold(): index for index, host in enumerate(catalog)}
-    sessions = _session_rows(payload, host_id=navigation.host_id if navigation.nested else None)
+    sessions = _session_rows(payload, host_id=_scope_host_id(payload, navigation))
     sessions.sort(key=lambda item: _session_sort_key(item, order))
     rows: list[str] = []
     for session in sessions:
         host = session.get("_host")
         if not isinstance(host, Mapping):
             continue
-        scoped_host = {**dict(host), "_scope": navigation.nested}
+        scoped_host = {**dict(host), "_scope": navigation.concrete}
         status = _session_status(session, scoped_host, titles)
         info = selection_payload(session, status=status, mesh_revision=mesh_revision)
         metadata = " ".join(
@@ -928,14 +960,10 @@ def _prompt(
     action: ActionState | None = None,
 ) -> str:
     if action is not None:
-        if action.kind == "choose-host":
-            return "Tmux › Choose host"
         if action.kind == "rename":
             return "Tmux › Rename session"
         return "Tmux › Confirm kill"
-    if navigation.nested:
-        return "Tmux › Hosts › " + sanitize(_host_display(payload, navigation.host_id))
-    return "Tmux › " + ("Recent" if navigation.view == VIEW_RECENT else "Hosts")
+    return "Tmux › " + _scope_label(payload, navigation)
 
 
 def render_snapshot(
@@ -944,6 +972,7 @@ def render_snapshot(
     message: str = "",
     selected: Mapping[str, object] | None = None,
     preserve: bool = False,
+    preserve_filter: bool = False,
     now: float | None = None,
     continuation: bool = False,
     timeout: bool | None = None,
@@ -971,6 +1000,9 @@ def render_snapshot(
         state = replace(state, navigation=navigation)
     now_value = time.time() if now is None else now
     active = state.active(now_value)
+    normalized_navigation = _normalize_navigation(snapshot, active.navigation)
+    if normalized_navigation != active.navigation:
+        active = replace(active, navigation=normalized_navigation)
     headers = [
         _protocol("prompt", _prompt(snapshot, active.navigation, active.action)),
         _protocol("use-hot-keys", "true"),
@@ -980,13 +1012,12 @@ def render_snapshot(
     # script mode has no safe header for pre-populating an input field, so the
     # rename screen displays the current name and accepts custom input only.
     allow_custom = active.action is not None and active.action.kind == "rename"
-    allow_custom = allow_custom or (
-        active.action is None
-        and (active.navigation.view == VIEW_RECENT or active.navigation.nested)
-    )
+    allow_custom = allow_custom or (active.action is None and active.navigation.concrete)
     headers.append(_protocol("no-custom", "false" if allow_custom else "true"))
     if preserve:
         headers.extend((_protocol("keep-selection", "true"), _protocol("keep-filter", "true")))
+    elif preserve_filter:
+        headers.append(_protocol("keep-filter", "true"))
     effective_message = _notice(message)
     if not effective_message and not clear_message:
         effective_message = active.error_message
@@ -1012,12 +1043,10 @@ def render_snapshot(
         else:
             headers.append(_protocol("theme", _timeout_theme(0)))
             headers.append(_protocol("data", _state_data(replace(active, refresh_deadline=None))))
-    elif continuation:
+    elif continuation or valid_snapshot_key(active.snapshot_key):
         headers.append(_protocol("data", _state_data(active)))
 
-    if active.action is not None and active.action.kind == "choose-host":
-        rows = _host_rows_render(snapshot, now=now_value)
-    elif active.action is not None and active.action.kind == "rename":
+    if active.action is not None and active.action.kind == "rename":
         selection = active.action.selection or {}
         current_name = sanitize(selection.get("name") or "session")
         text = "Enter a new name with Ctrl+Enter"
@@ -1068,8 +1097,6 @@ def render_snapshot(
                 )
             ),
         ]
-    elif active.navigation.view == VIEW_HOSTS and not active.navigation.nested:
-        rows = _host_rows_render(snapshot, now=now_value)
     else:
         rows = _session_rows_render(
             snapshot,
@@ -1078,14 +1105,23 @@ def render_snapshot(
             titles=titles if titles is not None else _niri_titles(),
         )
     if not rows:
-        text = "No tmux sessions found" if active.navigation.nested else "No tmux sessions"
+        if active.navigation.concrete:
+            scope = _scope_label(snapshot, active.navigation)
+            text = f"No tmux sessions available on {scope}"
+            secondary = "No sessions are available"
+            host_row = _host_for(snapshot, active.navigation.host_id or "")
+            if host_row is not None and not _host_live(host_row):
+                secondary += " · unavailable"
+        else:
+            text = "No tmux sessions"
+            secondary = "No sessions available"
         rows = [
             text
             + _row_options(
                 (
                     ("nonselectable", "true"),
                     ("urgent", "true"),
-                    ("display", text + ROW_SEPARATOR + "No sessions available"),
+                    ("display", text + ROW_SEPARATOR + secondary),
                 )
             )
         ]
@@ -1103,15 +1139,20 @@ def _render_state(
     *,
     message: str = "",
     preserve: bool = False,
+    preserve_filter: bool = False,
     continuation: bool = True,
     timeout: bool | None = None,
     clear_message: bool = False,
     now: float | None = None,
+    presentation_cache: PresentationSnapshotCache | None = None,
 ) -> str:
+    if presentation_cache is not None:
+        state = _state_with_snapshot(payload, state, presentation_cache)
     return render_snapshot(
         payload,
         message=message,
         preserve=preserve,
+        preserve_filter=preserve_filter,
         continuation=continuation,
         timeout=timeout,
         clear_message=clear_message,
@@ -1132,30 +1173,22 @@ def _error_state(
     )
 
 
-def _escape_state(state: ContinuationState) -> ContinuationState:
-    """Clear pending work and move Escape to a safe browsing scope."""
-
-    navigation = state.action.origin if state.action is not None else state.navigation.root()
-    return replace(state, navigation=navigation, action=None, blocked_action=False)
-
-
-def _escape_error_output(
+def _state_with_snapshot(
+    payload: Mapping[str, object] | None,
     state: ContinuationState,
-    message: str,
-    *,
-    now: float,
-) -> str:
-    """Recover Escape without requiring config/model data to render."""
+    cache: PresentationSnapshotCache,
+) -> ContinuationState:
+    """Bind rendered model data to an exact private presentation snapshot."""
 
-    safe = _escape_state(state)
-    if state.action is None and not state.navigation.nested:
-        return ""
-    return _render_state(
-        None,
-        _error_state(safe, message, now=now, key="escape"),
-        preserve=True,
-        now=now,
-    )
+    if not isinstance(payload, Mapping):
+        return state
+    try:
+        key = cache.store(payload)
+    except Exception:  # noqa: BLE001 - rendering remains useful without cache persistence
+        # Never carry the previous key alongside a newly rendered payload: an
+        # arrow callback must not display data from a different model snapshot.
+        return replace(state, snapshot_key=None)
+    return replace(state, snapshot_key=key)
 
 
 def _marker_key(marker: Mapping[str, object]) -> str:
@@ -1257,11 +1290,6 @@ def _open_selection(
     )
 
 
-def _root_cycle(navigation: NavigationState, direction: int) -> NavigationState:
-    index = _VIEWS.index(navigation.view) if navigation.view in _VIEWS else 0
-    return NavigationState(_VIEWS[(index + direction) % len(_VIEWS)])
-
-
 def _load_observed(
     model_service: PickerModelService, state: ContinuationState, *, start_refresh: bool, now: float
 ) -> tuple[dict[str, object], ContinuationState, str]:
@@ -1277,7 +1305,11 @@ def _load_observed(
 
 
 def _auto_refresh_callback(
-    model_service: PickerModelService, state: ContinuationState, *, now: float
+    model_service: PickerModelService,
+    state: ContinuationState,
+    *,
+    now: float,
+    presentation_cache: PresentationSnapshotCache,
 ) -> str:
     try:
         payload, next_state, message = _load_observed(
@@ -1285,9 +1317,15 @@ def _auto_refresh_callback(
         )
     except Exception as error:  # noqa: BLE001 - visible script callback boundary
         next_state = _error_state(
-            state, f"Refresh failed: {clean_message(error)}", now=now, key="callback"
+            state, f"Refresh failed: {_error_message(error)}", now=now, key="callback"
         )
-        return _render_state(None, next_state, preserve=True, now=now)
+        return _render_state(
+            None,
+            next_state,
+            preserve=True,
+            now=now,
+            presentation_cache=presentation_cache,
+        )
     timeout = next_state.has_lifecycle
     if not timeout and state.has_lifecycle:
         timeout = False
@@ -1299,6 +1337,7 @@ def _auto_refresh_callback(
         timeout=timeout,
         clear_message=not bool(message),
         now=now,
+        presentation_cache=presentation_cache,
     )
 
 
@@ -1413,11 +1452,11 @@ def _mutation_success(
             try:
                 payload = _refresh_affected(model_service, selection, current=True)
             except Exception as current_error:  # noqa: BLE001 - bounded reconciliation warning
-                warning = "Refresh warning: " + _notice(clean_message(current_error))
+                warning = "Refresh warning: " + _notice(_error_message(current_error))
             else:
                 warning = "Refresh warning: the Host Mesh changed while refreshing"
         else:
-            warning = "Refresh warning: " + _notice(clean_message(error))
+            warning = "Refresh warning: " + _notice(_error_message(error))
     text = message if not warning else message + " " + warning
     return payload, _error_state(next_state, text, now=now, key="mutation"), text
 
@@ -1446,7 +1485,7 @@ def _action_failure(
             state = replace(observed, action=state.action)
         except Exception:  # noqa: BLE001, S110 - retain the original visible action error
             pass
-    text = f"Unable to {verb}: {clean_message(error)}"
+    text = f"Unable to {verb}: {_error_message(error)}"
     return payload, _error_state(state, text, now=now, key="action:" + verb), text
 
 
@@ -1469,12 +1508,48 @@ def _confirm_selection(raw: str | None, action: ActionState) -> str:
     return "kill"
 
 
+def _cached_navigation_callback(
+    cache: PresentationSnapshotCache,
+    state: ContinuationState,
+    direction: int,
+    *,
+    now: float,
+) -> str:
+    """Render one arrow callback using only its exact persisted snapshot."""
+
+    try:
+        snapshot = cache.load(state.snapshot_key)
+    except Exception:  # noqa: BLE001 - cache failures stay within the Rofi boundary
+        snapshot = None
+    if snapshot is None:
+        message = CACHED_SNAPSHOT_UNAVAILABLE_MESSAGE
+        failed = _error_state(state, message, now=now, key="snapshot")
+        return _render_state(
+            None,
+            failed,
+            message=message,
+            preserve=state.action is not None,
+            preserve_filter=state.action is None,
+            now=now,
+        )
+    if state.action is not None:
+        # Action arrows are intentionally inert, but still render the exact
+        # snapshot that created the pending action without a model read.
+        return _render_state(snapshot, state, preserve=True, now=now)
+    next_state = replace(
+        state,
+        navigation=_cycle_scope(snapshot, state.navigation, direction),
+    )
+    return _render_state(snapshot, next_state, preserve_filter=True, now=now)
+
+
 def run_rofi(
     environ: Mapping[str, str] | None = None,
     *,
     model_service: PickerModelService | None = None,
     lifecycle_service: LifecycleService | None = None,
     config: Config | None = None,
+    presentation_cache: PresentationSnapshotCache | None = None,
 ) -> int:
     """Process one Rofi script-mode invocation."""
 
@@ -1483,45 +1558,16 @@ def run_rofi(
         retv = int(environ.get("ROFI_RETV", "0") or "0")
     except (TypeError, ValueError):
         retv = 0
+    # Pre-P8 managed invocations assigned Escape to a script callback.  Keep
+    # that callback number as a no-op migration guard, but never load config,
+    # model data, or continuation state for it.  P8 binds Escape natively.
+    if retv == ROFI_RETV_CUSTOM_6:
+        return 0
     state = _parse_continuation_state(environ.get("ROFI_DATA"))
     now = time.time()
-
-    # Escape at either browsing root is Rofi's close signal, and must work
-    # even if loading the current configuration would fail.
-    if retv == ROFI_RETV_CUSTOM_6 and state.action is None and not state.navigation.nested:
-        return 0
-    try:
-        selected_config = config or load_config()
-        model_service = model_service or PickerModelService(selected_config)
-        lifecycle_service = lifecycle_service or LifecycleService(selected_config)
-    except Exception as error:  # noqa: BLE001 - visible Rofi boundary
-        if retv == ROFI_RETV_CUSTOM_6:
-            rendered = _escape_error_output(
-                state,
-                f"Configuration failed: {clean_message(error)}",
-                now=now,
-            )
-            if rendered:
-                print(rendered, end="")
-            return 0
-        print(
-            _render_state(
-                None,
-                _error_state(
-                    state, f"Configuration failed: {clean_message(error)}", now=now, key="config"
-                ),
-                preserve=True,
-                now=now,
-            ),
-            end="",
-        )
-        return 0
-    assert model_service is not None
-    assert lifecycle_service is not None
-
-    if state.blocked_action and retv != ROFI_RETV_CUSTOM_6:
+    if state.blocked_action:
         # A present action which no longer validates must never turn into a
-        # browse callback. Keep it blocked until Escape/Ctrl+G cancels it.
+        # browse callback. Native Escape/Ctrl+G still closes the picker.
         text = "Pending action state is invalid; press Escape to cancel"
         print(
             _render_state(
@@ -1534,68 +1580,50 @@ def run_rofi(
             end="",
         )
         return 0
+    if retv in {ROFI_RETV_CUSTOM_2, ROFI_RETV_CUSTOM_3}:
+        cache = presentation_cache or PresentationSnapshotCache(environ=environ)
+        print(
+            _cached_navigation_callback(
+                cache,
+                state,
+                1 if retv == ROFI_RETV_CUSTOM_2 else -1,
+                now=now,
+            ),
+            end="",
+        )
+        return 0
+    presentation_cache = presentation_cache or PresentationSnapshotCache(environ=environ)
+    try:
+        selected_config = config or load_config()
+        model_service = model_service or PickerModelService(selected_config)
+        lifecycle_service = lifecycle_service or LifecycleService(selected_config)
+    except Exception as error:  # noqa: BLE001 - visible Rofi boundary
+        print(
+            _render_state(
+                None,
+                _error_state(
+                    state, f"Configuration failed: {_error_message(error)}", now=now, key="config"
+                ),
+                preserve=True,
+                now=now,
+                presentation_cache=presentation_cache,
+            ),
+            end="",
+        )
+        return 0
+    assert model_service is not None
+    assert lifecycle_service is not None
 
     if retv == ROFI_RETV_CUSTOM_19:
-        print(_auto_refresh_callback(model_service, state, now=now), end="")
-        return 0
-
-    if retv == ROFI_RETV_CUSTOM_6:
-        try:
-            payload, observed, _message = _load_observed(
-                model_service, state, start_refresh=False, now=now
-            )
-        except Exception as error:  # noqa: BLE001 - preserve a visible callback error
-            rendered = _escape_error_output(
+        print(
+            _auto_refresh_callback(
+                model_service,
                 state,
-                f"Unable to return to group root: {clean_message(error)}",
                 now=now,
-            )
-            if rendered:
-                print(rendered, end="")
-            return 0
-        next_state = (
-            replace(observed, navigation=state.action.origin, action=None, blocked_action=False)
-            if state.action is not None
-            else replace(
-                observed,
-                navigation=state.navigation.root(),
-                action=None,
-                blocked_action=False,
-            )
+                presentation_cache=presentation_cache,
+            ),
+            end="",
         )
-        print(_render_state(payload, next_state, now=now), end="")
-        return 0
-
-    if retv in {ROFI_RETV_CUSTOM_2, ROFI_RETV_CUSTOM_3}:
-        if state.action is not None:
-            try:
-                payload, observed, _message = _load_observed(
-                    model_service, state, start_refresh=False, now=now
-                )
-            except Exception:  # noqa: BLE001 - no-op action must remain safe
-                payload, observed = None, state
-            print(_render_state(payload, observed, preserve=True, now=now), end="")
-            return 0
-        try:
-            payload, observed, _message = _load_observed(
-                model_service, state, start_refresh=False, now=now
-            )
-        except Exception as error:  # noqa: BLE001 - preserve visible callback error
-            print(
-                _render_state(
-                    None,
-                    _error_state(state, clean_message(error), now=now, key="callback"),
-                    preserve=True,
-                    now=now,
-                ),
-                end="",
-            )
-            return 0
-        next_state = replace(
-            observed,
-            navigation=_root_cycle(state.navigation, 1 if retv == ROFI_RETV_CUSTOM_2 else -1),
-        )
-        print(_render_state(payload, next_state, now=now), end="")
         return 0
 
     if retv in {ROFI_RETV_CUSTOM_4, ROFI_RETV_DELETE_ENTRY}:
@@ -1606,7 +1634,16 @@ def run_rofi(
                 )
             except Exception:  # noqa: BLE001 - no-op action must remain safe
                 payload, observed = None, state
-            print(_render_state(payload, observed, preserve=True, now=now), end="")
+            print(
+                _render_state(
+                    payload,
+                    observed,
+                    preserve=True,
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
+            )
             return 0
         try:
             kind, selected = _parse_row_selection(environ.get("ROFI_INFO"))
@@ -1622,7 +1659,15 @@ def run_rofi(
                 state.navigation,
                 selection=selection,
             )
-            print(_render_state(payload, replace(observed, action=action), now=now), end="")
+            print(
+                _render_state(
+                    payload,
+                    replace(observed, action=action),
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
+            )
         except Exception as error:  # noqa: BLE001 - invalid callbacks cannot mutate
             try:
                 payload, observed, _message = _load_observed(
@@ -1634,10 +1679,11 @@ def run_rofi(
                 _render_state(
                     payload,
                     _error_state(
-                        observed, _notice(clean_message(error)), now=now, key="action-start"
+                        observed, _notice(_error_message(error)), now=now, key="action-start"
                     ),
                     preserve=True,
                     now=now,
+                    presentation_cache=presentation_cache,
                 ),
                 end="",
             )
@@ -1651,22 +1697,16 @@ def run_rofi(
                 payload, observed, _message = _load_observed(
                     model_service, state, start_refresh=False, now=now
                 )
-                print(_render_state(payload, observed, preserve=True, now=now), end="")
-                return 0
-            if action.kind == "choose-host":
-                kind, selected = _parse_row_selection(environ.get("ROFI_INFO"))
-                if kind != "host":
-                    raise ContractError("invalid_input", "selected row is not a host")
-                payload, observed, _message = _load_observed(
-                    model_service, state, start_refresh=False, now=now
+                print(
+                    _render_state(
+                        payload,
+                        observed,
+                        preserve=True,
+                        now=now,
+                        presentation_cache=presentation_cache,
+                    ),
+                    end="",
                 )
-                host_id = str(selected["hostId"])
-                if not any(
-                    item["hostId"].casefold() == host_id.casefold()
-                    for item in _host_catalog(payload)
-                ):
-                    raise ContractError("invalid_input", "selected host is no longer available")
-                _ensure_open_or_create(payload, host_id, action.name, lifecycle_service)
                 return 0
             decision = _confirm_selection(environ.get("ROFI_INFO"), action)
             if decision == "cancel":
@@ -1678,6 +1718,7 @@ def run_rofi(
                         payload,
                         replace(observed, navigation=action.origin, action=None),
                         now=now,
+                        presentation_cache=presentation_cache,
                     ),
                     end="",
                 )
@@ -1704,13 +1745,30 @@ def run_rofi(
                 now=now,
                 fallback_payload=payload,
             )
-            print(_render_state(payload, next_state, message=message, now=now), end="")
+            print(
+                _render_state(
+                    payload,
+                    next_state,
+                    message=message,
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
+            )
         except Exception as error:  # noqa: BLE001 - operation remains explicit and retryable
             payload, next_state, message = _action_failure(
                 model_service, state, error, verb="kill session", now=now
             )
             print(
-                _render_state(payload, next_state, message=message, preserve=True, now=now), end=""
+                _render_state(
+                    payload,
+                    next_state,
+                    message=message,
+                    preserve=True,
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
             )
         return 0
 
@@ -1743,18 +1801,34 @@ def run_rofi(
                     now=now,
                     fallback_payload=payload,
                 )
-                print(_render_state(payload, next_state, message=message, now=now), end="")
+                print(
+                    _render_state(
+                        payload,
+                        next_state,
+                        message=message,
+                        now=now,
+                        presentation_cache=presentation_cache,
+                    ),
+                    end="",
+                )
             except Exception as error:  # noqa: BLE001 - preserve edit state for correction/retry
                 payload, next_state, message = _action_failure(
                     model_service, state, error, verb="rename session", now=now
                 )
                 print(
-                    _render_state(payload, next_state, message=message, preserve=True, now=now),
+                    _render_state(
+                        payload,
+                        next_state,
+                        message=message,
+                        preserve=True,
+                        now=now,
+                        presentation_cache=presentation_cache,
+                    ),
                     end="",
                 )
             return 0
         if state.action is not None:
-            # Custom input is disabled for chooser/confirmation. Do not make a
+            # Custom input is disabled for confirmation. Do not make a
             # maliciously injected callback an alternate mutation path.
             try:
                 payload, observed, _message = _load_observed(
@@ -1762,21 +1836,51 @@ def run_rofi(
                 )
             except Exception:  # noqa: BLE001 - injected custom callback stays inert
                 payload, observed = None, state
-            print(_render_state(payload, observed, preserve=True, now=now), end="")
+            print(
+                _render_state(
+                    payload,
+                    observed,
+                    preserve=True,
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
+            )
             return 0
         try:
-            name = _typed_name(environ.get("ROFI_INPUT"))
             payload, observed, _message = _load_observed(
                 model_service, state, start_refresh=False, now=now
             )
-            if state.navigation.view == VIEW_HOSTS and not state.navigation.nested:
-                raise ContractError("invalid_input", "enter a host before creating a session")
-            if state.navigation.view == VIEW_RECENT:
-                action = _new_action("choose-host", state.navigation, name=name)
-                print(_render_state(payload, replace(observed, action=action), now=now), end="")
+            # In local-only mode the authoritative ring collapses its
+            # synthetic All state to the concrete Local scope. A stale
+            # concrete host must remain fail-closed rather than following
+            # that normalization to another host.
+            navigation = (
+                _normalize_navigation(payload, state.navigation)
+                if state.navigation.is_all
+                else state.navigation
+            )
+            host_id = _scope_host_id(payload, navigation)
+            if host_id is None:
+                print(
+                    _render_state(
+                        payload,
+                        _error_state(
+                            observed,
+                            CHOOSE_CONCRETE_HOST_MESSAGE,
+                            now=now,
+                            key="create-scope",
+                        ),
+                        message=CHOOSE_CONCRETE_HOST_MESSAGE,
+                        preserve=True,
+                        now=now,
+                        presentation_cache=presentation_cache,
+                    ),
+                    end="",
+                )
                 return 0
-            assert state.navigation.host_id is not None
-            _ensure_open_or_create(payload, state.navigation.host_id, name, lifecycle_service)
+            name = _typed_name(environ.get("ROFI_INPUT"))
+            _ensure_open_or_create(payload, host_id, name, lifecycle_service)
             return 0
         except Exception as error:  # noqa: BLE001 - invalid names/lifecycle stay in browse state
             try:
@@ -1785,7 +1889,7 @@ def run_rofi(
                 )
             except Exception:  # noqa: BLE001 - preserve original create error
                 payload, observed = None, state
-            text = f"Unable to create or open session: {clean_message(error)}"
+            text = f"Unable to create or open session: {_error_message(error)}"
             print(
                 _render_state(
                     payload,
@@ -1793,6 +1897,7 @@ def run_rofi(
                     message=text,
                     preserve=True,
                     now=now,
+                    presentation_cache=presentation_cache,
                 ),
                 end="",
             )
@@ -1802,23 +1907,7 @@ def run_rofi(
         try:
             kind, selected = _parse_row_selection(environ.get("ROFI_INFO"))
             if kind != "session":
-                payload, observed, _message = _load_observed(
-                    model_service, state, start_refresh=False, now=now
-                )
-                if state.navigation.view != VIEW_HOSTS or state.navigation.nested:
-                    raise ContractError("invalid_input", "selected host is not available here")
-                # The selected host came from typed metadata and is checked
-                # against the complete current catalog before entering it.
-                if not any(
-                    item["hostId"].casefold() == str(selected["hostId"]).casefold()
-                    for item in _host_catalog(payload)
-                ):
-                    raise ContractError("invalid_input", "selected host is no longer available")
-                next_state = replace(
-                    observed, navigation=NavigationState(VIEW_HOSTS, str(selected["hostId"]))
-                )
-                print(_render_state(payload, next_state, now=now), end="")
-                return 0
+                raise ContractError("invalid_input", "selected row is not a session")
             _open_selection(selected, lifecycle_service)
             return 0
         except Exception as error:  # noqa: BLE001 - action errors keep the picker open
@@ -1830,11 +1919,20 @@ def run_rofi(
                 payload, observed, message = None, state, ""
             error_state = _error_state(
                 observed,
-                f"Unable to open session: {clean_message(error)}",
+                f"Unable to open session: {_error_message(error)}",
                 now=now,
                 key="open",
             )
-            print(_render_state(payload, error_state, preserve=True, now=now), end="")
+            print(
+                _render_state(
+                    payload,
+                    error_state,
+                    preserve=True,
+                    now=now,
+                    presentation_cache=presentation_cache,
+                ),
+                end="",
+            )
         return 0
 
     if retv == ROFI_RETV_CUSTOM_1:
@@ -1860,6 +1958,7 @@ def run_rofi(
                     timeout=timeout,
                     clear_message=not bool(message),
                     now=now,
+                    presentation_cache=presentation_cache,
                 ),
                 end="",
             )
@@ -1874,10 +1973,11 @@ def run_rofi(
                 _render_state(
                     payload,
                     _error_state(
-                        observed, f"Refresh failed: {clean_message(error)}", now=now, key="refresh"
+                        observed, f"Refresh failed: {_error_message(error)}", now=now, key="refresh"
                     ),
                     preserve=True,
                     now=now,
+                    presentation_cache=presentation_cache,
                 ),
                 end="",
             )
@@ -1894,7 +1994,7 @@ def run_rofi(
             _render_state(
                 None,
                 _error_state(
-                    state, f"Refresh failed: {clean_message(error)}", now=now, key="refresh"
+                    state, f"Refresh failed: {_error_message(error)}", now=now, key="refresh"
                 ),
                 now=now,
             ),
@@ -1903,12 +2003,14 @@ def run_rofi(
         return 0
     timeout = observed.has_lifecycle
     print(
-        render_snapshot(
+        _render_state(
             payload,
+            observed,
             message=message,
-            state=observed,
             timeout=timeout if timeout else None,
+            continuation=False,
             now=now,
+            presentation_cache=presentation_cache,
         ),
         end="",
     )

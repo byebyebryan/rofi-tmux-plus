@@ -5,12 +5,15 @@ import json
 import os
 import unittest
 from contextlib import redirect_stdout
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from rofi_tmux_plus import cli, rofi
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache
 
 
 def session(
@@ -306,32 +309,63 @@ class RofiRenderTests(unittest.TestCase):
         }
         self.assertEqual("unavailable", statuses["stale"])
 
-    def test_hosts_root_uses_complete_cold_catalog_in_order_and_host_layer_omits_host(self) -> None:
-        alpha = host("alpha", "Alpha", local=True, sessions=[])
+    def test_flat_scopes_use_complete_catalog_order_and_leaf_rows(self) -> None:
+        alpha = host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "one")])
+        beta = host("beta", "Beta", local=False, sessions=[session("beta", "$1", "two")])
         catalog = [
             {"hostId": "alpha", "display": "Alpha", "local": True},
             {"hostId": "beta", "display": "Beta", "local": False},
             {"hostId": "gamma", "display": "Gamma", "local": False},
         ]
-        value = payload(hosts=[alpha], catalog=catalog)
-        root = rofi.render_snapshot(value, navigation=rofi.NavigationState("hosts"), now=200)
-        _, rows = rendered_records(root)
-        self.assertEqual([row.split("\0", 1)[0] for row in rows], ["Alpha", "Beta", "Gamma"])
-        infos = [json.loads(row_options(row)["info"]) for row in rows]
-        self.assertEqual(["alpha", "beta", "gamma"], [item["hostId"] for item in infos])
-        nested = rofi.render_snapshot(
-            payload(
-                hosts=[
-                    host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "one")])
-                ],
-                catalog=catalog,
-            ),
-            navigation=rofi.NavigationState("hosts", "alpha"),
-            now=200,
-            titles=(),
+        value = payload(hosts=[alpha, beta], catalog=catalog)
+        self.assertEqual(
+            [
+                (rofi.VIEW_ALL, None),
+                (rofi.VIEW_LOCAL, "alpha"),
+                (rofi.VIEW_HOST, "beta"),
+                (rofi.VIEW_HOST, "gamma"),
+            ],
+            [(item.view, item.host_id) for item in rofi._scope_ring(value)],
         )
-        _, nested_rows = rendered_records(nested)
-        self.assertNotIn("Alpha  ·", row_options(nested_rows[0])["display"])
+        all_rows = rendered_records(
+            rofi.render_snapshot(value, navigation=rofi.NavigationState(), now=200, titles=())
+        )[1]
+        self.assertEqual([row.split("\0", 1)[0] for row in all_rows], ["one", "two"])
+        self.assertIn("Alpha", row_options(all_rows[0])["display"])
+        local_rows = rendered_records(
+            rofi.render_snapshot(
+                value,
+                navigation=rofi.NavigationState(rofi.VIEW_LOCAL, "alpha"),
+                now=200,
+                titles=(),
+            )
+        )[1]
+        self.assertEqual([row.split("\0", 1)[0] for row in local_rows], ["one"])
+        self.assertNotIn("Alpha  ·", row_options(local_rows[0])["display"])
+        cold_rows = rendered_records(
+            rofi.render_snapshot(
+                value,
+                navigation=rofi.NavigationState(rofi.VIEW_HOST, "gamma"),
+                now=200,
+                titles=(),
+            )
+        )[1]
+        self.assertEqual(
+            [row.split("\0", 1)[0] for row in cold_rows], ["No tmux sessions available on Gamma"]
+        )
+        self.assertEqual("true", row_options(cold_rows[0])["nonselectable"])
+        local_only = payload(
+            hosts=[alpha],
+            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
+            revision=None,
+        )
+        self.assertEqual(
+            [(rofi.VIEW_LOCAL, "alpha")],
+            [(item.view, item.host_id) for item in rofi._scope_ring(local_only)],
+        )
+        local_only_rows = rendered_records(rofi.render_snapshot(local_only, now=200, titles=()))[1]
+        self.assertIn("Tmux › Local", rofi.render_snapshot(local_only, now=200, titles=()))
+        self.assertEqual([row.split("\0", 1)[0] for row in local_only_rows], ["one"])
 
 
 class RofiProtocolTests(unittest.TestCase):
@@ -344,6 +378,15 @@ class RofiProtocolTests(unittest.TestCase):
         )
         self.model = FakeModel(self.value)
         self.lifecycle = FakeLifecycle()
+        self.cache_directory = TemporaryDirectory()
+        self.addCleanup(self.cache_directory.cleanup)
+        self.presentation_cache = PresentationSnapshotCache(Path(self.cache_directory.name))
+        self.snapshot_key = self.presentation_cache.store(self.value)
+
+    def navigation_data(self, navigation: rofi.NavigationState) -> str:
+        return rofi._state_data(
+            rofi.ContinuationState(navigation=navigation, snapshot_key=self.snapshot_key)
+        )
 
     def invoke(
         self,
@@ -359,90 +402,53 @@ class RofiProtocolTests(unittest.TestCase):
                 model_service=model or self.model,
                 lifecycle_service=lifecycle or self.lifecycle,
                 config=Config(),
+                presentation_cache=self.presentation_cache,
             )
         self.assertEqual(0, result)
         return output.getvalue()
 
-    def test_left_right_wrap_roots_and_enter_drills_host(self) -> None:
+    def test_left_right_wrap_flat_scopes_preserves_filter_and_resets_selection(self) -> None:
         right = self.invoke(
             {
                 "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState()),
+                "ROFI_DATA": self.navigation_data(rofi.NavigationState()),
             }
         )
-        self.assertIn("Tmux › Hosts", right)
-        self.assertNotIn("keep-filter", right)
+        self.assertIn("Tmux › Local", right)
+        self.assertIn("keep-filter", right)
+        self.assertNotIn("keep-selection", right)
+        self.assertEqual(
+            {"view": rofi.VIEW_LOCAL, "hostId": "alpha"},
+            json.loads(right.split("\0data\x1f", 1)[1].split(rofi.ROFI_RECORD_SEPARATOR, 1)[0])[
+                "navigation"
+            ],
+        )
         right_again = self.invoke(
             {
                 "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
+                "ROFI_DATA": self.navigation_data(rofi.NavigationState(rofi.VIEW_LOCAL, "alpha")),
             }
         )
-        self.assertIn("Tmux › Recent", right_again)
-        nested_right = self.invoke(
-            {
-                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts", "alpha")),
-            }
-        )
-        self.assertIn("Tmux › Recent", nested_right)
-        self.assertNotIn("keep-filter", nested_right)
+        self.assertIn("Tmux › Beta", right_again)
         left = self.invoke(
             {
                 "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_3),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState()),
+                "ROFI_DATA": self.navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta")),
             }
         )
-        self.assertIn("Tmux › Hosts", left)
-        root, rows = rendered_records(
-            rofi.render_snapshot(self.value, navigation=rofi.NavigationState("hosts"), now=200)
-        )
-        del root
-        host_info = row_options(rows[0])["info"]
-        entered = self.invoke(
+        self.assertIn("Tmux › Local", left)
+        wrapped = self.invoke(
             {
-                "ROFI_RETV": str(rofi.ROFI_RETV_SELECTED),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
-                "ROFI_INFO": host_info,
+                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_3),
+                "ROFI_DATA": self.navigation_data(rofi.NavigationState(rofi.VIEW_LOCAL, "alpha")),
             }
         )
-        self.assertIn("Tmux › Hosts › Alpha", entered)
-        self.assertNotIn("keep-filter", entered)
+        self.assertIn("Tmux › All", wrapped)
 
-    def test_escape_backs_nested_and_exits_at_root(self) -> None:
-        backed = self.invoke(
-            {
-                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts", "beta")),
-            }
-        )
-        self.assertIn("Tmux › Hosts", backed)
-        output = io.StringIO()
-        with redirect_stdout(output):
-            self.assertEqual(
-                0,
-                rofi.run_rofi(
-                    {
-                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
-                        "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
-                    },
-                    model_service=self.model,
-                    lifecycle_service=self.lifecycle,
-                    config=Config(),
-                ),
-            )
-        self.assertEqual("", output.getvalue())
-        self.assertNotIn("element-navigation", backed)
-        self.assertNotIn("keep-filter", backed)
-
-    def test_escape_recovers_to_root_when_configuration_or_model_fails(self) -> None:
-        nested = rofi.NavigationState("hosts", "beta")
+    def test_legacy_escape_callback_is_an_immediate_noop(self) -> None:
         output = io.StringIO()
         with (
-            patch(
-                "rofi_tmux_plus.rofi.load_config",
-                side_effect=ValueError("bad config"),
-            ),
+            patch("rofi_tmux_plus.rofi.load_config", side_effect=AssertionError("must not load")),
             redirect_stdout(output),
         ):
             self.assertEqual(
@@ -450,63 +456,64 @@ class RofiProtocolTests(unittest.TestCase):
                 rofi.run_rofi(
                     {
                         "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
-                        "ROFI_DATA": rofi._navigation_data(nested),
+                        "ROFI_DATA": "malformed and oversized state" * 1000,
                     },
-                    model_service=self.model,
-                    lifecycle_service=self.lifecycle,
                 ),
             )
-        rendered = output.getvalue()
-        self.assertIn("Tmux › Hosts", rendered)
-        self.assertNotIn("Tmux › Hosts › Beta", rendered)
-        self.assertIn("Configuration failed: bad config", rendered)
+        self.assertEqual("", output.getvalue())
+        self.assertEqual([], self.model.calls)
 
-        broken = FakeModel(self.value)
+    def test_arrow_callback_is_cache_only_and_uses_exact_snapshot(self) -> None:
+        broken = FakeModel(payload(hosts=[host("alpha", "Wrong", local=True)]))
 
         def broken_load(*, start_refresh: bool) -> SimpleNamespace:
             del start_refresh
             raise RuntimeError("model unavailable")
 
         broken.load = broken_load
-        output = io.StringIO()
-        with redirect_stdout(output):
-            self.assertEqual(
-                0,
-                rofi.run_rofi(
-                    {
-                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
-                        "ROFI_DATA": rofi._navigation_data(nested),
-                    },
-                    model_service=broken,
-                    lifecycle_service=self.lifecycle,
-                    config=Config(),
-                ),
-            )
-        rendered = output.getvalue()
-        self.assertIn("Tmux › Hosts", rendered)
-        self.assertNotIn("Tmux › Hosts › Beta", rendered)
-        self.assertIn("Unable to return to group root: model unavailable", rendered)
+        output = self.invoke(
+            {
+                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2),
+                "ROFI_DATA": self.navigation_data(rofi.NavigationState()),
+            },
+            model=broken,
+        )
+        self.assertIn("Tmux › Local", output)
+        self.assertIn("one", output)
+        self.assertNotIn("model unavailable", output)
+        self.assertIn("keep-filter", output)
+        self.assertNotIn("keep-selection", output)
+        self.assertEqual([], broken.calls)
+        self.assertEqual([], self.lifecycle.opens)
+        self.assertEqual([], self.lifecycle.creates)
 
+    def test_arrow_cache_miss_is_bounded_before_any_setup_or_model_read(self) -> None:
+        missing = rofi._state_data(rofi.ContinuationState(snapshot_key="f" * SNAPSHOT_KEY_LENGTH))
         output = io.StringIO()
         with (
             patch(
                 "rofi_tmux_plus.rofi.load_config",
-                side_effect=ValueError("bad config"),
+                side_effect=AssertionError("arrow callback must not load config"),
             ),
             redirect_stdout(output),
         ):
-            self.assertEqual(
-                0,
-                rofi.run_rofi(
-                    {
-                        "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_6),
-                        "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
-                    },
-                    model_service=self.model,
-                    lifecycle_service=self.lifecycle,
-                ),
+            result = rofi.run_rofi(
+                {
+                    "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2),
+                    "ROFI_DATA": missing,
+                },
+                presentation_cache=self.presentation_cache,
             )
-        self.assertEqual("", output.getvalue())
+        self.assertEqual(0, result)
+        self.assertIn(rofi.CACHED_SNAPSHOT_UNAVAILABLE_MESSAGE, output.getvalue())
+        self.assertIn("keep-filter", output.getvalue())
+        self.assertNotIn("arrow callback must not load config", output.getvalue())
+
+    def test_browsing_rejects_forged_host_row_as_non_leaf(self) -> None:
+        forged = json.dumps({"type": "host", "hostId": "beta", "display": "Beta"})
+        output = self.invoke({"ROFI_RETV": "1", "ROFI_INFO": forged})
+        self.assertIn("selected row is not a session", output)
+        self.assertEqual([], self.lifecycle.opens)
 
     def test_open_uses_typed_full_reference_and_revision(self) -> None:
         rendered = rofi.render_snapshot(self.value, now=200, titles=())
@@ -590,14 +597,17 @@ class RofiProtocolTests(unittest.TestCase):
     def test_open_failure_keeps_state_and_emits_bounded_notice(self) -> None:
         lifecycle = FakeLifecycle(ContractError("stale_session", "the selected session changed"))
         rendered = rofi.render_snapshot(
-            self.value, navigation=rofi.NavigationState("hosts", "alpha"), now=200, titles=()
+            self.value,
+            navigation=rofi.NavigationState(rofi.VIEW_LOCAL, "alpha"),
+            now=200,
+            titles=(),
         )
         _, rows = rendered_records(rendered)
         output = self.invoke(
             {
                 "ROFI_RETV": "1",
                 "ROFI_INFO": row_options(rows[0])["info"],
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts", "alpha")),
+                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_LOCAL, "alpha")),
             },
             lifecycle=lifecycle,
         )
@@ -619,11 +629,10 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertTrue(message.endswith("…"))
         self.assertEqual([False], self.model.calls)
 
-    def test_tab_is_not_a_view_callback_and_recent_custom_input_enters_host_chooser(self) -> None:
+    def test_tab_is_not_a_view_callback_and_all_custom_input_requires_concrete_scope(self) -> None:
         self.assertNotIn("Tab", rofi.render_snapshot(self.value))
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
-        self.assertIn("Tmux › Choose host", output)
-        self.assertIn('"name":"new-name"', output)
+        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, output)
         self.assertEqual([], self.lifecycle.opens)
         self.assertEqual([], self.lifecycle.creates)
 
@@ -638,17 +647,27 @@ class RofiMutationTests(unittest.TestCase):
         )
         self.model = FakeModel(self.value)
         self.lifecycle = FakeLifecycle()
+        self.cache_directory = TemporaryDirectory()
+        self.addCleanup(self.cache_directory.cleanup)
+        self.presentation_cache = PresentationSnapshotCache(Path(self.cache_directory.name))
 
-    def invoke(self, environ: dict[str, str], *, lifecycle: FakeLifecycle | None = None) -> str:
+    def invoke(
+        self,
+        environ: dict[str, str],
+        *,
+        model: FakeModel | None = None,
+        lifecycle: FakeLifecycle | None = None,
+    ) -> str:
         output = io.StringIO()
         with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
             self.assertEqual(
                 0,
                 rofi.run_rofi(
                     environ,
-                    model_service=self.model,
+                    model_service=model or self.model,
                     lifecycle_service=lifecycle or self.lifecycle,
                     config=Config(),
+                    presentation_cache=self.presentation_cache,
                 ),
             )
         return output.getvalue()
@@ -668,69 +687,111 @@ class RofiMutationTests(unittest.TestCase):
                 return row_options(row)["info"]
         raise AssertionError("session row missing")
 
-    def test_recent_create_chooser_uses_typed_host_and_exact_create_arguments(self) -> None:
-        chooser = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "fresh"})
-        self.assertIn("Tmux › Choose host", chooser)
-        beta = next(
-            row_options(row)["info"]
-            for row in self.rows(chooser)
-            if json.loads(row_options(row)["info"])["hostId"] == "beta"
+    def test_all_create_requires_a_concrete_scope(self) -> None:
+        result = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "fresh"})
+        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, result)
+        self.assertEqual(
+            [],
+            self.lifecycle.creates,
         )
-        self.assertEqual("host", json.loads(beta)["type"])
-        result = self.invoke({"ROFI_RETV": "1", "ROFI_DATA": self.data(chooser), "ROFI_INFO": beta})
+
+    def test_concrete_scope_create_and_existing_name_open_use_exact_host(self) -> None:
+        self.invoke(
+            {
+                "ROFI_RETV": "2",
+                "ROFI_INPUT": "one",
+                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_LOCAL, "alpha")),
+            }
+        )
+        self.assertEqual(
+            [("alpha", "sha256:fixture", "tmux-v1:alpha:generation", "$0", 10, None)],
+            self.lifecycle.opens,
+        )
+        result = self.invoke(
+            {
+                "ROFI_RETV": "2",
+                "ROFI_INPUT": "fresh",
+                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta")),
+            }
+        )
         self.assertEqual("", result)
         self.assertEqual(
             [("beta", "sha256:fixture", "fresh", None, (), (), False, None, True)],
             self.lifecycle.creates,
         )
 
-    def test_ensure_opens_only_a_current_exact_name_and_host_root_cannot_create(self) -> None:
-        chooser = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "one"})
-        alpha = row_options(self.rows(chooser)[0])["info"]
-        self.invoke({"ROFI_RETV": "1", "ROFI_DATA": self.data(chooser), "ROFI_INFO": alpha})
+    def test_local_only_ring_collapses_all_to_local_for_custom_create(self) -> None:
+        value = payload(
+            hosts=[host("alpha", "Alpha", local=True)],
+            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
+            revision=None,
+        )
+        model = FakeModel(value)
         self.assertEqual(
-            [("alpha", "sha256:fixture", "tmux-v1:alpha:generation", "$0", 10, None)],
-            self.lifecycle.opens,
+            "",
+            self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "fresh"}, model=model),
         )
-        root = self.invoke(
-            {
-                "ROFI_RETV": "2",
-                "ROFI_INPUT": "blocked",
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState("hosts")),
-            }
+        self.assertEqual(
+            [("alpha", None, "fresh", None, (), (), False, None, True)],
+            self.lifecycle.creates,
         )
-        self.assertIn("enter a host", root)
-        self.assertEqual([], self.lifecycle.creates)
 
-    def test_host_layer_custom_create_and_hostile_input_never_mutates(self) -> None:
-        nested = rofi._navigation_data(rofi.NavigationState("hosts", "beta"))
+    def test_concrete_scope_custom_create_and_hostile_input_never_mutates(self) -> None:
+        concrete = rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta"))
         self.assertEqual(
-            "", self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "nested", "ROFI_DATA": nested})
+            "",
+            self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "nested", "ROFI_DATA": concrete}),
         )
         self.assertEqual(
             [("beta", "sha256:fixture", "nested", None, (), (), False, None, True)],
             self.lifecycle.creates,
         )
-        failed = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "\u2066", "ROFI_DATA": nested})
+        failed = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "\u2066", "ROFI_DATA": concrete})
         self.assertIn("Unable to create or open", failed)
         self.assertEqual(1, len(self.lifecycle.creates))
-        empty = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "", "ROFI_DATA": nested})
+        empty = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "", "ROFI_DATA": concrete})
         self.assertIn("session name is empty", empty)
         self.assertEqual(1, len(self.lifecycle.creates))
         oversized = self.invoke(
             {
                 "ROFI_RETV": "2",
                 "ROFI_INPUT": "x" * (rofi.MAX_TYPED_NAME_LENGTH + 1),
-                "ROFI_DATA": nested,
+                "ROFI_DATA": concrete,
             }
         )
         self.assertIn("session name is too large", oversized)
         self.assertEqual(1, len(self.lifecycle.creates))
 
+    def test_removed_concrete_scope_never_falls_back_to_another_host(self) -> None:
+        local_only = payload(
+            hosts=[host("alpha", "Alpha", local=True)],
+            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
+            revision=None,
+        )
+        model = FakeModel(local_only)
+        output = self.invoke(
+            {
+                "ROFI_RETV": "2",
+                "ROFI_INPUT": "must-not-move",
+                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta")),
+            },
+            model=model,
+        )
+        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, output)
+        self.assertEqual([], self.lifecycle.creates)
+
     def test_rename_is_explicit_and_reconciles_only_affected_host(self) -> None:
         editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
         self.assertIn("Tmux › Rename session", editing)
         self.assertIn("Enter a new name", editing)
+        # Left/Right are deliberately inert in rename mode and must use only
+        # the exact snapshot that created the pending action.
+        self.model.calls.clear()
+        inert = self.invoke(
+            {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2), "ROFI_DATA": self.data(editing)}
+        )
+        self.assertIn("Tmux › Rename session", inert)
+        self.assertEqual([], self.model.calls)
         # Enter is deliberately inert in rename mode.
         self.invoke(
             {"ROFI_RETV": "1", "ROFI_DATA": self.data(editing), "ROFI_INFO": self.session_info()}
@@ -783,7 +844,7 @@ class RofiMutationTests(unittest.TestCase):
                 "ROFI_INFO": row_options(rows[0])["info"],
             }
         )
-        self.assertIn("Tmux › Recent", canceled)
+        self.assertIn("Tmux › All", canceled)
         self.assertEqual([], self.lifecycle.kills)
         confirmation = self.invoke(
             {"ROFI_RETV": "3", "ROFI_INFO": self.session_info(host_id="beta")}
@@ -802,15 +863,14 @@ class RofiMutationTests(unittest.TestCase):
         )
         self.assertEqual([("beta", "sha256:fixture")], self.model.host_refreshes)
 
-    def test_action_navigation_is_inert_escape_restores_origin_and_stale_does_not_retry(
+    def test_action_navigation_is_inert_and_legacy_escape_does_not_render(
         self,
     ) -> None:
         editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
         inert = self.invoke({"ROFI_RETV": "11", "ROFI_DATA": self.data(editing)})
         self.assertIn("Tmux › Rename session", inert)
         backed = self.invoke({"ROFI_RETV": "15", "ROFI_DATA": self.data(editing)})
-        self.assertIn("Tmux › Recent", backed)
-        self.assertNotIn('"action"', self.data(backed))
+        self.assertEqual("", backed)
         stale_lifecycle = FakeLifecycle(ContractError("stale_session", "session changed"))
         failed = self.invoke(
             {"ROFI_RETV": "2", "ROFI_DATA": self.data(editing), "ROFI_INPUT": "again"},
@@ -854,17 +914,17 @@ class RofiMutationTests(unittest.TestCase):
         self.assertIn("Session renamed.", output)
         self.assertIn("Refresh warning", output)
         self.assertEqual(1, len(self.lifecycle.renames))
-        self.assertIn("Tmux › Recent", output)
+        self.assertIn("Tmux › All", output)
         self.assertIn("one", output)
         data = self.data(output)
         self.assertNotIn('"action"', data)
-        self.assertEqual("recent", json.loads(data)["navigation"]["view"])
+        self.assertEqual(rofi.VIEW_ALL, json.loads(data)["navigation"]["view"])
 
     def test_invalid_pending_action_blocks_all_mutation_callbacks_and_escape_cancels(self) -> None:
         invalid = json.dumps(
             {
                 "version": 1,
-                "navigation": {"view": "recent"},
+                "navigation": {"view": rofi.VIEW_ALL},
                 "action": {"kind": "rename"},
             }
         )
@@ -887,7 +947,9 @@ class RofiMutationTests(unittest.TestCase):
         self.assertEqual("", self.invoke({"ROFI_RETV": "15", "ROFI_DATA": invalid}))
 
     def test_pending_action_state_budget_handles_unicode_and_selection_boundary(self) -> None:
-        safe = rofi._new_action("choose-host", rofi.NavigationState(), name="é" * 1800)
+        selection = json.loads(self.session_info())
+        selection["name"] = "é" * 1800
+        safe = rofi._new_action("rename", rofi.NavigationState(), selection=selection)
         state = rofi._error_state(
             rofi.ContinuationState(action=safe), "é" * rofi.MAX_MESSAGE_LENGTH, now=100, key="test"
         )
@@ -895,17 +957,21 @@ class RofiMutationTests(unittest.TestCase):
         self.assertLessEqual(len(encoded), rofi.MAX_DATA_LENGTH)
         self.assertFalse(rofi.parse_continuation_state(encoded).blocked_action)
         with self.assertRaises(ContractError):
-            rofi._new_action("choose-host", rofi.NavigationState(), name="é" * 2048)
+            rofi._new_action(
+                "rename",
+                rofi.NavigationState(),
+                selection={**selection, "name": "é" * 2048},
+            )
 
         selection = json.loads(self.session_info())
         selection["serverGeneration"] = "é" * 2048
         oversized_action = json.dumps(
             {
                 "version": 1,
-                "navigation": {"view": "recent"},
+                "navigation": {"view": rofi.VIEW_ALL},
                 "action": {
                     "kind": "rename",
-                    "origin": {"view": "recent"},
+                    "origin": {"view": rofi.VIEW_ALL},
                     "selection": selection,
                 },
             },
@@ -922,6 +988,9 @@ class RofiMutationTests(unittest.TestCase):
 
 class RofiRefreshTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.cache_directory = TemporaryDirectory()
+        self.addCleanup(self.cache_directory.cleanup)
+        self.presentation_cache = PresentationSnapshotCache(Path(self.cache_directory.name))
         self.old = payload(
             hosts=[host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "old")])],
             marker={
@@ -942,6 +1011,27 @@ class RofiRefreshTests(unittest.TestCase):
             },
         )
 
+    def test_initial_render_carries_cached_snapshot_for_arrow_callbacks(self) -> None:
+        model = FakeModel(self.fresh)
+        output = io.StringIO()
+        with (
+            patch("rofi_tmux_plus.rofi._niri_titles", return_value=()),
+            redirect_stdout(output),
+        ):
+            rofi.run_rofi(
+                {"ROFI_RETV": "0"},
+                model_service=model,
+                lifecycle_service=FakeLifecycle(),
+                config=Config(),
+                presentation_cache=self.presentation_cache,
+            )
+        rendered = output.getvalue()
+        self.assertIn("\0data\x1f", rendered)
+        data = rendered.split("\0data\x1f", 1)[1].split("\n", 1)[0]
+        state = json.loads(data)
+        self.assertTrue(rofi.valid_snapshot_key(state["snapshotKey"]))
+        self.assertEqual(self.fresh, self.presentation_cache.load(state["snapshotKey"]))
+
     def test_initial_stale_model_polls_and_completion_preserves_selection_filter_then_clears(
         self,
     ) -> None:
@@ -957,11 +1047,15 @@ class RofiRefreshTests(unittest.TestCase):
                 model_service=model,
                 lifecycle_service=FakeLifecycle(),
                 config=Config(),
+                presentation_cache=self.presentation_cache,
             )
         initial = output.getvalue()
         self.assertIn("Refreshing in background", initial)
         self.assertIn('"refreshDeadline":', initial)
         data = initial.split("\0data\x1f", 1)[1].split("\n", 1)[0]
+        initial_state = json.loads(data)
+        self.assertTrue(rofi.valid_snapshot_key(initial_state["snapshotKey"]))
+        self.assertEqual(self.old, self.presentation_cache.load(initial_state["snapshotKey"]))
         model.values = [self.fresh]
         output = io.StringIO()
         with (
@@ -974,6 +1068,7 @@ class RofiRefreshTests(unittest.TestCase):
                 model_service=model,
                 lifecycle_service=FakeLifecycle(),
                 config=Config(),
+                presentation_cache=self.presentation_cache,
             )
         completed = output.getvalue()
         self.assertIn("keep-selection", completed)
@@ -1016,6 +1111,7 @@ class RofiRefreshTests(unittest.TestCase):
                         model_service=model,
                         lifecycle_service=FakeLifecycle(),
                         config=Config(),
+                        presentation_cache=self.presentation_cache,
                     )
                 rendered = output.getvalue()
                 self.assertIn("worker stopped", rendered)
@@ -1032,6 +1128,7 @@ class RofiRefreshTests(unittest.TestCase):
                 model_service=model,
                 lifecycle_service=FakeLifecycle(),
                 config=Config(),
+                presentation_cache=self.presentation_cache,
             )
         self.assertEqual(1, model.refresh_calls)
         self.assertNotIn("Refreshing in background", output.getvalue())
