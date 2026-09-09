@@ -3,8 +3,10 @@
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
 private retained remote cache and refresh lifecycle, the complete Rofi
 browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
-and operator acceptance are complete. Selection latency remains a documented
-post-P6 performance follow-up rather than a functional blocker.
+and operator acceptance are complete. P7 removes the redundant
+picker-model read before a successful typed open; lifecycle still revalidates
+the current Mesh and exact stable reference. Managed publication and deployment
+are coordinated through chezmoi.
 
 ## Product boundary
 
@@ -160,6 +162,10 @@ originating list. Rename input is submitted only with Ctrl+Enter; plain Enter
 retains its browse meaning and does not ambiguously select a row while editing.
 Rename and kill leave the picker open and refresh the affected host. Opening or
 creating a session closes the picker after focusing or launching the terminal.
+A selected session is handed directly to the lifecycle service from its typed
+Rofi metadata. The picker model is reloaded only when an open fails and the
+dialog must reconcile visible state; the lifecycle service independently
+revalidates Mesh authority and the full stable reference before acting.
 
 Configuration, model, and callback failures are bounded at the Rofi process
 boundary. Root Escape returns no rows before setup, so it closes even when a

@@ -514,8 +514,47 @@ class RofiProtocolTests(unittest.TestCase):
         info = row_options(rows[0])["info"]
         self.assertEqual("sha256:fixture", json.loads(info)["meshRevision"])
         self.invoke({"ROFI_RETV": "1", "ROFI_INFO": info}, lifecycle=self.lifecycle)
+        self.assertEqual([], self.model.calls)
         self.assertEqual(
             [("alpha", "sha256:fixture", "tmux-v1:alpha:generation", "$0", 10, None)],
+            self.lifecycle.opens,
+        )
+
+    def test_local_only_open_uses_typed_reference_without_model_load(self) -> None:
+        value = payload(
+            hosts=[host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "one")])],
+            revision=None,
+        )
+        model = FakeModel(value)
+        _, rows = rendered_records(rofi.render_snapshot(value, now=200, titles=()))
+        info = row_options(rows[0])["info"]
+        self.invoke(
+            {"ROFI_RETV": "1", "ROFI_INFO": info},
+            model=model,
+            lifecycle=self.lifecycle,
+        )
+        self.assertEqual([], model.calls)
+        self.assertEqual(
+            [("alpha", None, "tmux-v1:alpha:generation", "$0", 10, None)],
+            self.lifecycle.opens,
+        )
+
+    def test_remote_open_uses_typed_reference_without_model_load(self) -> None:
+        value = payload(
+            hosts=[host("beta", "Beta", local=False, sessions=[session("beta", "$1", "two")])],
+            revision="sha256:remote",
+        )
+        model = FakeModel(value)
+        _, rows = rendered_records(rofi.render_snapshot(value, now=200, titles=()))
+        info = row_options(rows[0])["info"]
+        self.invoke(
+            {"ROFI_RETV": "1", "ROFI_INFO": info},
+            model=model,
+            lifecycle=self.lifecycle,
+        )
+        self.assertEqual([], model.calls)
+        self.assertEqual(
+            [("beta", "sha256:remote", "tmux-v1:beta:generation", "$1", 10, None)],
             self.lifecycle.opens,
         )
 
@@ -567,7 +606,7 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertIn("keep-filter", output)
         self.assertIn("errorDeadline", output)
         self.assertIn('"hostId":"alpha"', output)
-        self.assertTrue(self.model.calls[-1])
+        self.assertEqual([True], self.model.calls)
 
     def test_open_failure_notice_is_bounded_before_it_reenters_rofi_data(self) -> None:
         lifecycle = FakeLifecycle(ContractError("operation_failed", "x" * 10_000))
@@ -578,6 +617,7 @@ class RofiProtocolTests(unittest.TestCase):
         message = output.split("\0message\x1f", 1)[1].split(rofi.ROFI_RECORD_SEPARATOR, 1)[0]
         self.assertLessEqual(len(message), rofi.MAX_MESSAGE_LENGTH)
         self.assertTrue(message.endswith("…"))
+        self.assertEqual([False], self.model.calls)
 
     def test_tab_is_not_a_view_callback_and_recent_custom_input_enters_host_chooser(self) -> None:
         self.assertNotIn("Tab", rofi.render_snapshot(self.value))

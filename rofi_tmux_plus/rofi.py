@@ -1819,9 +1819,6 @@ def run_rofi(
                 )
                 print(_render_state(payload, next_state, now=now), end="")
                 return 0
-            payload, observed, _message = _load_observed(
-                model_service, state, start_refresh=False, now=now
-            )
             _open_selection(selected, lifecycle_service)
             return 0
         except Exception as error:  # noqa: BLE001 - action errors keep the picker open
