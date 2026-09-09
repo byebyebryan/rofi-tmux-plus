@@ -14,7 +14,7 @@ from .inventory_service import InventoryService
 from .lifecycle_service import LifecycleService
 from .picker_model import PickerModelService, RemoteRefresh
 from .remote_cache import RemoteCache
-from .tmux import validate_user_option
+from .tmux import validate_required_options, validate_user_option
 
 _JSON_COMMANDS = {
     "inventory",
@@ -81,6 +81,7 @@ def build_parser() -> JsonArgumentParser:
     open_parser = commands.add_parser("open", add_help=True)
     _common(open_parser, reference=True)
     open_parser.add_argument("--expected-name")
+    open_parser.add_argument("--require-option", action="append", default=[])
 
     create = commands.add_parser("create", add_help=True)
     _common(create)
@@ -128,6 +129,16 @@ def _options(raw_options: Sequence[str]) -> list[tuple[str, str]]:
         validate_user_option(name)
         result.append((name, value))
     return result
+
+
+def _required_options(raw_options: Sequence[str]) -> tuple[tuple[str, str], ...]:
+    parsed: list[tuple[str, str]] = []
+    for item in raw_options:
+        if "=" not in item:
+            raise ContractError("invalid_input", "--require-option must use @NAME=VALUE")
+        name, value = item.split("=", 1)
+        parsed.append((name, value))
+    return validate_required_options(parsed)
 
 
 def _lifecycle() -> LifecycleService:
@@ -178,6 +189,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
             args.session_id,
             args.created_at,
             args.expected_name,
+            _required_options(args.require_option),
         )
     if args.command == "create":
         command = list(args.command_argv)

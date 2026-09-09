@@ -100,6 +100,11 @@ class IsolatedServer(unittest.TestCase):
             reference.created_at,
         )
         self.assertTrue(opened["terminalLaunched"])
+        self.assertEqual(
+            set(opened),
+            {"schemaVersion", "ok", "meshRevision", "session", "focused", "terminalLaunched"},
+        )
+        self.assertNotIn("options", opened["session"])
         with self.assertRaisesRegex(ContractError, "selected tmux session changed"):
             self.lifecycle.rename(
                 self.host.host_id,
@@ -110,6 +115,64 @@ class IsolatedServer(unittest.TestCase):
                 "before",
                 "new",
             )
+
+    def test_open_required_options_match_before_focus_or_terminal_launch(self) -> None:
+        self.create_direct()
+        generation, sessions = self.client.inventory(self.host.host_id)
+        self.assertIsNotNone(generation)
+        reference = sessions[0].reference
+        self.client.set_option(reference.session_id, "@provider", "expected")
+        focused = MagicMock(return_value=True)
+        spawned = MagicMock()
+        lifecycle = LocalLifecycle(
+            self.client,
+            Config(terminal=("true",)),
+            host=self.host,
+            terminal_spawner=spawned,
+        )
+        lifecycle._focus_matching_window = focused  # type: ignore[method-assign]
+
+        opened = lifecycle.open(
+            self.host.host_id,
+            None,
+            reference.server_generation,
+            reference.session_id,
+            reference.created_at,
+            required_options=(("@provider", "expected"),),
+        )
+        self.assertTrue(opened["focused"])
+        self.assertNotIn("options", opened["session"])
+        focused.assert_called_once()
+        spawned.assert_not_called()
+
+        focused.reset_mock()
+        self.client.unset_option(reference.session_id, "@provider")
+        with self.assertRaises(ContractError) as missing:
+            lifecycle.open(
+                self.host.host_id,
+                None,
+                reference.server_generation,
+                reference.session_id,
+                reference.created_at,
+                required_options=(("@provider", "expected"),),
+            )
+        self.assertEqual(missing.exception.code, "stale_session")
+        focused.assert_not_called()
+        spawned.assert_not_called()
+
+        self.client.set_option(reference.session_id, "@provider", "different")
+        with self.assertRaises(ContractError) as mismatched:
+            lifecycle.open(
+                self.host.host_id,
+                None,
+                reference.server_generation,
+                reference.session_id,
+                reference.created_at,
+                required_options=(("@provider", "expected"),),
+            )
+        self.assertEqual(mismatched.exception.code, "stale_session")
+        focused.assert_not_called()
+        spawned.assert_not_called()
 
     def test_restart_with_reused_id_is_stale(self) -> None:
         self.create_direct("first")
@@ -598,3 +661,61 @@ class FocusAndCliTests(unittest.TestCase):
             )
         self.assertEqual(status, 2)
         self.assertEqual(result["error"]["code"], "invalid_input")
+
+    def test_cli_open_required_options_are_open_only_and_conflict_safe(self) -> None:
+        fake = MagicMock()
+        fake.open.return_value = {"schemaVersion": 1, "ok": True}
+        valid_open = [
+            "open",
+            "--json",
+            "--host",
+            "local",
+            "--server-generation",
+            "generation",
+            "--session-id",
+            "$0",
+            "--created-at",
+            "1",
+            "--require-option",
+            "@provider=expected",
+            "--require-option",
+            "@provider=expected",
+        ]
+        with patch("rofi_tmux_plus.cli._lifecycle", return_value=fake):
+            status, result = self._main_json(valid_open)
+            self.assertEqual(status, 0)
+            self.assertTrue(result["ok"])
+            self.assertEqual(fake.open.call_args.args[-1], (("@provider", "expected"),))
+
+            for required in ("provider=expected", "@provider", "@provider=bad\nvalue"):
+                with self.subTest(required=required):
+                    status, result = self._main_json(
+                        [*valid_open[:10], "--require-option", required]
+                    )
+                    self.assertEqual(status, 2)
+                    self.assertEqual(result["error"]["code"], "invalid_input")
+            status, result = self._main_json(
+                [
+                    *valid_open,
+                    "--require-option",
+                    "@provider=conflicting",
+                ]
+            )
+            create_status, create_result = self._main_json(
+                [
+                    "create",
+                    "--json",
+                    "--host",
+                    "local",
+                    "--name",
+                    "fresh",
+                    "--require-option",
+                    "@provider=expected",
+                ]
+            )
+        self.assertEqual(status, 2)
+        self.assertEqual(result["error"]["code"], "invalid_input")
+        self.assertEqual(create_status, 2)
+        self.assertEqual(create_result["error"]["code"], "invalid_input")
+        self.assertEqual(fake.open.call_count, 1)
+        fake.create.assert_not_called()

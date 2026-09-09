@@ -17,7 +17,7 @@ from .config import Config, has_control, require_clean_text
 from .errors import ContractError, NoServer, clean_message
 from .host import LocalHost, resolve_local_host
 from .model import Session, SessionReference
-from .tmux import TmuxClient, validate_session_id, validate_user_option
+from .tmux import TmuxClient, validate_required_options, validate_session_id, validate_user_option
 
 _OPERATION_OPTION = "@rofi_tmux_plus_operation"
 _PENDING_OPTION = "@rofi_tmux_plus_pending"
@@ -83,6 +83,19 @@ def _validate_reference_inputs(
         raise ContractError(
             "invalid_input", "expected name must not contain NUL or control characters"
         )
+
+
+def _validate_required_options(
+    session: Session, options: Sequence[tuple[str, str]], tmux: TmuxClient
+) -> None:
+    """Require exact current option values after stable-reference validation."""
+    for name, expected_value in validate_required_options(options):
+        if tmux.option(session.reference.session_id, name) != expected_value:
+            raise ContractError(
+                "stale_session",
+                "the selected tmux session no longer satisfies required options; refresh and try again",
+                session.reference.host_id,
+            )
 
 
 def _wrapper_command(token: str, command: Sequence[str], *, defer: bool, timeout: int) -> list[str]:
@@ -292,6 +305,7 @@ class LocalLifecycle:
         session_id: str,
         created_at: int,
         expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
     ) -> Session:
         _validate_reference_inputs(generation, session_id, created_at, expected_name)
         host = self.resolve(host_id, mesh_revision)
@@ -302,6 +316,7 @@ class LocalLifecycle:
                 "the selected tmux session changed; refresh and try again",
                 host.host_id,
             )
+        _validate_required_options(session, required_options, self.tmux)
         return session
 
     def open(
@@ -312,9 +327,16 @@ class LocalLifecycle:
         session_id: str,
         created_at: int,
         expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
     ) -> dict[str, object]:
         session = self.validate_reference(
-            host_id, mesh_revision, generation, session_id, created_at, expected_name
+            host_id,
+            mesh_revision,
+            generation,
+            session_id,
+            created_at,
+            expected_name,
+            required_options,
         )
         if self._focus_matching_window(session):
             return self._open_response(session, focused=True, terminal_launched=False)

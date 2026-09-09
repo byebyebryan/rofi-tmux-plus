@@ -180,7 +180,8 @@ rofi-tmux-plus open --json \
   --server-generation GENERATION \
   --session-id '$6' \
   --created-at 1722742000 \
-  [--expected-name rofi-tmux-plus]
+  [--expected-name rofi-tmux-plus] \
+  [--require-option @NAME=VALUE]...
 ```
 
 Open revalidates the stable reference, then focuses a matching Niri terminal
@@ -217,6 +218,15 @@ Exactly one of `focused` or `terminalLaunched` is true on success.
 `session` is always the complete descriptor shape used by inventory and create.
 `terminalLaunched` confirms a successful local spawn, not a completed SSH
 attachment.
+
+`--require-option` is an optional, repeatable provider-neutral session
+precondition. Each requested `@NAME=VALUE` must match the live exact session
+after its stable reference has been revalidated. A missing or changed option
+returns `stale_session` before Tmux Plus focuses a window or launches a
+terminal. Names follow the same `@[A-Za-z0-9_.-]+` rule as inventory and
+create; values reject NUL and control characters. Repeating a requirement with
+the same value is harmless, while conflicting values for one name are
+`invalid_input`. Required option values are never added to the open response.
 
 ## Create
 

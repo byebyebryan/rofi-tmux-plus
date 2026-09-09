@@ -75,11 +75,20 @@ class LifecycleService:
         session_id: str,
         created_at: int,
         expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
     ) -> dict[str, object]:
         snapshot, host, local = self._selected(host_id, revision)
         if snapshot is None or host is None or host.local:
             return self._mesh_response(
-                local.open(host_id, None, generation, session_id, created_at, expected_name),
+                local.open(
+                    host_id,
+                    None,
+                    generation,
+                    session_id,
+                    created_at,
+                    expected_name,
+                    required_options,
+                ),
                 snapshot.revision if snapshot else None,
             )
         return self._remote.open(
@@ -90,6 +99,7 @@ class LifecycleService:
             session_id,
             created_at,
             expected_name,
+            required_options,
         )
 
     def create(

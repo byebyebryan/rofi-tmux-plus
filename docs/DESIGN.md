@@ -260,11 +260,13 @@ installed.
 
 ## Open, create, rename, and kill
 
-Open first revalidates the selected reference. It then looks for a current
-Niri window matching the live session name and native host identity. If found,
-it focuses that window. Otherwise it launches the configured terminal in a
-detached user scope and attaches by exact tmux session ID, locally or through
-`ssh -t`.
+Open first revalidates the selected reference and any optional generic
+`@NAME=VALUE` requirements. It then looks for a current Niri window matching
+the live session name and native host identity. If found, it focuses that
+window. Otherwise it launches the configured terminal in a detached user scope
+and attaches by exact tmux session ID, locally or through `ssh -t`. A missing
+or changed required option is `stale_session`, before focus or terminal launch;
+the generic contract never attributes those options to a provider.
 
 Window matching is best-effort. It benefits from a tmux title containing the
 session name and native hostname, but failure never prevents a new client from

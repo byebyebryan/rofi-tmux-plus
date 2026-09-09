@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
@@ -147,10 +149,137 @@ class RemoteLifecycleTests(unittest.TestCase):
         self.assertTrue(result["terminalLaunched"])
         self.assertFalse(result["focused"])
         self.assertEqual(
+            set(result),
+            {"schemaVersion", "ok", "meshRevision", "session", "focused", "terminalLaunched"},
+        )
+        self.assertNotIn("options", result["session"])
+        self.assertEqual(
             launched,
             [["ssh", "-t", "beta-vpn.test", "tmux -u attach-session -t '$0'"]],
         )
         self.assertEqual(self.adapter.reports[0]["status"], "reachable")
+
+    def test_open_required_options_run_through_fixed_remote_program_before_actions(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            directory = Path(raw_directory)
+            state = directory / "state"
+            state.mkdir()
+            sentinel = directory / "must-not-exist"
+            fake_tmux = directory / "tmux"
+            fake_tmux.write_text(
+                "#!/bin/sh\n"
+                f"state={shlex.quote(str(state))}\n"
+                "command=$1; shift\n"
+                'case "$command" in\n'
+                "  display-message)\n"
+                '    for value in "$@"; do format=$value; done\n'
+                '    case "$format" in\n'
+                "      '#{socket_path}') printf '/tmp/tmux\\n' ;;\n"
+                "      '#{start_time}') printf '10\\n' ;;\n"
+                "      '#{pid}') printf '20\\n' ;;\n"
+                "      '#{session_created}') printf '11\\n' ;;\n"
+                "      '#{session_name}') printf 'before\\n' ;;\n"
+                "      '#{session_activity}') printf '12\\n' ;;\n"
+                "      '#{session_last_attached}') printf '\\n' ;;\n"
+                "      '#{session_attached}') printf '0\\n' ;;\n"
+                "      '#{session_windows}') printf '1\\n' ;;\n"
+                "      '#{session_path}'|'#{pane_current_path}') printf '/tmp/work\\n' ;;\n"
+                "      '#{window_name}') printf 'shell\\n' ;;\n"
+                "    esac ;;\n"
+                "  show-options)\n"
+                '    case " $* " in\n'
+                '      *" -qv "*) [ -f "$state/present" ] || exit 1; cat "$state/value"; printf "\\n" ;;\n'
+                '      *) [ -f "$state/present" ] || exit 0; printf "@provider "; cat "$state/value"; printf "\\n" ;;\n'
+                "    esac ;;\n"
+                "esac\n",
+                encoding="utf-8",
+            )
+            fake_tmux.chmod(0o700)
+            environment = {**os.environ, "PATH": f"{directory}:{os.environ.get('PATH', '')}"}
+            remote_commands: list[str] = []
+            remote_results: list[subprocess.CompletedProcess[str]] = []
+
+            def runner(argv: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                assert isinstance(argv, (list, tuple))
+                remote_commands.append(str(argv[-1]))
+                result = subprocess.run(
+                    ["sh", "-c", str(argv[-1])],
+                    capture_output=True,
+                    text=True,
+                    env=environment,
+                    check=False,
+                )
+                remote_results.append(result)
+                return result
+
+            focused = MagicMock(return_value=True)
+            spawned = MagicMock()
+            lifecycle = RemoteLifecycle(
+                self.adapter,
+                Config(terminal=("ghostty",)),
+                runner=runner,
+                nonce_factory=lambda: self.nonce,
+                now_millis=lambda: 1234,
+                focus=focused,
+                terminal_spawner=spawned,
+            )
+            required = "expected;$(touch " + str(sentinel) + ")"
+
+            with self.assertRaises(ContractError) as missing:
+                lifecycle.open(
+                    self.host,
+                    self.policy,
+                    "sha256:fixture",
+                    "tmux-v1:10:20:/tmp/tmux",
+                    "$0",
+                    11,
+                    None,
+                    (("@provider", required),),
+                )
+            self.assertEqual(
+                missing.exception.code,
+                "stale_session",
+                remote_results[-1].stdout + remote_results[-1].stderr,
+            )
+            focused.assert_not_called()
+            spawned.assert_not_called()
+
+            (state / "present").write_text("", encoding="utf-8")
+            (state / "value").write_text(required, encoding="utf-8")
+            opened = lifecycle.open(
+                self.host,
+                self.policy,
+                "sha256:fixture",
+                "tmux-v1:10:20:/tmp/tmux",
+                "$0",
+                11,
+                None,
+                (("@provider", required),),
+            )
+            self.assertTrue(opened["focused"])
+            self.assertNotIn("options", opened["session"])
+            focused.assert_called_once()
+            spawned.assert_not_called()
+            self.assertIn(shlex.quote(required), remote_commands[-1])
+            self.assertNotIn(required, _REMOTE_PROGRAM)
+            self.assertFalse(sentinel.exists())
+
+            focused.reset_mock()
+            (state / "value").write_text("different", encoding="utf-8")
+            with self.assertRaises(ContractError) as mismatched:
+                lifecycle.open(
+                    self.host,
+                    self.policy,
+                    "sha256:fixture",
+                    "tmux-v1:10:20:/tmp/tmux",
+                    "$0",
+                    11,
+                    None,
+                    (("@provider", required),),
+                )
+            self.assertEqual(mismatched.exception.code, "stale_session")
+            focused.assert_not_called()
+            spawned.assert_not_called()
 
     def test_launch_executes_a_literal_session_id_through_a_fake_openssh_shell(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:

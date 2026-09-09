@@ -29,7 +29,7 @@ from .remote_inventory import (
     parse_reached_marker,
     parse_remote_inventory,
 )
-from .tmux import validate_session_id, validate_user_option
+from .tmux import validate_required_options, validate_session_id, validate_user_option
 
 _REMOTE_TIMEOUT_SECONDS = 12.0
 _MAX_ACTION_OUTPUT = _MAX_OUTPUT
@@ -160,17 +160,33 @@ rollback() {{
 }}
 case "$action" in
   open)
-    [ "$#" -eq 5 ] || reply_error operation_failed 'invalid open request'
+    [ "$#" -ge 5 ] || reply_error operation_failed 'invalid open request'
     [ "$4" = 0 ] || [ "$4" = 1 ] || reply_error operation_failed 'invalid open request'
-    open_expected=''
-    [ "$4" = 0 ] || open_expected=$5
-    validate "$1" "$2" "$3" "$open_expected"
+    open_generation=$1; open_sid=$2; open_created=$3; open_expected_present=$4; open_expected=$5
+    open_required_count=0
+    if [ "$#" -gt 5 ]; then
+      open_required_count=$6
+      case "$open_required_count" in ''|*[!0-9]*) reply_error operation_failed 'invalid open request' ;; esac
+      [ "$#" -eq $((6 + open_required_count * 2)) ] || reply_error operation_failed 'invalid open request'
+      shift 6
+    else
+      shift 5
+    fi
+    [ "$open_expected_present" = 0 ] && open_expected=''
+    validate "$open_generation" "$open_sid" "$open_created" "$open_expected"
+    while [ "$open_required_count" -gt 0 ]; do
+      open_option=$1; open_value=$2; shift 2
+      tmux show-options -q -t "$open_sid" | awk -v option="$open_option" '$0 == option || index($0, option " ") == 1 {{ found=1 }} END {{ exit !found }}' || reply_error stale_session 'the selected tmux session no longer satisfies required options; refresh and try again'
+      open_actual="$(tmux show-options -qv -t "$open_sid" "$open_option" 2>/dev/null || :)"
+      [ "$open_actual" = "$open_value" ] || reply_error stale_session 'the selected tmux session no longer satisfies required options; refresh and try again'
+      open_required_count=$((open_required_count - 1))
+    done
     emit_records=1
     generation || reply_error operation_failed 'tmux could not read the server identity'
-    [ "$current_generation" = "$1" ] || reply_error stale_session 'the selected tmux server changed; refresh and try again'
-    descriptor "$2" || reply_error session_not_found 'the selected tmux session no longer exists'
-    [ "$descriptor_created" = "$3" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
-    [ "$4" = 0 ] || [ "$descriptor_name" = "$5" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
+    [ "$current_generation" = "$open_generation" ] || reply_error stale_session 'the selected tmux server changed; refresh and try again'
+    descriptor "$open_sid" || reply_error session_not_found 'the selected tmux session no longer exists'
+    [ "$descriptor_created" = "$open_created" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
+    [ "$open_expected_present" = 0 ] || [ "$descriptor_name" = "$open_expected" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
     printf 'R\tOPEN\n'
     ;;
   rename)
@@ -517,20 +533,30 @@ class RemoteLifecycle:
         session_id: str,
         created_at: int,
         expected_name: str | None,
+        required_options: Sequence[tuple[str, str]] = (),
     ) -> dict[str, object]:
         _validate_reference_inputs(generation, session_id, created_at, expected_name)
+        required_options = validate_required_options(required_options)
+        values = [
+            generation,
+            session_id,
+            str(created_at),
+            "1" if expected_name is not None else "0",
+            expected_name or "",
+        ]
+        # Preserve the established no-precondition remote request exactly.
+        # The fixed remote program accepts that legacy five-value shape as an
+        # empty required-option set.
+        if required_options:
+            values.append(str(len(required_options)))
+            for name, value in required_options:
+                values.extend((name, value))
         result = self._action(
             host,
             policy,
             revision,
             "open",
-            [
-                generation,
-                session_id,
-                str(created_at),
-                "1" if expected_name is not None else "0",
-                expected_name or "",
-            ],
+            values,
         )
         assert result.session is not None
         focused = bool(self._focus and self._focus(result.session, result.native_hostname))
