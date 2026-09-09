@@ -6,7 +6,42 @@ browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
 and operator acceptance are complete. P7 removes the redundant
 picker-model read before a successful typed open; lifecycle still revalidates
 the current Mesh and exact stable reference. Managed publication and deployment
-are coordinated through chezmoi.
+are coordinated through chezmoi. P8 flat-scope navigation is an accepted design
+target, not an implemented runtime claim.
+
+## P8 flat-scope target
+
+P8 replaces the `Recent` / `Hosts` root pair and per-host child layers
+described below with leaf-only peer views:
+
+```text
+Tmux › All
+Tmux › Local
+Tmux › <remote host in Host Mesh order>
+```
+
+`All` is the mixed, recency-ordered cross-host session list. `Local` follows,
+then every authoritative remote in stable Host Mesh order; availability and
+activity never reorder the ring. Empty and unavailable hosts keep their scope.
+When no remote exists, the redundant `All` and `Local` scopes collapse to one
+`Local` view. Tmux Plus starts in `All` when it exists and does not persist a
+host scope between invocations.
+
+Left and Right wrap through scopes without discovery or network work, preserve
+the current filter, and reset selection to the first eligible matching row.
+Tab and Shift+Tab retain native row navigation. Enter opens the selected
+session. Escape and Ctrl+G always close through Rofi's native cancel action and
+are never script callbacks.
+
+Ctrl+Enter creates or opens a typed session only from a concrete host scope.
+From `All`, it renders a bounded instruction to choose a host view rather than
+guessing a host or entering a chooser layer. Rename and kill confirmation stay
+transient action states; Left and Right do nothing there, and Escape closes the
+picker without committing the action. Host Mesh v1 and Tmux Session v1 do not
+change.
+
+The following Views and Navigation sections describe the currently deployed P7
+interface until the coordinated P8 cutover.
 
 ## Product boundary
 
