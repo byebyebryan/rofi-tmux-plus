@@ -1,0 +1,9 @@
+{
+  "semantic": "shared local-only Host Mesh identity cases",
+  "cases": [
+    {"hostname": "DeskTop.Example", "hostId": "desktop", "display": "DeskTop", "aliases": ["DeskTop", "DeskTop.Example"]},
+    {"hostname": "MACHINE_WITH_UNDERSCORE", "hostId": "machine_with_underscore", "display": "MACHINE_WITH_UNDERSCORE", "aliases": ["MACHINE_WITH_UNDERSCORE"]},
+    {"hostname": "bad name.example", "hostId": "localhost", "display": "bad name", "aliases": ["localhost"]},
+    {"hostname": "bad\u0000name.example", "hostId": "localhost", "display": "localhost", "aliases": ["localhost"]}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": 1000000,
+  "meshRevision": "sha256:c932eaa7fc77de0590085a5916d5ea823eccce0ba22157f091549ed9ad5c1262",
+  "localHostId": "alpha",
+  "sshPolicy": {
+    "executable": "ssh",
+    "connectTimeoutSeconds": 2,
+    "connectionAttempts": 1,
+    "routeHealthTtlSeconds": 300
+  },
+  "hosts": [
+    {
+      "id": "alpha",
+      "display": "Alpha",
+      "local": true,
+      "aliases": ["alpha-native", "alpha.example", "alpha"],
+      "routes": []
+    }
+  ]
+}

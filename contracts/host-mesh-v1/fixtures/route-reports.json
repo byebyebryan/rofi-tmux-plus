@@ -1,0 +1,49 @@
+{
+  "clock": {
+    "now": 1000000,
+    "futureLimit": 1300000
+  },
+  "cases": [
+    {
+      "name": "accepted-reachable",
+      "host": "beta",
+      "route": "beta-vpn.test",
+      "status": "reachable",
+      "observedAt": 900000,
+      "expectedAccepted": true
+    },
+    {
+      "name": "duplicate",
+      "host": "beta",
+      "route": "beta-vpn.test",
+      "status": "reachable",
+      "observedAt": 900000,
+      "expectedAccepted": false
+    },
+    {
+      "name": "out-of-order",
+      "host": "beta",
+      "route": "beta-vpn.test",
+      "status": "unreachable",
+      "observedAt": 899999,
+      "expectedAccepted": false
+    },
+    {
+      "name": "future-dated",
+      "host": "beta",
+      "route": "beta-vpn.test",
+      "status": "unreachable",
+      "observedAt": 1300001,
+      "expectedError": "invalid_input"
+    },
+    {
+      "name": "stale-revision",
+      "host": "beta",
+      "route": "beta-vpn.test",
+      "status": "reachable",
+      "observedAt": 900001,
+      "meshRevision": "sha256:stale",
+      "expectedError": "stale_mesh"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "report-route.schema.json",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "ok",
+    "accepted"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "ok": {
+      "type": "boolean",
+      "const": true
+    },
+    "accepted": {
+      "type": "boolean"
+    }
+  }
+}

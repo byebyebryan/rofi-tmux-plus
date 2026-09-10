@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 import shutil
 import subprocess
@@ -12,23 +11,42 @@ from dataclasses import dataclass
 
 from .bounded_process import BoundedCompleted, run_bounded
 from .errors import ContractError, clean_message
+from .wire import WireError, decode_document
 
 _HOST_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", re.ASCII)
+_REVISION = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
+_ERROR_CODE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]*$", re.ASCII)
 _MAX_OUTPUT = 512 * 1024
+_MAX_STDERR = 64 * 1024
+_MAX_STRING = 16_384
+_MAX_ERROR_MESSAGE = 4_096
 
 
 def _clean_token(value: object, label: str, *, identifier: bool = False) -> str:
-    if not isinstance(value, str) or not value or value.strip() != value or value.startswith("-"):
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > _MAX_STRING
+        or value.strip() != value
+        or value.startswith("-")
+    ):
         raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
     if any(char.isspace() or unicodedata.category(char).startswith("C") for char in value):
         raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
     if identifier and not _HOST_ID.fullmatch(value):
         raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
+    if label == "meshRevision" and _REVISION.fullmatch(value) is None:
+        raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
     return value
 
 
 def _clean_display(value: object, label: str) -> str:
-    if not isinstance(value, str) or not value or value.strip() != value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > _MAX_STRING
+        or value.strip() != value
+    ):
         raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
     if any(unicodedata.category(char).startswith("C") for char in value):
         raise ContractError("operation_failed", f"Host Mesh {label} is invalid")
@@ -123,6 +141,8 @@ class HostMeshAdapter:
         if executable is None:
             return None
         payload = self._run_json(executable, ["mesh", "list", "--json"])
+        if _is_error_envelope(payload):
+            _raise_error_envelope(payload)
         return _parse_snapshot(payload)
 
     def report_route(
@@ -161,17 +181,11 @@ class HostMeshAdapter:
             ],
             timeout_seconds=timeout_seconds,
         )
-        if (
-            isinstance(payload, dict)
-            and payload.get("schemaVersion") == 1
-            and payload.get("ok") is False
-        ):
-            error = payload.get("error")
-            if isinstance(error, dict) and error.get("code") == "stale_mesh":
-                raise MeshStaleError()
-            raise ContractError("operation_failed", "Host Mesh rejected route health report")
+        if _is_error_envelope(payload):
+            _raise_error_envelope(payload)
         if (
             not isinstance(payload, dict)
+            or type(payload.get("schemaVersion")) is not int
             or payload.get("schemaVersion") != 1
             or payload.get("ok") is not True
             or not isinstance(payload.get("accepted"), bool)
@@ -190,7 +204,7 @@ class HostMeshAdapter:
                     [executable, *args],
                     timeout=timeout_seconds,
                     stdout_limit=_MAX_OUTPUT,
-                    stderr_limit=_MAX_OUTPUT,
+                    stderr_limit=_MAX_STDERR,
                 )
             else:
                 completed = self._runner(
@@ -212,32 +226,97 @@ class HostMeshAdapter:
             raise ContractError(
                 "operation_failed", "Host Mesh response exceeded the consumer limit"
             )
-        stdout = completed.stdout or ""
-        stderr = completed.stderr or ""
-        if (
-            len(stdout.encode("utf-8", errors="replace")) > _MAX_OUTPUT
-            or len(stderr.encode("utf-8", errors="replace")) > _MAX_OUTPUT
-        ):
+        stdout = _stream_bytes(completed, "stdout")
+        stderr = _stream_bytes(completed, "stderr")
+        if len(stdout) > _MAX_OUTPUT or len(stderr) > _MAX_STDERR:
             raise ContractError(
                 "operation_failed", "Host Mesh response exceeded the consumer limit"
             )
         try:
-            payload = json.loads(stdout)
-        except (TypeError, json.JSONDecodeError) as error:
+            payload = decode_document(stdout, limit=_MAX_OUTPUT)
+        except WireError as error:
             raise ContractError("operation_failed", "Host Mesh returned malformed JSON") from error
-        if completed.returncode != 0:
-            if isinstance(payload, dict) and payload.get("schemaVersion") == 1:
-                error = payload.get("error")
-                if isinstance(error, dict) and error.get("code") == "stale_mesh":
-                    raise MeshStaleError()
-            raise ContractError("operation_failed", "Host Mesh command returned a failure")
+        returncode = getattr(completed, "returncode", 1)
+        if not isinstance(returncode, int) or isinstance(returncode, bool) or returncode < 0:
+            raise ContractError("operation_failed", "Host Mesh command terminated unexpectedly")
+        if returncode != 0:
+            if not _is_error_envelope(payload):
+                raise ContractError("operation_failed", "Host Mesh command returned a failure")
+        elif _is_error_envelope(payload):
+            raise ContractError("operation_failed", "Host Mesh returned an error with exit zero")
         return payload
+
+
+def _stream_bytes(completed: object, name: str) -> bytes:
+    """Obtain bounded raw bytes while retaining compatibility with test runners."""
+    raw = getattr(completed, f"{name}_bytes", None)
+    if isinstance(raw, bytes):
+        return raw
+    value = getattr(completed, name, None)
+    if value is None:
+        return b""
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, str):
+        try:
+            return value.encode("utf-8", errors="strict")
+        except UnicodeEncodeError as error:
+            raise ContractError("operation_failed", "Host Mesh returned invalid UTF-8") from error
+    raise ContractError("operation_failed", "Host Mesh returned an invalid output stream")
+
+
+def _is_error_envelope(payload: object) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if type(payload.get("schemaVersion")) is not int or payload.get("schemaVersion") != 1:
+        return False
+    if payload.get("ok") is not False:
+        return False
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        return False
+    code = error.get("code")
+    message = error.get("message")
+    return (
+        isinstance(code, str)
+        and not isinstance(code, bool)
+        and len(code) <= 64
+        and _ERROR_CODE.fullmatch(code) is not None
+        and isinstance(message, str)
+        and not isinstance(message, bool)
+        and 0 < len(message) <= _MAX_ERROR_MESSAGE
+    )
+
+
+def _raise_error_envelope(payload: dict[str, object]) -> None:
+    error = payload["error"]
+    assert isinstance(error, dict)
+    code = error["code"]
+    message = error["message"]
+    assert isinstance(code, str) and isinstance(message, str)
+    if code == "stale_mesh":
+        raise MeshStaleError()
+    raise ContractError(code, message)
+
+
+def _require_fields(value: dict[str, object], *names: str) -> None:
+    if any(name not in value for name in names):
+        raise ContractError("operation_failed", "Host Mesh response is missing a required field")
 
 
 def _parse_snapshot(payload: object) -> MeshSnapshot:
     if not isinstance(payload, dict):
         raise ContractError("operation_failed", "Host Mesh list response must be an object")
-    if payload.get("schemaVersion") != 1:
+    _require_fields(
+        payload,
+        "schemaVersion",
+        "generatedAt",
+        "meshRevision",
+        "localHostId",
+        "sshPolicy",
+        "hosts",
+    )
+    if type(payload.get("schemaVersion")) is not int or payload.get("schemaVersion") != 1:
         raise ContractError("operation_failed", "unsupported Host Mesh schema version")
     revision = _clean_token(payload.get("meshRevision"), "meshRevision")
     _integer(payload.get("generatedAt"), "generatedAt", 0, 2**63 - 1)
@@ -247,6 +326,13 @@ def _parse_snapshot(payload: object) -> MeshSnapshot:
     raw_policy = payload.get("sshPolicy")
     if not isinstance(raw_policy, dict):
         raise ContractError("operation_failed", "Host Mesh sshPolicy is invalid")
+    _require_fields(
+        raw_policy,
+        "executable",
+        "connectTimeoutSeconds",
+        "connectionAttempts",
+        "routeHealthTtlSeconds",
+    )
     policy = MeshPolicy(
         _clean_token(raw_policy.get("executable"), "ssh executable"),
         _integer(raw_policy.get("connectTimeoutSeconds"), "connectTimeoutSeconds", 1, 60),
@@ -254,7 +340,7 @@ def _parse_snapshot(payload: object) -> MeshSnapshot:
         _integer(raw_policy.get("routeHealthTtlSeconds"), "routeHealthTtlSeconds", 1, 86400),
     )
     raw_hosts = payload.get("hosts")
-    if not isinstance(raw_hosts, list) or not raw_hosts:
+    if not isinstance(raw_hosts, list) or not raw_hosts or len(raw_hosts) > 128:
         raise ContractError("operation_failed", "Host Mesh hosts is invalid")
     hosts: list[MeshHost] = []
     identity_owners: dict[str, str] = {}
@@ -262,6 +348,7 @@ def _parse_snapshot(payload: object) -> MeshSnapshot:
     for index, raw_host in enumerate(raw_hosts):
         if not isinstance(raw_host, dict) or not isinstance(raw_host.get("local"), bool):
             raise ContractError("operation_failed", "Host Mesh host is invalid")
+        _require_fields(raw_host, "id", "display", "local", "aliases", "routes")
         host_id = _clean_token(raw_host.get("id"), "host id", identifier=True).casefold()
         display = _clean_display(raw_host.get("display"), "host display")
         raw_aliases = raw_host.get("aliases")
@@ -276,6 +363,13 @@ def _parse_snapshot(payload: object) -> MeshSnapshot:
         for raw_route in raw_routes:
             if not isinstance(raw_route, dict):
                 raise ContractError("operation_failed", "Host Mesh route is invalid")
+            _require_fields(
+                raw_route,
+                "destination",
+                "configuredIndex",
+                "lastReachableAt",
+                "lastUnreachableAt",
+            )
             configured_index = _integer(
                 raw_route.get("configuredIndex"), "configuredIndex", 0, 2**31 - 1
             )
@@ -291,6 +385,10 @@ def _parse_snapshot(payload: object) -> MeshSnapshot:
                     _timestamp(raw_route.get("lastReachableAt"), "lastReachableAt"),
                     _timestamp(raw_route.get("lastUnreachableAt"), "lastUnreachableAt"),
                 )
+            )
+        if sorted(configured_indices) != list(range(len(configured_indices))):
+            raise ContractError(
+                "operation_failed", "Host Mesh configured route indices are ambiguous"
             )
         if raw_host["local"]:
             local_count += 1

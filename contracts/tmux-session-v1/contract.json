@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contract.json",
+  "contract": "tmux-session-v1",
+  "contractName": "Tmux Session",
+  "schemaVersion": 1,
+  "version": 1,
+  "commands": {
+    "inventory": {
+      "argv": ["inventory", "--json"],
+      "successSchema": "schemas/inventory.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 1048576
+    },
+    "open": {
+      "argv": ["open", "--json"],
+      "successSchema": "schemas/open.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    },
+    "create": {
+      "argv": ["create", "--json"],
+      "successSchema": "schemas/create.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    },
+    "rename": {
+      "argv": ["rename", "--json"],
+      "successSchema": "schemas/rename.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    },
+    "kill": {
+      "argv": ["kill", "--json"],
+      "successSchema": "schemas/kill.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    }
+  },
+  "schemas": {
+    "common": "schemas/common.schema.json",
+    "error": "schemas/error.schema.json",
+    "inventory": "schemas/inventory.schema.json",
+    "open": "schemas/open.schema.json",
+    "create": "schemas/create.schema.json",
+    "rename": "schemas/rename.schema.json",
+    "kill": "schemas/kill.schema.json"
+  },
+  "limits": {
+    "inventoryStdoutBytes": 1048576,
+    "lifecycleStdoutBytes": 262144,
+    "stderrBytes": 65536,
+    "maxHosts": 128,
+    "maxSessionsPerHost": 256,
+    "maxPanesPerHost": 512,
+    "maxInventoryStringCodePoints": 16384,
+    "maxLifecycleStringCodePoints": 4096,
+    "maxErrorMessageCodePoints": 4096,
+    "maxTimestampValue": 9223372036854775807,
+    "inventoryTimestampUnit": "unix-milliseconds",
+    "sessionTimestampUnit": "unix-seconds"
+  },
+  "wire": {
+    "encoding": "UTF-8",
+    "documentCount": 1,
+    "finalLineFeedBytes": 1,
+    "trailingBytes": 0,
+    "duplicateObjectKeys": "reject",
+    "nonFiniteNumbers": "reject"
+  },
+  "fixtures": {
+    "index": "fixtures/index.json",
+    "validDirectory": "fixtures/valid",
+    "invalidDirectory": "fixtures/invalid",
+    "requiredGroups": ["inventory", "lifecycle", "errors", "raw-wire", "semantic"]
+  },
+  "bundle": {
+    "checksums": "SHA256SUMS",
+    "digestAlgorithm": "sha256",
+    "digestInput": "the exact UTF-8 bytes of SHA256SUMS"
+  }
+}

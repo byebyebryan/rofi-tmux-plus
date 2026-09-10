@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "usage: $0 /path/to/rofi-ssh-plus" >&2
+  exit 2
+fi
+
+source_checkout=$(cd -- "$1" && pwd)
+source_root=$(cd -- "${source_checkout}/contracts/host-mesh-v1" && pwd)
+target_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../contracts/host-mesh-v1" && pwd)
+
+SOURCE_CHECKOUT="$source_checkout" SOURCE_ROOT="$source_root" TARGET_ROOT="$target_root" python3 - <<'PY'
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+from pathlib import Path
+
+source_checkout = Path(os.environ["SOURCE_CHECKOUT"])
+source = Path(os.environ["SOURCE_ROOT"])
+target = Path(os.environ["TARGET_ROOT"])
+
+
+def manifest(root: Path) -> tuple[bytes, dict[str, str]]:
+    path = root / "SHA256SUMS"
+    raw = path.read_bytes()
+    if not raw.endswith(b"\n"):
+        raise SystemExit(f"checksum manifest has no final LF: {path}")
+    entries: dict[str, str] = {}
+    previous: bytes | None = None
+    for line in raw.splitlines(keepends=True):
+        match = re.fullmatch(rb"([0-9a-f]{64})  ([^\x00\r\n]+)\n", line)
+        if match is None:
+            raise SystemExit(f"invalid checksum manifest: {path}")
+        name_bytes, digest_bytes = match.group(2), match.group(1)
+        if previous is not None and name_bytes <= previous:
+            raise SystemExit(f"unsorted checksum manifest: {path}")
+        try:
+            name = name_bytes.decode("utf-8")
+            digest = digest_bytes.decode("ascii")
+        except UnicodeDecodeError:
+            raise SystemExit(f"non-UTF-8 checksum path: {path}") from None
+        if name in entries or name == "SHA256SUMS":
+            raise SystemExit(f"duplicate or self checksum entry: {path}")
+        entries[name] = digest
+        previous = name_bytes
+    actual = {
+        item.relative_to(root).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()
+        for item in root.rglob("*")
+        if item.is_file() and item.name not in {"SHA256SUMS", "SOURCE.json"}
+    }
+    if entries != actual:
+        raise SystemExit(f"checksum coverage mismatch: {root}")
+    return raw, entries
+
+
+source_raw, _ = manifest(source)
+target_raw, _ = manifest(target)
+if source_raw != target_raw:
+    raise SystemExit("Host Mesh SHA256SUMS differs from upstream")
+source_files = {
+    item.relative_to(source).as_posix()
+    for item in source.rglob("*")
+    if item.is_file() and item.name != "SHA256SUMS"
+}
+target_files = {
+    item.relative_to(target).as_posix()
+    for item in target.rglob("*")
+    if item.is_file() and item.name not in {"SHA256SUMS", "SOURCE.json"}
+}
+if source_files != target_files:
+    raise SystemExit("Host Mesh vendored file set differs from upstream")
+for name in sorted(source_files):
+    if (source / name).read_bytes() != (target / name).read_bytes():
+        raise SystemExit(f"Host Mesh vendored file differs: {name}")
+
+provenance = json.loads((target / "SOURCE.json").read_text(encoding="utf-8"))
+if (
+    not isinstance(provenance, dict)
+    or set(provenance)
+    != {
+        "contract",
+        "upstreamRepository",
+        "sourceState",
+        "sourceCommit",
+        "bundleDigest",
+    }
+    or provenance.get("contract") != "host-mesh-v1"
+    or provenance.get("upstreamRepository")
+    != "https://github.com/byebyebryan/rofi-ssh-plus"
+    or provenance.get("sourceState") != "released"
+    or re.fullmatch(r"[0-9a-f]{40}", str(provenance.get("sourceCommit"))) is None
+    or provenance.get("bundleDigest")
+    != "sha256:" + hashlib.sha256(source_raw).hexdigest()
+):
+    raise SystemExit("Host Mesh SOURCE.json does not describe the released bundle")
+head = subprocess.run(
+    ["git", "-C", str(source_checkout), "rev-parse", "HEAD"],
+    check=True,
+    capture_output=True,
+    text=True,
+).stdout.strip()
+if head != provenance["sourceCommit"]:
+    raise SystemExit("Host Mesh checkout HEAD differs from released provenance")
+dirty = subprocess.run(
+    [
+        "git",
+        "-C",
+        str(source_checkout),
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--",
+        "contracts/host-mesh-v1",
+    ],
+    check=True,
+    capture_output=True,
+    text=True,
+).stdout
+if dirty:
+    raise SystemExit("Host Mesh checkout bundle differs from its released commit")
+print(f"Host Mesh released bundle matches {head}")
+PY

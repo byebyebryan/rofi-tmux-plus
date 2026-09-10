@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "error.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "error"],
+  "properties": {
+    "schemaVersion": {"$ref": "common.schema.json#/$defs/schemaVersion"},
+    "ok": {"type": "boolean", "const": false},
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"},
+        "message": {"$ref": "common.schema.json#/$defs/lifecycleText"},
+        "hostId": {"$ref": "common.schema.json#/$defs/lifecycleIdentifier"}
+      }
+    }
+  }
+}

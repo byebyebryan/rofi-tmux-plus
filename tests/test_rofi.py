@@ -1176,7 +1176,7 @@ class EntryPointTests(unittest.TestCase):
                     "schemaVersion": 1,
                     "generatedAt": 1,
                     "meshRevision": None,
-                    "hosts": [],
+                    "hosts": [host("local", "Local", local=True)],
                 }
             },
         )()
@@ -1189,7 +1189,7 @@ class EntryPointTests(unittest.TestCase):
         ):
             self.assertEqual(0, cli.main(["inventory", "--json"]))
         run.assert_not_called()
-        self.assertEqual([], json.loads(output.getvalue())["hosts"])
+        self.assertEqual("local", json.loads(output.getvalue())["hosts"][0]["hostId"])
 
     def test_contract_command_wins_over_inherited_rofi_callback_environment(self) -> None:
         inventory = type(
@@ -1200,7 +1200,7 @@ class EntryPointTests(unittest.TestCase):
                     "schemaVersion": 1,
                     "generatedAt": 1,
                     "meshRevision": None,
-                    "hosts": [],
+                    "hosts": [host("local", "Local", local=True)],
                 }
             },
         )()
@@ -1221,4 +1221,4 @@ class EntryPointTests(unittest.TestCase):
         ):
             self.assertEqual(0, cli.main(["inventory", "--json"]))
         run.assert_not_called()
-        self.assertEqual([], json.loads(output.getvalue())["hosts"])
+        self.assertEqual("local", json.loads(output.getvalue())["hosts"][0]["hostId"])

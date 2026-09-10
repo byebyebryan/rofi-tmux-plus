@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contract.json",
+  "contract": "host-mesh-v1",
+  "contractName": "Host Mesh",
+  "schemaVersion": 1,
+  "version": 1,
+  "commands": {
+    "list": {
+      "argv": ["mesh", "list", "--json"],
+      "successSchema": "schemas/list.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero"
+    },
+    "report-route": {
+      "argv": ["mesh", "report-route", "--json"],
+      "successSchema": "schemas/report-route.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero"
+    }
+  },
+  "schemas": {
+    "common": "schemas/common.schema.json",
+    "error": "schemas/error.schema.json",
+    "list": "schemas/list.schema.json",
+    "reportRoute": "schemas/report-route.schema.json"
+  },
+  "limits": {
+    "stdoutBytes": 524288,
+    "stderrBytes": 65536,
+    "maxHosts": 128,
+    "maxStringCodePoints": 16384,
+    "maxErrorMessageCodePoints": 4096,
+    "maxSourceCodePoints": 64,
+    "maxTimestampMilliseconds": 9223372036854775807
+  },
+  "wire": {
+    "encoding": "UTF-8",
+    "documentCount": 1,
+    "finalLineFeedBytes": 1,
+    "trailingBytes": 0,
+    "duplicateObjectKeys": "reject"
+  },
+  "fixtures": {
+    "index": "fixtures/index.json",
+    "validDirectory": "fixtures/valid",
+    "invalidDirectory": "fixtures/invalid",
+    "requiredGroups": [
+      "list",
+      "report-route",
+      "errors",
+      "raw-wire",
+      "semantic"
+    ]
+  },
+  "bundle": {
+    "checksums": "SHA256SUMS",
+    "digestAlgorithm": "sha256",
+    "digestInput": "the exact UTF-8 bytes of SHA256SUMS"
+  }
+}

@@ -3,7 +3,7 @@
   "mesh": {
     "schemaVersion": 1,
     "generatedAt": 1722743000123,
-    "meshRevision": "sha256:fixture",
+    "meshRevision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "localHostId": "alpha",
     "sshPolicy": {
       "executable": "ssh",

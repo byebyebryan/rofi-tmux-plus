@@ -5,9 +5,36 @@ private retained remote cache and refresh lifecycle, the complete Rofi
 browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
 and operator acceptance are complete. P7 removed the redundant
 picker-model read before a successful typed open; lifecycle still revalidates
-the current Mesh and exact stable reference. Managed publication and deployment
-are coordinated through chezmoi. P8 flat-scope navigation is implemented in
-this repository; the coordinated suite cutover remains a cross-repository gate.
+the current Mesh and exact stable reference. The coordinated P8 flat-scope
+navigation cutover is published, deployed, and operator-accepted. The P9
+producer and consumer implementation and canonical bundles are published in
+this repository; managed suite deployment is coordinated through chezmoi.
+
+## P9 locked CLI contracts
+
+Tmux Plus has both P9 roles. As a Host Mesh consumer, it vendors the complete
+canonical Host Mesh v1 bundle with one exact producer-provenance record, then
+continues to parse the subprocess output independently. As the Tmux Session
+producer, it publishes a complete bundle of canonical Draft 2020-12 schemas,
+machine metadata, normative semantic rules, checksums, and synthetic valid plus
+raw-invalid fixtures for inventory and every lifecycle response.
+
+P9 keeps the existing executable boundary through `PATH`; it adds no Python
+dependency on SSH Plus and no static remote-host fallback. Failure to resolve an
+executable SSH Plus command continues to select the existing local-only
+identity. Once a path resolves, launch failure, disappearance, oversized or
+malformed output, and incompatibility remain visible failures.
+
+Inventory and lifecycle stdout remain one strict UTF-8 JSON document followed
+by exactly one LF. Stderr is bounded diagnostics only, numeric nonzero exit
+codes carry no domain meaning, and only a matching typed error/nonzero-exit pair
+may influence documented pre-action recovery. Ambiguous transport or response
+failure never repeats a lifecycle action. Per-host inventory failures remain
+data in a successful top-level inventory.
+
+The P9 artifacts describe and test the current v1 semantics; they do not add a
+runtime handshake or reopen P8 navigation. The coordinated suite design and
+rollout boundary live in the managed `rofi-plus-p9-cli-contracts.md` document.
 
 ## P8 flat-scope implementation
 

@@ -1,0 +1,11 @@
+{
+  "routeHealthTtlSeconds": 300,
+  "routes": [
+    {"destination": "beta-vpn.test", "configuredIndex": 0, "lastUnreachableAt": 800000},
+    {"destination": "beta-lan.test", "configuredIndex": 1, "lastUnreachableAt": null}
+  ],
+  "observations": [
+    {"now": 800001, "expectedOrder": ["beta-lan.test", "beta-vpn.test"]},
+    {"now": 1100000, "expectedOrder": ["beta-vpn.test", "beta-lan.test"]}
+  ]
+}

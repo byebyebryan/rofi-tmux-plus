@@ -14,8 +14,48 @@ for root in (
     Path("contracts/tmux-session-v1/fixtures"),
     Path("contracts/host-mesh-v1/fixtures"),
 ):
-    for fixture in root.glob("*.json"):
+    for fixture in root.rglob("*.json"):
         json.loads(fixture.read_text(encoding="utf-8"))
+PY
+
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+from __future__ import annotations
+
+import hashlib
+import re
+from pathlib import Path
+
+for bundle in (Path("contracts/host-mesh-v1"), Path("contracts/tmux-session-v1")):
+    checksum = bundle / "SHA256SUMS"
+    lines = checksum.read_bytes().splitlines(keepends=True)
+    entries: list[tuple[str, str]] = []
+    pattern = re.compile(rb"^([0-9a-f]{64})  ([^\x00\r\n]+)\n$")
+    for line in lines:
+        match = pattern.fullmatch(line)
+        if match is None:
+            raise SystemExit(f"invalid checksum line: {checksum}")
+        entries.append((match.group(2).decode("utf-8"), match.group(1).decode("ascii")))
+    names = [name for name, _digest in entries]
+    if names != sorted(names, key=lambda item: item.encode("utf-8")):
+        raise SystemExit(f"unsorted checksum entries: {checksum}")
+    if len(names) != len(set(names)):
+        raise SystemExit(f"duplicate checksum entry: {checksum}")
+    excluded = {"SHA256SUMS"}
+    if bundle.name == "host-mesh-v1":
+        excluded.add("SOURCE.json")
+    actual = sorted(
+        (
+            path.relative_to(bundle).as_posix()
+            for path in bundle.rglob("*")
+            if path.is_file() and path.name not in excluded
+        ),
+        key=lambda item: item.encode("utf-8"),
+    )
+    if names != actual:
+        raise SystemExit(f"checksum coverage mismatch: {bundle}")
+    for name, digest in entries:
+        if hashlib.sha256((bundle / name).read_bytes()).hexdigest() != digest:
+            raise SystemExit(f"checksum mismatch: {bundle / name}")
 PY
 
 command -v ruff >/dev/null
@@ -24,6 +64,8 @@ ruff check rofi_tmux_plus tests
 ruff format --check rofi_tmux_plus tests
 command -v shellcheck >/dev/null
 shellcheck scripts/check
+test -x scripts/check-contract-sync
+shellcheck scripts/check-contract-sync
 
 # git diff --check cannot see untracked files. Scan every tracked or
 # candidate-untracked text file and deliberately skip binary/deleted entries.
@@ -45,6 +87,8 @@ problems: list[str] = []
 for name in paths:
     path = Path(name)
     if not path.exists():
+        continue
+    if path.suffix == ".bin":
         continue
     try:
         data = path.read_bytes()
@@ -74,7 +118,7 @@ test -x scripts/check
 test -f pyproject.toml
 test -f docs/TMUX_SESSION_V1.md
 test -f contracts/tmux-session-v1/fixtures/envelopes.json
-test -f contracts/host-mesh-v1/fixtures/consumer-inventory-v1.json
+test -f tests/fixtures/consumer-inventory-v1.json
 test -f contracts/host-mesh-v1/fixtures/reached-markers.json
 
 mapfile -t candidate_files < <(git ls-files --cached --others --exclude-standard -- rofi_tmux_plus tests bin scripts contracts)

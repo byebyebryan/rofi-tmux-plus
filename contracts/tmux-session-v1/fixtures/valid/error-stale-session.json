@@ -1,0 +1,1 @@
+{"schemaVersion":1,"ok":false,"error":{"code":"stale_session","message":"the selected tmux session changed; refresh and try again","hostId":"local"}}

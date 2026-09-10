@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kill.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "meshRevision", "reference", "observedClients"],
+  "properties": {
+    "schemaVersion": {"$ref": "common.schema.json#/$defs/schemaVersion"},
+    "ok": {"type": "boolean", "const": true},
+    "meshRevision": {"$ref": "common.schema.json#/$defs/nullableRevision"},
+    "reference": {"$ref": "common.schema.json#/$defs/reference"},
+    "observedClients": {"$ref": "common.schema.json#/$defs/count"}
+  }
+}

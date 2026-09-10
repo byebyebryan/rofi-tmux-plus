@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "error": {
+    "code": "persistence_failed",
+    "message": "fixture"
+  }
+}

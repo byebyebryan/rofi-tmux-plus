@@ -23,6 +23,10 @@ class BoundedCompleted:
     stderr: str
     timed_out: bool = False
     overflow_streams: frozenset[str] = frozenset()
+    # Keep the historical decoded fields for the remote framing callers, but
+    # retain the complete bounded bytes for strict public JSON consumers.
+    stdout_bytes: bytes | None = None
+    stderr_bytes: bytes | None = None
 
 
 def run_bounded(
@@ -120,4 +124,6 @@ def run_bounded(
         bytes(stderr).decode("utf-8", errors="replace"),
         timed_out=timed_out,
         overflow_streams=frozenset(overflow_streams),
+        stdout_bytes=bytes(stdout),
+        stderr_bytes=bytes(stderr),
     )

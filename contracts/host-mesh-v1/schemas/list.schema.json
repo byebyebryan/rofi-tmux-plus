@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "list.schema.json",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "meshRevision",
+    "localHostId",
+    "sshPolicy",
+    "hosts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "generatedAt": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "meshRevision": {
+      "$ref": "common.schema.json#/$defs/revision"
+    },
+    "localHostId": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "sshPolicy": {
+      "$ref": "common.schema.json#/$defs/sshPolicy"
+    },
+    "hosts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "common.schema.json#/$defs/host"
+      }
+    }
+  }
+}

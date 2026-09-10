@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "$comment": "Shared definitions for Host Mesh v1. Object boundaries remain extensible unless a command schema says otherwise.",
+  "$defs": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036854775807
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^(?!-)[^\\s\\u0000-\\u001f\\u007f\\u0080-\\u009f]+$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "display": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f\\u0080-\\u009f](?:[^\\u0000-\\u001f\\u007f\\u0080-\\u009f]*[^\\s\\u0000-\\u001f\\u007f\\u0080-\\u009f])?$"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f\\u0080-\\u009f]+$"
+    },
+    "errorCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "sshPolicy": {
+      "type": "object",
+      "required": [
+        "executable",
+        "connectTimeoutSeconds",
+        "connectionAttempts",
+        "routeHealthTtlSeconds"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/token"
+        },
+        "connectTimeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "connectionAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "routeHealthTtlSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": [
+        "destination",
+        "configuredIndex",
+        "lastReachableAt",
+        "lastUnreachableAt"
+      ],
+      "properties": {
+        "destination": {
+          "$ref": "#/$defs/token"
+        },
+        "configuredIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lastReachableAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastUnreachableAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "required": [
+        "id",
+        "display",
+        "local",
+        "aliases",
+        "routes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "display": {
+          "$ref": "#/$defs/display"
+        },
+        "local": {
+          "type": "boolean"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/token"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          }
+        }
+      }
+    }
+  }
+}

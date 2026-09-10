@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "$comment": "Shared Tmux Session v1 definitions. Object boundaries are extensible.",
+  "$defs": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "timestamp": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+    "count": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+    "text": {"type": "string", "minLength": 1, "maxLength": 16384},
+    "nullableText": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+    "lifecycleText": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "nullableLifecycleText": {"anyOf": [{"$ref": "#/$defs/lifecycleText"}, {"type": "null"}]},
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^(?!-)[^\\s\\u0000-\\u001f\\u007f\\u0080-\\u009f]+$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "lifecycleIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nullableRevision": {"anyOf": [{"$ref": "#/$defs/revision"}, {"type": "null"}]},
+    "generation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "lifecycleGeneration": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "sessionId": {"type": "string", "pattern": "^\\$[0-9]+$", "maxLength": 4096},
+    "paneId": {"type": "string", "pattern": "^%[0-9]+$", "maxLength": 4096},
+    "userOption": {"type": "string", "pattern": "^@[A-Za-z0-9_.-]+$", "maxLength": 4096},
+    "status": {"type": "string", "enum": ["ok", "unreachable", "tmux_missing", "error"]},
+    "paneInventory": {
+      "type": "object",
+      "required": ["paneId", "pid", "currentPath", "currentCommand"],
+      "properties": {
+        "paneId": {"$ref": "#/$defs/paneId"},
+        "pid": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "currentPath": {"$ref": "#/$defs/nullableText"},
+        "currentCommand": {"$ref": "#/$defs/nullableText"}
+      }
+    },
+    "paneLifecycle": {
+      "type": "object",
+      "required": ["paneId", "pid", "currentPath", "currentCommand"],
+      "properties": {
+        "paneId": {"$ref": "#/$defs/paneId"},
+        "pid": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "currentPath": {"$ref": "#/$defs/nullableLifecycleText"},
+        "currentCommand": {"$ref": "#/$defs/nullableLifecycleText"}
+      }
+    },
+    "options": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/userOption"},
+      "additionalProperties": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}
+    },
+    "optionsLifecycle": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/userOption"},
+      "additionalProperties": {"anyOf": [{"$ref": "#/$defs/lifecycleText"}, {"type": "null"}]}
+    },
+    "sessionInventory": {
+      "type": "object",
+      "required": [
+        "hostId", "serverGeneration", "sessionId", "createdAt", "name",
+        "activityAt", "lastAttachedAt", "attachedClients", "pending",
+        "windowCount", "sessionPath", "currentWindow", "currentPath"
+      ],
+      "properties": {
+        "hostId": {"$ref": "#/$defs/identifier"},
+        "serverGeneration": {"$ref": "#/$defs/generation"},
+        "sessionId": {"$ref": "#/$defs/sessionId"},
+        "createdAt": {"$ref": "#/$defs/timestamp"},
+        "name": {"$ref": "#/$defs/nullableText"},
+        "activityAt": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "lastAttachedAt": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "attachedClients": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "pending": {"type": "boolean"},
+        "windowCount": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "sessionPath": {"$ref": "#/$defs/nullableText"},
+        "currentWindow": {"$ref": "#/$defs/nullableText"},
+        "currentPath": {"$ref": "#/$defs/nullableText"},
+        "panes": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/paneInventory"}},
+        "options": {"$ref": "#/$defs/options"}
+      }
+    },
+    "sessionLifecycle": {
+      "type": "object",
+      "required": [
+        "hostId", "serverGeneration", "sessionId", "createdAt", "name",
+        "activityAt", "lastAttachedAt", "attachedClients", "pending",
+        "windowCount", "sessionPath", "currentWindow", "currentPath"
+      ],
+      "properties": {
+        "hostId": {"$ref": "#/$defs/lifecycleIdentifier"},
+        "serverGeneration": {"$ref": "#/$defs/lifecycleGeneration"},
+        "sessionId": {"$ref": "#/$defs/sessionId"},
+        "createdAt": {"$ref": "#/$defs/timestamp"},
+        "name": {"$ref": "#/$defs/nullableLifecycleText"},
+        "activityAt": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "lastAttachedAt": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "attachedClients": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "pending": {"type": "boolean"},
+        "windowCount": {"anyOf": [{"$ref": "#/$defs/count"}, {"type": "null"}]},
+        "sessionPath": {"$ref": "#/$defs/nullableLifecycleText"},
+        "currentWindow": {"$ref": "#/$defs/nullableLifecycleText"},
+        "currentPath": {"$ref": "#/$defs/nullableLifecycleText"},
+        "panes": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/paneLifecycle"}},
+        "options": {"$ref": "#/$defs/optionsLifecycle"}
+      }
+    },
+    "hostRow": {
+      "type": "object",
+      "required": [
+        "hostId", "display", "local", "status", "observedAt", "nativeHostname",
+        "serverGeneration", "route", "sessions"
+      ],
+      "properties": {
+        "hostId": {"$ref": "#/$defs/identifier"},
+        "display": {"$ref": "#/$defs/text"},
+        "local": {"type": "boolean"},
+        "status": {"$ref": "#/$defs/status"},
+        "observedAt": {"$ref": "#/$defs/timestamp"},
+        "nativeHostname": {"$ref": "#/$defs/nullableText"},
+        "serverGeneration": {"anyOf": [{"$ref": "#/$defs/generation"}, {"type": "null"}]},
+        "route": {"$ref": "#/$defs/nullableText"},
+        "sessions": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/sessionInventory"}},
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"},
+            "message": {"$ref": "#/$defs/lifecycleText"}
+          }
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["hostId", "serverGeneration", "sessionId", "createdAt"],
+      "properties": {
+        "hostId": {"$ref": "#/$defs/lifecycleIdentifier"},
+        "serverGeneration": {"$ref": "#/$defs/lifecycleGeneration"},
+        "sessionId": {"$ref": "#/$defs/sessionId"},
+        "createdAt": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  }
+}

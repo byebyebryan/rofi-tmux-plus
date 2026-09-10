@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "create.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "meshRevision", "session"],
+  "properties": {
+    "schemaVersion": {"$ref": "common.schema.json#/$defs/schemaVersion"},
+    "ok": {"type": "boolean", "const": true},
+    "meshRevision": {"$ref": "common.schema.json#/$defs/nullableRevision"},
+    "session": {"$ref": "common.schema.json#/$defs/sessionLifecycle"},
+    "focused": {"type": "boolean"},
+    "terminalLaunched": {"type": "boolean"}
+  }
+}

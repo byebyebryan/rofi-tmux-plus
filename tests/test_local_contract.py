@@ -472,6 +472,8 @@ class UnitContractTests(unittest.TestCase):
             "setup-rollback.json",
             "deferred-timeout.json",
             "envelopes.json",
+            "index.json",
+            "local-identity-matrix.json",
         }
         self.assertEqual({path.name for path in root.glob("*.json")}, expected)
         for path in root.glob("*.json"):
@@ -618,8 +620,23 @@ class FocusAndCliTests(unittest.TestCase):
 
     def test_cli_open_and_create_dispatch_and_invalid_reference_envelope(self) -> None:
         fake = MagicMock()
-        fake.open.return_value = {"schemaVersion": 1, "ok": True}
-        fake.create.return_value = {"schemaVersion": 1, "ok": True}
+        descriptor = {
+            **self.session.as_dict(),
+        }
+        fake.open.return_value = {
+            "schemaVersion": 1,
+            "ok": True,
+            "meshRevision": None,
+            "session": descriptor,
+            "focused": True,
+            "terminalLaunched": False,
+        }
+        fake.create.return_value = {
+            "schemaVersion": 1,
+            "ok": True,
+            "meshRevision": None,
+            "session": descriptor,
+        }
         with patch("rofi_tmux_plus.cli._lifecycle", return_value=fake):
             status, result = self._main_json(
                 [
@@ -664,7 +681,14 @@ class FocusAndCliTests(unittest.TestCase):
 
     def test_cli_open_required_options_are_open_only_and_conflict_safe(self) -> None:
         fake = MagicMock()
-        fake.open.return_value = {"schemaVersion": 1, "ok": True}
+        fake.open.return_value = {
+            "schemaVersion": 1,
+            "ok": True,
+            "meshRevision": None,
+            "session": self.session.as_dict(),
+            "focused": True,
+            "terminalLaunched": False,
+        }
         valid_open = [
             "open",
             "--json",

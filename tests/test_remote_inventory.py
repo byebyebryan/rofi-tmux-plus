@@ -33,6 +33,12 @@ def _completed(stdout: str, stderr: str = "", code: int = 0) -> subprocess.Compl
     return subprocess.CompletedProcess(["fake"], code, stdout, stderr)
 
 
+def _json_completed(
+    stdout: str, stderr: str = "", code: int = 0
+) -> subprocess.CompletedProcess[str]:
+    return _completed(stdout.rstrip("\n") + "\n", stderr, code)
+
+
 def _field(value: str, *, tmux_output: bool = True) -> str:
     raw = value.encode("utf-8") + (b"\n" if tmux_output else b"")
     return raw.hex()
@@ -109,13 +115,7 @@ class FakeAdapter:
 
 class HostMeshAdapterTests(unittest.TestCase):
     def setUp(self) -> None:
-        fixture = (
-            Path(__file__).parents[1]
-            / "contracts"
-            / "host-mesh-v1"
-            / "fixtures"
-            / "consumer-inventory-v1.json"
-        )
+        fixture = Path(__file__).parents[1] / "tests" / "fixtures" / "consumer-inventory-v1.json"
         self.payload = json.loads(fixture.read_text(encoding="utf-8"))["mesh"]
 
     def test_missing_provider_is_the_only_local_fallback(self) -> None:
@@ -126,11 +126,14 @@ class HostMeshAdapterTests(unittest.TestCase):
         payload = {**self.payload, "future": {"ignored": True}}
         adapter = HostMeshAdapter(
             which=lambda _name: "/fake/rofi-ssh-plus",
-            runner=lambda *_args, **_kwargs: _completed(json.dumps(payload)),
+            runner=lambda *_args, **_kwargs: _json_completed(json.dumps(payload)),
         )
         snapshot = adapter.load()
         assert snapshot is not None
-        self.assertEqual(snapshot.revision, "sha256:fixture")
+        self.assertEqual(
+            snapshot.revision,
+            "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        )
         self.assertEqual([host.host_id for host in snapshot.hosts], ["alpha", "beta", "gamma"])
         self.assertEqual(snapshot.local_host.aliases[0], "alpha")
         self.assertEqual(snapshot.resolve_host("BETA-NATIVE").host_id, "beta")
@@ -142,16 +145,16 @@ class HostMeshAdapterTests(unittest.TestCase):
         payload["hosts"][2]["aliases"].append("beta-vpn.test")
         adapter = HostMeshAdapter(
             which=lambda _name: "/fake/rofi-ssh-plus",
-            runner=lambda *_args, **_kwargs: _completed(json.dumps(payload)),
+            runner=lambda *_args, **_kwargs: _json_completed(json.dumps(payload)),
         )
         with self.assertRaisesRegex(ContractError, "ambiguous"):
             adapter.load()
 
     def test_nonzero_malformed_and_unsupported_provider_are_visible_failures(self) -> None:
         cases = [
-            _completed("not json"),
-            _completed(json.dumps({**self.payload, "schemaVersion": 2})),
-            _completed(
+            _json_completed("not json"),
+            _json_completed(json.dumps({**self.payload, "schemaVersion": 2})),
+            _json_completed(
                 json.dumps({"schemaVersion": 1, "ok": False, "error": {"code": "invalid_config"}}),
                 code=1,
             ),
@@ -167,8 +170,14 @@ class HostMeshAdapterTests(unittest.TestCase):
     def test_report_stale_revision_is_preserved(self) -> None:
         adapter = HostMeshAdapter(
             which=lambda _name: "/fake/rofi-ssh-plus",
-            runner=lambda *_args, **_kwargs: _completed(
-                json.dumps({"schemaVersion": 1, "ok": False, "error": {"code": "stale_mesh"}}),
+            runner=lambda *_args, **_kwargs: _json_completed(
+                json.dumps(
+                    {
+                        "schemaVersion": 1,
+                        "ok": False,
+                        "error": {"code": "stale_mesh", "message": "mesh changed"},
+                    }
+                ),
                 code=1,
             ),
         )
@@ -186,7 +195,7 @@ class HostMeshAdapterTests(unittest.TestCase):
 
         def runner(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
             calls.append(argv)
-            return _completed(json.dumps({"schemaVersion": 1, "ok": True, "accepted": True}))
+            return _json_completed(json.dumps({"schemaVersion": 1, "ok": True, "accepted": True}))
 
         adapter = HostMeshAdapter(which=lambda _name: "/fake/rofi-ssh-plus", runner=runner)
         self.assertTrue(
@@ -576,21 +585,16 @@ class _RemoteRows:
 
 class InventoryServiceTests(unittest.TestCase):
     def setUp(self) -> None:
-        fixture = (
-            Path(__file__).parents[1]
-            / "contracts"
-            / "host-mesh-v1"
-            / "fixtures"
-            / "consumer-inventory-v1.json"
-        )
+        fixture = Path(__file__).parents[1] / "tests" / "fixtures" / "consumer-inventory-v1.json"
         payload = json.loads(fixture.read_text(encoding="utf-8"))["mesh"]
         adapter = HostMeshAdapter(
             which=lambda _name: "/fake",
-            runner=lambda *_args, **_kwargs: _completed(json.dumps(payload)),
+            runner=lambda *_args, **_kwargs: _json_completed(json.dumps(payload)),
         )
         snapshot = adapter.load()
         assert snapshot is not None
         self.snapshot = snapshot
+        self.revision = snapshot.revision
 
     def test_mesh_selection_order_dedupe_revision_and_partial_remote_rows(self) -> None:
         remote = _RemoteRows()
@@ -602,7 +606,7 @@ class InventoryServiceTests(unittest.TestCase):
         )
         result = service.inventory(
             requested_hosts=["gamma", "beta", "beta-native"],
-            mesh_revision="sha256:fixture",
+            mesh_revision=self.revision,
             panes=False,
             option_names=[],
         )
@@ -627,7 +631,7 @@ class InventoryServiceTests(unittest.TestCase):
         )
         result = service.inventory(
             requested_hosts=["beta", "alpha-native", "alpha", "beta-native"],
-            mesh_revision="sha256:fixture",
+            mesh_revision=self.revision,
             panes=False,
             option_names=["@state", "@state"],
         )
@@ -665,7 +669,7 @@ class InventoryServiceTests(unittest.TestCase):
         with self.assertRaises(MeshStaleError):
             service.inventory(
                 requested_hosts=["beta"],
-                mesh_revision="sha256:fixture",
+                mesh_revision=self.revision,
                 panes=False,
                 option_names=[],
             )
@@ -709,7 +713,7 @@ class InventoryServiceTests(unittest.TestCase):
         with self.assertRaises(MeshStaleError):
             service.inventory(
                 requested_hosts=["beta", "gamma"],
-                mesh_revision="sha256:fixture",
+                mesh_revision=self.revision,
                 panes=False,
                 option_names=[],
             )

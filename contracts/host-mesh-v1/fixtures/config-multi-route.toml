@@ -1,0 +1,23 @@
+schema_version = 1
+
+local_id = "alpha"
+local_display = "Alpha"
+local_aliases = ["alpha-native"]
+
+[ssh]
+executable = "ssh"
+connect_timeout_seconds = 3
+connection_attempts = 2
+route_health_ttl_seconds = 300
+
+[[hosts]]
+id = "beta"
+display = "Beta"
+routes = ["beta-vpn.test", "beta-lan.test"]
+aliases = ["beta-native"]
+
+[[hosts]]
+id = "gamma"
+display = "Gamma"
+routes = ["gamma.test"]
+aliases = ["gamma-native"]

@@ -1,0 +1,16 @@
+{
+  "success": {
+    "schemaVersion": 1,
+    "ok": true,
+    "accepted": true
+  },
+  "errors": {
+    "invalid_input": {"schemaVersion": 1, "ok": false, "error": {"code": "invalid_input", "message": "fixture"}},
+    "invalid_config": {"schemaVersion": 1, "ok": false, "error": {"code": "invalid_config", "message": "fixture"}},
+    "unsupported_schema": {"schemaVersion": 1, "ok": false, "error": {"code": "unsupported_schema", "message": "fixture"}},
+    "unknown_host": {"schemaVersion": 1, "ok": false, "error": {"code": "unknown_host", "message": "fixture"}},
+    "unknown_route": {"schemaVersion": 1, "ok": false, "error": {"code": "unknown_route", "message": "fixture"}},
+    "stale_mesh": {"schemaVersion": 1, "ok": false, "error": {"code": "stale_mesh", "message": "fixture"}},
+    "persistence_failed": {"schemaVersion": 1, "ok": false, "error": {"code": "persistence_failed", "message": "fixture"}}
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "contract": "tmux-session-v1",
+  "schemaVersion": 1,
+  "cases": [
+    {"name": "inventory-no-server", "command": ["inventory", "--json"], "fixture": "valid/inventory-no-server.json", "kind": "document", "schema": "schemas/inventory.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "inventory-running-empty", "command": ["inventory", "--json"], "fixture": "valid/inventory-running-empty.json", "kind": "document", "schema": "schemas/inventory.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "inventory-multiple-sessions", "command": ["inventory", "--json"], "fixture": "valid/inventory-multiple-sessions.json", "kind": "document", "schema": "schemas/inventory.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "inventory-partial-host", "command": ["inventory", "--json"], "fixture": "valid/inventory-partial-host.json", "kind": "document", "schema": "schemas/inventory.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "open-success", "command": ["open", "--json"], "fixture": "valid/open-success.json", "kind": "document", "schema": "schemas/open.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "create-default", "command": ["create", "--json"], "fixture": "valid/create-default.json", "kind": "document", "schema": "schemas/create.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "create-deferred", "command": ["create", "--json"], "fixture": "valid/create-deferred.json", "kind": "document", "schema": "schemas/create.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "rename-success", "command": ["rename", "--json"], "fixture": "valid/rename-success.json", "kind": "document", "schema": "schemas/rename.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "kill-success", "command": ["kill", "--json"], "fixture": "valid/kill-success.json", "kind": "document", "schema": "schemas/kill.schema.json", "expectedExit": "zero", "expected": "accept"},
+    {"name": "error-unknown-host", "command": ["inventory", "--json"], "fixture": "valid/error-unknown-host.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-stale-mesh", "command": ["open", "--json"], "fixture": "valid/error-stale-mesh.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-session-exists", "command": ["create", "--json"], "fixture": "valid/error-session-exists.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-stale-session", "command": ["rename", "--json"], "fixture": "valid/error-stale-session.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-invalid-input", "command": ["create", "--json"], "fixture": "valid/error-invalid-input.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-invalid-cwd", "command": ["create", "--json"], "fixture": "valid/error-invalid-cwd.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-launch-failed", "command": ["open", "--json"], "fixture": "valid/error-launch-failed.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-tmux-missing", "command": ["inventory", "--json"], "fixture": "valid/error-tmux-missing.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-operation-failed", "command": ["kill", "--json"], "fixture": "valid/error-operation-failed.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-host-unreachable", "command": ["inventory", "--json"], "fixture": "valid/error-host-unreachable.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "error-session-not-found", "command": ["open", "--json"], "fixture": "valid/error-session-not-found.json", "kind": "document", "schema": "schemas/error.schema.json", "expectedExit": "nonzero", "expected": "accept"},
+    {"name": "raw-duplicate-object-key", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/duplicate-object-key.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "duplicate_key"},
+    {"name": "raw-extra-document", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/extra-document.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "extra_document"},
+    {"name": "raw-extra-final-lf", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/extra-final-lf.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "extra_final_lf"},
+    {"name": "raw-space-after-final-lf", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/space-after-final-lf.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "space_after_final_lf"},
+    {"name": "raw-trailing-byte", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/trailing-byte.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "trailing_byte"},
+    {"name": "raw-leading-bom", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/leading-bom.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "byte_order_mark"},
+    {"name": "raw-invalid-utf8", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/invalid-utf8.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "invalid_utf8"},
+    {"name": "raw-embedded-nul", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/embedded-nul.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "embedded_nul"},
+    {"name": "raw-missing-final-lf", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/missing-final-lf.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "missing_final_lf"},
+    {"name": "raw-non-finite-number", "command": ["inventory", "--json"], "appliesTo": ["inventory", "open", "create", "rename", "kill"], "fixture": "invalid/non-finite-number.bin", "kind": "raw", "schema": "schemas/inventory.schema.json", "expectedExit": "transport-failure", "expected": "reject", "reason": "non_finite_number"}
+  ],
+  "supportingFixtures": [
+    {"fixture": "README.md", "kind": "documentation", "group": "semantic"},
+    {
+      "fixture": "envelopes.json",
+      "kind": "envelope-catalog",
+      "group": "errors",
+      "responses": [
+        {"path": "success", "schema": "schemas/common.schema.json", "expectedExit": "zero"},
+        {"path": "errors.unknown_host", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.stale_mesh", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.host_unreachable", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.tmux_missing", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.session_not_found", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.session_exists", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.stale_session", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.invalid_input", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.invalid_cwd", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.launch_failed", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.operation_failed", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}
+      ]
+    },
+    {"fixture": "no-server.json", "kind": "semantic", "group": "inventory", "responses": [{"path": "response", "schema": "schemas/inventory.schema.json", "expectedExit": "zero"}]},
+    {"fixture": "running-empty.json", "kind": "semantic", "group": "inventory", "responses": [{"path": "response", "schema": "schemas/inventory.schema.json", "expectedExit": "zero"}]},
+    {"fixture": "multiple-sessions.json", "kind": "semantic", "group": "inventory", "responses": [{"path": "response", "schema": "schemas/inventory.schema.json", "expectedExit": "zero"}]},
+    {"fixture": "panes-options-pending.json", "kind": "semantic", "group": "inventory", "responses": [{"path": "response", "schema": "schemas/inventory.schema.json", "expectedExit": "zero"}]},
+    {
+      "fixture": "remote-lifecycle.json",
+      "kind": "semantic",
+      "group": "lifecycle",
+      "responses": [
+        {"path": "open", "schema": "schemas/open.schema.json", "expectedExit": "zero"},
+        {"path": "create", "schema": "schemas/create.schema.json", "expectedExit": "zero"},
+        {"path": "errors.stale_mesh", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.session_exists", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"},
+        {"path": "errors.stale_session", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}
+      ]
+    },
+    {"fixture": "create-default.json", "kind": "semantic", "group": "lifecycle", "responses": [{"path": "response", "schema": "schemas/create.schema.json", "expectedExit": "zero"}]},
+    {"fixture": "create-deferred.json", "kind": "semantic", "group": "lifecycle", "responses": [{"path": "response", "schema": "schemas/create.schema.json", "expectedExit": "zero"}]},
+    {
+      "fixture": "external-rename.json",
+      "kind": "semantic",
+      "group": "lifecycle",
+      "responses": [
+        {"path": "open", "schema": "schemas/open.schema.json", "expectedExit": "zero"},
+        {"path": "rename", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}
+      ]
+    },
+    {"fixture": "reused-session-id.json", "kind": "semantic", "group": "lifecycle", "responses": [{"path": "response", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}]},
+    {"fixture": "invalid-cwd.json", "kind": "semantic", "group": "errors", "responses": [{"path": "response", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}]},
+    {"fixture": "session-exists.json", "kind": "semantic", "group": "errors", "responses": [{"path": "response", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}]},
+    {"fixture": "setup-rollback.json", "kind": "semantic", "group": "errors", "responses": [{"path": "response", "schema": "schemas/error.schema.json", "expectedExit": "nonzero"}]},
+    {"fixture": "deferred-timeout.json", "kind": "semantic", "group": "lifecycle", "responses": []},
+    {"fixture": "local-identity-matrix.json", "kind": "semantic", "group": "identity", "responses": []}
+  ]
+}

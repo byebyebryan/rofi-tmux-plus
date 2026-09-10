@@ -1,0 +1,14 @@
+schema_version = 1
+local_id = "alpha"
+
+[[hosts]]
+id = "beta"
+display = "Beta"
+routes = ["beta.test"]
+aliases = ["shared"]
+
+[[hosts]]
+id = "gamma"
+display = "Gamma"
+routes = ["gamma.test"]
+aliases = ["SHARED"]

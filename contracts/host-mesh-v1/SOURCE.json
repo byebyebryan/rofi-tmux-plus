@@ -1,0 +1,7 @@
+{
+  "contract": "host-mesh-v1",
+  "upstreamRepository": "https://github.com/byebyebryan/rofi-ssh-plus",
+  "sourceState": "released",
+  "sourceCommit": "0845ceef771915788cab1dc0511c1c8e6f238b20",
+  "bundleDigest": "sha256:258e8df0562aea18a20db5378b3335b03332e3df0c0709faf49ccfbffa5c3e10"
+}

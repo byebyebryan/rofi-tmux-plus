@@ -2,7 +2,9 @@
 
 Status: local and Host Mesh-backed remote live inventory and lifecycle
 operations, the private retained remote cache and refresh lifecycle, and the
-complete Rofi browse/open/create/rename/kill UI are implemented.
+complete Rofi browse/open/create/rename/kill UI are implemented. P9 producer
+contracts and their canonical bundle are published in this repository; managed
+suite deployment is coordinated through chezmoi.
 
 This is the process boundary between generic tmux lifecycle and consumers such
 as `rofi-agent-plus`. All commands exchange versioned JSON. Consumers do not
@@ -67,7 +69,8 @@ The stable reference used by lifecycle operations is:
 ```
 
 `serverGeneration` is an opaque value derived from the live default server's
-socket path, server start time, and PID. Tmux session IDs are unique only
+socket path, server start time, and PID; it is bounded and excludes control
+characters. Tmux session IDs are unique only
 within that server generation. The generation, session ID, and creation time
 form the durable action identity; after validation, the session ID is used as
 the exact tmux target.
@@ -99,7 +102,7 @@ Successful output has this shape:
 {
   "schemaVersion": 1,
   "generatedAt": 1722743000123,
-  "meshRevision": "sha256:0123456789abcdef",
+  "meshRevision": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
   "hosts": [
     {
       "hostId": "desktop-a",
@@ -193,7 +196,7 @@ Successful output is:
 {
   "schemaVersion": 1,
   "ok": true,
-  "meshRevision": "sha256:0123456789abcdef",
+  "meshRevision": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
   "session": {
     "hostId": "desktop-a",
     "serverGeneration": "tmux-v1:1722741000:1234:/run/user/1000/tmux-1000/default",

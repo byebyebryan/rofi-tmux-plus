@@ -1,0 +1,217 @@
+{
+  "contract": "host-mesh-v1",
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "list-local-only",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "valid/list-local-only.json",
+      "kind": "document",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "zero",
+      "expected": "accept"
+    },
+    {
+      "name": "list-multi-route",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "valid/list-multi-route.json",
+      "kind": "document",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "zero",
+      "expected": "accept"
+    },
+    {
+      "name": "report-accepted",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/report-accepted.json",
+      "kind": "document",
+      "schema": "schemas/report-route.schema.json",
+      "expectedExit": "zero",
+      "expected": "accept",
+      "accepted": true
+    },
+    {
+      "name": "report-stale-observation",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/report-stale-observation.json",
+      "kind": "document",
+      "schema": "schemas/report-route.schema.json",
+      "expectedExit": "zero",
+      "expected": "accept",
+      "accepted": false
+    },
+    {
+      "name": "error-invalid-input",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "valid/error-invalid-input.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-invalid-config",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "valid/error-invalid-config.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-unsupported-schema",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "valid/error-unsupported-schema.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-unknown-host",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/error-unknown-host.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-unknown-route",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/error-unknown-route.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-stale-mesh",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/error-stale-mesh.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "error-persistence-failed",
+      "command": ["mesh", "report-route", "--json"],
+      "fixture": "valid/error-persistence-failed.json",
+      "kind": "document",
+      "schema": "schemas/error.schema.json",
+      "expectedExit": "nonzero",
+      "expected": "accept"
+    },
+    {
+      "name": "raw-duplicate-object-key",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/duplicate-object-key.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "duplicate_key"
+    },
+    {
+      "name": "raw-extra-document",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/extra-document.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "extra_document"
+    },
+    {
+      "name": "raw-extra-final-lf",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/extra-final-lf.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "extra_final_lf"
+    },
+    {
+      "name": "raw-space-after-final-lf",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/space-after-final-lf.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "space_after_final_lf"
+    },
+    {
+      "name": "raw-trailing-byte",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/trailing-byte.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "trailing_byte"
+    },
+    {
+      "name": "raw-leading-bom",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/leading-bom.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "byte_order_mark"
+    },
+    {
+      "name": "raw-invalid-utf8",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/invalid-utf8.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "invalid_utf8"
+    },
+    {
+      "name": "raw-embedded-nul",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/embedded-nul.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "embedded_nul"
+    },
+    {
+      "name": "raw-missing-final-lf",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/missing-final-lf.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "missing_final_lf"
+    },
+    {
+      "name": "raw-non-finite-number",
+      "command": ["mesh", "list", "--json"],
+      "fixture": "invalid/non-finite-number.bin",
+      "kind": "raw",
+      "schema": "schemas/list.schema.json",
+      "expectedExit": "transport-failure",
+      "expected": "reject",
+      "reason": "non_finite_number"
+    }
+  ],
+  "supportingFixtures": [
+    {"fixture": "config-local-only.toml", "kind": "semantic", "group": "list"},
+    {"fixture": "config-multi-route.toml", "kind": "semantic", "group": "list"},
+    {"fixture": "config-invalid-duplicate.toml", "kind": "semantic", "group": "invalid-config"},
+    {"fixture": "config-invalid-ambiguous.toml", "kind": "semantic", "group": "invalid-config"},
+    {"fixture": "route-reports.json", "kind": "semantic", "group": "report-route"},
+    {"fixture": "route-order.json", "kind": "semantic", "group": "route-order"},
+    {"fixture": "reached-markers.json", "kind": "semantic", "group": "reached-host"},
+    {"fixture": "envelopes.json", "kind": "envelope-catalog", "group": "errors"}
+  ]
+}

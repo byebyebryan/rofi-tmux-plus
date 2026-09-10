@@ -1,0 +1,11 @@
+schema_version = 1
+
+local_id = "alpha"
+local_display = "Alpha"
+local_aliases = ["alpha-native"]
+
+[ssh]
+executable = "ssh"
+connect_timeout_seconds = 2
+connection_attempts = 1
+route_health_ttl_seconds = 300
