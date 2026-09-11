@@ -44,8 +44,8 @@ rollout boundary live in the managed `rofi-plus-p9-cli-contracts.md` document.
 P9 itself did not change picker presentation. A subsequent post-P9 SSH-only
 refinement makes SSH recent-only and restores its native filter arrows; it
 leaves Tmux behavior, Host Mesh v1, and both P9 wire contracts unchanged. That
-SSH refinement remains a separate candidate requiring publication, deployment,
-and acceptance.
+SSH refinement is published separately and awaits managed deployment and
+acceptance.
 
 ## P8 flat-scope implementation
 
