@@ -98,14 +98,6 @@ if (
     != "sha256:" + hashlib.sha256(source_raw).hexdigest()
 ):
     raise SystemExit("Host Mesh SOURCE.json does not describe the released bundle")
-head = subprocess.run(
-    ["git", "-C", str(source_checkout), "rev-parse", "HEAD"],
-    check=True,
-    capture_output=True,
-    text=True,
-).stdout.strip()
-if head != provenance["sourceCommit"]:
-    raise SystemExit("Host Mesh checkout HEAD differs from released provenance")
 dirty = subprocess.run(
     [
         "git",
@@ -122,6 +114,45 @@ dirty = subprocess.run(
     text=True,
 ).stdout
 if dirty:
-    raise SystemExit("Host Mesh checkout bundle differs from its released commit")
-print(f"Host Mesh released bundle matches {head}")
+    raise SystemExit("Host Mesh checkout bundle is not clean")
+
+head_result = subprocess.run(
+    ["git", "-C", str(source_checkout), "rev-parse", "HEAD"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+head = head_result.stdout.strip()
+source_commit = provenance["sourceCommit"]
+if head != source_commit:
+    resolved = subprocess.run(
+        ["git", "-C", str(source_checkout), "cat-file", "-e", f"{source_commit}^{{commit}}"],
+        check=False,
+        capture_output=True,
+    )
+    if resolved.returncode != 0:
+        raise SystemExit("Host Mesh released provenance does not resolve to a commit")
+    ancestor = subprocess.run(
+        ["git", "-C", str(source_checkout), "merge-base", "--is-ancestor", source_commit, head],
+        check=False,
+        capture_output=True,
+    )
+    if ancestor.returncode != 0:
+        raise SystemExit("Host Mesh checkout HEAD does not descend from released provenance")
+    released_manifest = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(source_checkout),
+            "show",
+            f"{source_commit}:contracts/host-mesh-v1/SHA256SUMS",
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    if released_manifest != source_raw:
+        raise SystemExit("Host Mesh checksum manifest changed after released provenance")
+    print(f"Host Mesh released bundle remains unchanged through {head}")
+else:
+    print(f"Host Mesh released bundle matches {head}")
 PY

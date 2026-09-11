@@ -11,6 +11,18 @@ as `rofi-agent-plus`. All commands exchange versioned JSON. Consumers do not
 import Tmux Plus internals, invoke raw helper scripts from its package, or read
 its cache files.
 
+## Released bundle provenance
+
+The consumer's `contracts/host-mesh-v1/SOURCE.json` identifies the exact
+released Host Mesh commit and checksum-manifest digest that it vendors. The
+`scripts/check-contract-sync` gate also accepts a later producer `HEAD` when
+the recorded commit resolves and is an ancestor, the manifest at that commit
+is byte-identical to the clean current producer manifest, and the current
+bundle is byte-identical to the consumer's vendored bundle. A missing,
+non-ancestor, dirty, or contract-changing producer checkout fails the gate;
+contract changes therefore still require a new released tuple and consumer
+repin.
+
 ## Dependencies and host identity
 
 Logical hosts and remote route candidates come from
