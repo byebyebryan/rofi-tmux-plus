@@ -59,7 +59,6 @@ for bundle in (Path("contracts/host-mesh-v1"), Path("contracts/tmux-session-v1")
 PY
 
 command -v ruff >/dev/null
-test "$(ruff --version)" = "ruff 0.16.6"
 ruff check rofi_tmux_plus tests
 ruff format --check rofi_tmux_plus tests
 command -v shellcheck >/dev/null
