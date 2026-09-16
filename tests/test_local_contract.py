@@ -58,6 +58,18 @@ class IsolatedServer(unittest.TestCase):
     def create_direct(self, name: str = "alpha") -> tuple[str, int]:
         return self.client.create_detached(name, "/tmp", ["/bin/sh", "-c", "sleep 30"])
 
+    def _q_a_quotes_session_name(self, session_id: str, expected: str) -> bool:
+        result = self.client.try_run(
+            ["display-message", "-p", "-t", session_id, "#{q/a:session_name}"]
+        )
+        if result.returncode != 0:
+            return False
+        encoded = result.stdout.removesuffix("\n")
+        try:
+            return encoded == f'"{expected}"' and decode_tmux_argument(encoded) == expected
+        except TmuxWireError:
+            return False
+
     def test_no_server_is_authoritative_empty_and_never_default(self) -> None:
         self.assertIn("-L", self.client._executable)
         generation, sessions = self.client.inventory(self.host.host_id)
@@ -80,13 +92,35 @@ class IsolatedServer(unittest.TestCase):
         self.assertEqual(row["options"], {"@present": "provider-id", "@absent": None})
         self.assertEqual(len(row["panes"]), 2)
 
-    def test_batched_inventory_preserves_empty_hostile_options_and_reduces_calls(self) -> None:
+    def test_inventory_preserves_empty_hostile_options_on_any_compatible_tmux(self) -> None:
         for number in range(14):
             self.create_direct(f"session {number}")
         self.client.run(["new-window", "-d", "-t", "$0", "/bin/sh", "-c", "sleep 30"])
         hostile = 'unicode ☃\tnewline\n"quote"\\backslash$'
         self.client.set_option("$0", "@hostile", hostile)
         self.client.set_option("$0", "@empty", "")
+
+        client = TmuxClient(self.argv, timeout_seconds=2)
+        generation, sessions = client.inventory(
+            self.host.host_id,
+            panes=True,
+            option_names=["@hostile", "@empty", "@missing"],
+        )
+        self.assertIsNotNone(generation)
+        self.assertEqual(len(sessions), 14)
+        options = sessions[0].as_dict()["options"]
+        self.assertEqual(options, {"@hostile": hostile, "@empty": "", "@missing": None})
+
+    def test_fast_inventory_batches_collection_when_q_a_quotes_arguments(self) -> None:
+        self.create_direct("quote; hostile")
+        for number in range(1, 14):
+            self.create_direct(f"session {number}")
+        self.client.run(["new-window", "-d", "-t", "$0", "/bin/sh", "-c", "sleep 30"])
+        hostile = 'unicode ☃\tnewline\n"quote"\\backslash$'
+        self.client.set_option("$0", "@hostile", hostile)
+        self.client.set_option("$0", "@empty", "")
+        if not self._q_a_quotes_session_name("$0", "quote; hostile"):
+            self.skipTest("tmux q/a did not provide safe argument quoting")
 
         class CountingClient(TmuxClient):
             def __init__(self, *args: object, **kwargs: object) -> None:

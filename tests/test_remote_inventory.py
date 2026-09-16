@@ -25,12 +25,14 @@ from rofi_tmux_plus.mesh_adapter import (
 )
 from rofi_tmux_plus.remote_inventory import (
     _REMOTE_FAST_PROGRAM,
+    _REMOTE_PROGRAM,
     RemoteInventory,
     build_remote_inventory_argv,
     parse_fast_remote_inventory,
     parse_reached_marker,
     parse_remote_inventory,
 )
+from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument
 
 
 def _completed(stdout: str, stderr: str = "", code: int = 0) -> subprocess.CompletedProcess[str]:
@@ -124,6 +126,33 @@ def _q(value: str) -> str:
         else:
             escaped.append(char)
     return '"' + "".join(escaped) + '"'
+
+
+def _q_a_quotes_session_name(tmux: str, socket: str, expected: str) -> bool:
+    result = subprocess.run(
+        [
+            tmux,
+            "-L",
+            socket,
+            "-f",
+            "/dev/null",
+            "display-message",
+            "-p",
+            "-t",
+            "$0",
+            "#{q/a:session_name}",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return False
+    encoded = result.stdout.removesuffix("\n")
+    try:
+        return encoded == _q(expected) and decode_tmux_argument(encoded) == expected
+    except TmuxWireError:
+        return False
 
 
 def _fast_domain_output(*, panes: bool = False, options: tuple[str, ...] = ()) -> str:
@@ -527,7 +556,7 @@ class RemoteInventoryTests(unittest.TestCase):
         self.assertNotIn("show-options -A", argv[-1])
         self.assertIn("complete", argv[-1])
 
-    def test_fast_remote_program_uses_batched_tmux_calls_on_a_disposable_server(self) -> None:
+    def test_remote_inventory_round_trip_and_optional_fast_path_on_disposable_server(self) -> None:
         tmux = shutil.which("tmux")
         self.assertIsNotNone(tmux)
         assert tmux is not None
@@ -561,7 +590,7 @@ class RemoteInventoryTests(unittest.TestCase):
                     "new-session",
                     "-d",
                     "-s",
-                    "remote;hostile",
+                    "remote; hostile",
                 ],
                 check=True,
                 capture_output=True,
@@ -591,6 +620,45 @@ class RemoteInventoryTests(unittest.TestCase):
                     "ROFI_TMUX_PLUS_SOCKET": socket,
                     "ROFI_TMUX_PLUS_CALLS": str(calls),
                 }
+                q_a_supported = _q_a_quotes_session_name(tmux, socket, "remote; hostile")
+                public_policy = MeshPolicy(str(ssh_wrapper), 2, 1, 300)
+
+                def public_runner(
+                    argv: list[str], **kwargs: object
+                ) -> subprocess.CompletedProcess[str]:
+                    return subprocess.run(
+                        argv,
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        env=environment,
+                        timeout=kwargs["timeout"],
+                    )
+
+                public_remote = RemoteInventory(
+                    self.adapter,
+                    runner=public_runner,
+                    nonce_factory=lambda: self.nonce,
+                    now_millis=lambda: 1234,
+                )
+                public_row = public_remote.inventory(
+                    self.host,
+                    public_policy,
+                    "sha256:fixture",
+                    panes=True,
+                    option_names=("@state", "@missing"),
+                    deadline=time.monotonic() + 5,
+                )
+                self.assertEqual(public_row["status"], "ok")
+                self.assertEqual(public_row["route"], "beta-vpn.test")
+                public_session = public_row["sessions"][0]
+                self.assertEqual(public_session["name"], "remote; hostile")
+                self.assertEqual(public_session["options"], {"@state": "", "@missing": None})
+                self.assertEqual(len(public_session["panes"]), 1)
+
+                # Keep the direct collector's call-budget assertions isolated
+                # from the unconditional public-path round trip above.
+                calls.write_text("", encoding="utf-8")
                 completed = subprocess.run(
                     ["sh", "-c", _REMOTE_FAST_PROGRAM, "remote-test", "1", "@state", "@missing"],
                     check=True,
@@ -635,7 +703,14 @@ class RemoteInventoryTests(unittest.TestCase):
                     text=True,
                 )
                 empty_completed = subprocess.run(
-                    ["sh", "-c", _REMOTE_FAST_PROGRAM, "remote-test", "1", "@state"],
+                    [
+                        "sh",
+                        "-c",
+                        _REMOTE_FAST_PROGRAM if q_a_supported else _REMOTE_PROGRAM,
+                        "remote-test",
+                        "1",
+                        "@state",
+                    ],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -648,61 +723,63 @@ class RemoteInventoryTests(unittest.TestCase):
                     capture_output=True,
                     text=True,
                 )
-            parsed = parse_fast_remote_inventory(
-                completed.stdout,
-                host_id="beta",
-                panes_requested=True,
-                option_names=("@state", "@missing"),
-            )
-            self.assertEqual(parsed.sessions[0].options, {"@state": "", "@missing": None})
+            if q_a_supported:
+                parsed = parse_fast_remote_inventory(
+                    completed.stdout,
+                    host_id="beta",
+                    panes_requested=True,
+                    option_names=("@state", "@missing"),
+                )
+                self.assertEqual(parsed.sessions[0].options, {"@state": "", "@missing": None})
             self.assertTrue(completed.stdout.endswith("Z\n"))
             reached, remaining_stderr = parse_reached_marker(nested_completed.stderr, self.nonce)
             self.assertTrue(reached)
             self.assertEqual(remaining_stderr, "")
-            nested = parse_fast_remote_inventory(
-                nested_completed.stdout,
-                host_id="beta",
-                panes_requested=True,
-                option_names=("@state", "@missing"),
-            )
-            self.assertEqual(nested.sessions[0].options, {"@state": "", "@missing": None})
-            self.assertEqual(nested.sessions[0].name, "remote;hostile")
+            if q_a_supported:
+                nested = parse_fast_remote_inventory(
+                    nested_completed.stdout,
+                    host_id="beta",
+                    panes_requested=True,
+                    option_names=("@state", "@missing"),
+                )
+                self.assertEqual(nested.sessions[0].options, {"@state": "", "@missing": None})
+                self.assertEqual(nested.sessions[0].name, "remote; hostile")
             self.assertTrue(nested_completed.stdout.splitlines()[1].startswith("G;"))
             self.assertTrue(nested_completed.stdout.splitlines()[2].startswith("D;"))
-            empty = parse_fast_remote_inventory(
-                empty_completed.stdout,
-                host_id="beta",
-                panes_requested=True,
-                option_names=("@state",),
-            )
+            if q_a_supported:
+                empty = parse_fast_remote_inventory(
+                    empty_completed.stdout,
+                    host_id="beta",
+                    panes_requested=True,
+                    option_names=("@state",),
+                )
+            else:
+                empty = parse_remote_inventory(
+                    empty_completed.stdout,
+                    host_id="beta",
+                    panes_requested=True,
+                    option_names=("@state",),
+                )
             self.assertIsNotNone(empty.generation)
             self.assertEqual(empty.sessions, ())
-            self.assertEqual(
-                calls.read_text(encoding="utf-8").splitlines()[:6],
-                [
-                    "display-message",
-                    "display-message",
-                    "list-sessions",
-                    "list-sessions",
-                    "show-options",
-                    "list-panes",
-                ],
-            )
-            self.assertEqual(
-                calls.read_text(encoding="utf-8").splitlines()[6:12],
-                [
-                    "display-message",
-                    "display-message",
-                    "list-sessions",
-                    "list-sessions",
-                    "show-options",
-                    "list-panes",
-                ],
-            )
-            self.assertEqual(
-                calls.read_text(encoding="utf-8").splitlines()[12:],
-                ["display-message", "display-message", "list-sessions", "list-sessions"],
-            )
+            if q_a_supported:
+                direct_calls = calls.read_text(encoding="utf-8").splitlines()
+                self.assertEqual(
+                    direct_calls[:6],
+                    [
+                        "display-message",
+                        "display-message",
+                        "list-sessions",
+                        "list-sessions",
+                        "show-options",
+                        "list-panes",
+                    ],
+                )
+                self.assertEqual(direct_calls[6:12], direct_calls[:6])
+                self.assertEqual(
+                    direct_calls[12:],
+                    ["display-message", "display-message", "list-sessions", "list-sessions"],
+                )
 
     def test_fast_parser_rejects_unknown_records_output_overflow_and_session_pane_caps(
         self,
