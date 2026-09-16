@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -22,8 +24,10 @@ from rofi_tmux_plus.mesh_adapter import (
     MeshStaleError,
 )
 from rofi_tmux_plus.remote_inventory import (
+    _REMOTE_FAST_PROGRAM,
     RemoteInventory,
     build_remote_inventory_argv,
+    parse_fast_remote_inventory,
     parse_reached_marker,
     parse_remote_inventory,
 )
@@ -95,6 +99,70 @@ def _domain_output(*, panes: bool = False, options: tuple[str, ...] = ()) -> str
                 )
             )
         )
+    return "\n".join(lines) + "\n"
+
+
+def _q(value: str) -> str:
+    escaped: list[str] = []
+    for char in value:
+        if char == "\\":
+            escaped.append("\\\\")
+        elif char == '"':
+            escaped.append('\\"')
+        elif char == "$":
+            escaped.append("\\$")
+        elif char == "\t":
+            escaped.append("\\t")
+        elif char == "\n":
+            escaped.append("\\n")
+        elif char == "\r":
+            escaped.append("\\r")
+        elif char == "\x1b":
+            escaped.append("\\e")
+        elif ord(char) < 0x20 or char == "\x7f":
+            escaped.append(f"\\{ord(char):03o}")
+        else:
+            escaped.append(char)
+    return '"' + "".join(escaped) + '"'
+
+
+def _fast_domain_output(*, panes: bool = False, options: tuple[str, ...] = ()) -> str:
+    lines = [
+        _hostname_record().removesuffix("\n"),
+        "G\t" + "\t".join((_q("/tmp/tmux"), _q("10"), _q("20"))),
+        "D\t"
+        + "\t".join(
+            (
+                _q("$0"),
+                _q("11"),
+                _q("hostile\tname\npath"),
+                _q("12"),
+                _q(""),
+                _q("0"),
+                _q("1"),
+                _q("/tmp/a\tb\n"),
+                _q("window"),
+                _q("/tmp/current"),
+            )
+        ),
+        "S\t" + _field("$0", tmux_output=False),
+    ]
+    for option in options:
+        lines.append("O\t" + _field("$0", tmux_output=False) + "\t" + option + " " + _q("value"))
+    if panes:
+        lines.append(
+            "P\t"
+            + "\t".join(
+                (
+                    _q("$0"),
+                    _q("%0"),
+                    _q("123"),
+                    _q("/tmp/pane\tpath"),
+                    _q("codex"),
+                )
+            )
+        )
+    lines.append("Z")
     return "\n".join(lines) + "\n"
 
 
@@ -316,7 +384,7 @@ class RemoteInventoryTests(unittest.TestCase):
         remote = self._inventory(
             [
                 _completed(
-                    _domain_output(panes=True, options=("@codex_thread_id",)),
+                    _fast_domain_output(panes=True, options=("@codex_thread_id",)),
                     "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n",
                 )
             ]
@@ -338,6 +406,303 @@ class RemoteInventoryTests(unittest.TestCase):
         self.assertEqual(self.adapter.reports[0]["status"], "reachable")
         self.assertEqual(self.adapter.reports[0]["observed_at"], 1234)
 
+    def test_fast_parser_preserves_absent_empty_and_hostile_values(self) -> None:
+        output = _fast_domain_output(options=("@empty",))
+        output = output.replace('@empty "value"', "@empty ''")
+        parsed = parse_fast_remote_inventory(
+            output,
+            host_id="beta",
+            panes_requested=False,
+            option_names=("@empty", "@absent"),
+        )
+        self.assertEqual(parsed.sessions[0].name, "hostile\tname\npath")
+        self.assertEqual(parsed.sessions[0].options, {"@empty": "", "@absent": None})
+
+    def test_completed_invalid_fast_framing_retries_legacy_once_on_the_same_route(self) -> None:
+        marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
+        broken = _fast_domain_output().replace('"\\$0"', '"unterminated', 1)
+        calls: list[list[str]] = []
+        replies = [_completed(broken, marker), _completed(_domain_output(), marker)]
+
+        def runner(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(argv)
+            return replies.pop(0)
+
+        remote = RemoteInventory(
+            self.adapter,
+            runner=runner,
+            nonce_factory=lambda: self.nonce,
+            now_millis=lambda: 1234,
+        )
+        row = remote.inventory(
+            self.host,
+            self.policy,
+            "sha256:fixture",
+            panes=False,
+            option_names=[],
+            deadline=time.monotonic() + 5,
+        )
+        self.assertEqual(row["status"], "ok")
+        self.assertEqual(len(calls), 2)
+        self.assertIn("q/a:socket_path", calls[0][-1])
+        self.assertNotIn("q/a:socket_path", calls[1][-1])
+        self.assertEqual([report["status"] for report in self.adapter.reports], ["reachable"])
+
+    def test_incomplete_fast_framing_never_retries_and_malformed_records_are_rejected(self) -> None:
+        marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
+        calls: list[list[str]] = []
+
+        def runner(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(argv)
+            return _completed("D\tbad\n", marker)
+
+        remote = RemoteInventory(
+            self.adapter,
+            runner=runner,
+            nonce_factory=lambda: self.nonce,
+            now_millis=lambda: 1234,
+        )
+        row = remote.inventory(
+            self.host,
+            self.policy,
+            "sha256:fixture",
+            panes=False,
+            option_names=[],
+            deadline=time.monotonic() + 5,
+        )
+        self.assertEqual(row["status"], "error")
+        self.assertEqual(len(calls), 1)
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                _fast_domain_output() + "trailing\n",
+                host_id="beta",
+                panes_requested=False,
+                option_names=[],
+            )
+        malformed = _fast_domain_output().replace("\nS\t", '\nD\t"$0"\nS\t', 1)
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                malformed, host_id="beta", panes_requested=False, option_names=[]
+            )
+
+    def test_completed_session_change_never_becomes_a_legacy_empty_inventory(self) -> None:
+        marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
+        changed = (
+            "\n".join(
+                line for line in _fast_domain_output().splitlines() if not line.startswith("S\t")
+            )
+            + "\n"
+        )
+        calls: list[list[str]] = []
+
+        def runner(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(argv)
+            return _completed(changed, marker)
+
+        remote = RemoteInventory(
+            self.adapter,
+            runner=runner,
+            nonce_factory=lambda: self.nonce,
+            now_millis=lambda: 1234,
+        )
+        row = remote.inventory(
+            self.host,
+            self.policy,
+            "sha256:fixture",
+            panes=False,
+            option_names=[],
+            deadline=time.monotonic() + 5,
+        )
+        self.assertEqual(row["status"], "error")
+        self.assertEqual(len(calls), 1)
+
+    def test_fast_remote_command_is_one_marked_ssh_transaction_without_inheritance(self) -> None:
+        argv = build_remote_inventory_argv(
+            "beta-vpn.test", self.policy, panes=True, option_names=["@state"], nonce=self.nonce
+        )
+        self.assertIn("q/a:socket_path", argv[-1])
+        self.assertIn("list-panes -a", argv[-1])
+        self.assertNotIn("show-options -A", argv[-1])
+        self.assertIn("complete", argv[-1])
+
+    def test_fast_remote_program_uses_batched_tmux_calls_on_a_disposable_server(self) -> None:
+        tmux = shutil.which("tmux")
+        self.assertIsNotNone(tmux)
+        assert tmux is not None
+        socket = f"rofi-tmux-plus-remote-test-{os.getpid()}-{time.time_ns()}"
+        with tempfile.TemporaryDirectory() as raw_directory:
+            directory = Path(raw_directory)
+            calls = directory / "calls"
+            wrapper = directory / "tmux"
+            wrapper.write_text(
+                "#!/bin/sh\n"
+                'printf \'%s\\n\' "$1" >> "$ROFI_TMUX_PLUS_CALLS"\n'
+                f'exec {shlex.quote(tmux)} -L "$ROFI_TMUX_PLUS_SOCKET" -f /dev/null "$@"\n',
+                encoding="utf-8",
+            )
+            os.chmod(wrapper, 0o700)
+            subprocess.run(
+                [tmux, "-L", socket, "-f", "/dev/null", "new-session", "-d", "-s", "remote"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            try:
+                subprocess.run(
+                    [
+                        tmux,
+                        "-L",
+                        socket,
+                        "-f",
+                        "/dev/null",
+                        "set-option",
+                        "-t",
+                        "remote",
+                        "@state",
+                        "",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                environment = {
+                    **os.environ,
+                    "PATH": f"{directory}{os.pathsep}{os.environ['PATH']}",
+                    "ROFI_TMUX_PLUS_SOCKET": socket,
+                    "ROFI_TMUX_PLUS_CALLS": str(calls),
+                }
+                completed = subprocess.run(
+                    ["sh", "-c", _REMOTE_FAST_PROGRAM, "remote-test", "1", "@state", "@missing"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    env=environment,
+                )
+                subprocess.run(
+                    [
+                        tmux,
+                        "-L",
+                        socket,
+                        "-f",
+                        "/dev/null",
+                        "set-option",
+                        "-g",
+                        "exit-empty",
+                        "off",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                subprocess.run(
+                    [tmux, "-L", socket, "-f", "/dev/null", "kill-session", "-t", "remote"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                empty_completed = subprocess.run(
+                    ["sh", "-c", _REMOTE_FAST_PROGRAM, "remote-test", "1", "@state"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    env=environment,
+                )
+            finally:
+                subprocess.run(
+                    [tmux, "-L", socket, "-f", "/dev/null", "kill-server"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+            parsed = parse_fast_remote_inventory(
+                completed.stdout,
+                host_id="beta",
+                panes_requested=True,
+                option_names=("@state", "@missing"),
+            )
+            self.assertEqual(parsed.sessions[0].options, {"@state": "", "@missing": None})
+            self.assertTrue(completed.stdout.endswith("Z\n"))
+            empty = parse_fast_remote_inventory(
+                empty_completed.stdout,
+                host_id="beta",
+                panes_requested=True,
+                option_names=("@state",),
+            )
+            self.assertIsNotNone(empty.generation)
+            self.assertEqual(empty.sessions, ())
+            self.assertEqual(
+                calls.read_text(encoding="utf-8").splitlines()[:6],
+                [
+                    "display-message",
+                    "display-message",
+                    "list-sessions",
+                    "list-sessions",
+                    "show-options",
+                    "list-panes",
+                ],
+            )
+            self.assertEqual(
+                calls.read_text(encoding="utf-8").splitlines()[6:],
+                ["display-message", "display-message", "list-sessions", "list-sessions"],
+            )
+
+    def test_fast_parser_rejects_unknown_records_output_overflow_and_session_pane_caps(
+        self,
+    ) -> None:
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                _fast_domain_output().replace("\nZ\n", "\nQ\nZ\n"),
+                host_id="beta",
+                panes_requested=False,
+                option_names=[],
+            )
+        duplicate_session = _fast_domain_output().replace(
+            "\nS\t", "\n" + _fast_domain_output().splitlines()[2] + "\nS\t", 1
+        )
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                duplicate_session, host_id="beta", panes_requested=False, option_names=[]
+            )
+        pane_template = _fast_domain_output(panes=True)
+        duplicate_pane = pane_template.replace(
+            "\nZ\n", "\n" + pane_template.splitlines()[-2] + "\nZ\n"
+        )
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                duplicate_pane, host_id="beta", panes_requested=True, option_names=[]
+            )
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                "x" * (1024 * 1024 + 1),
+                host_id="beta",
+                panes_requested=False,
+                option_names=[],
+            )
+
+        template = _fast_domain_output().splitlines()
+        headers = template[:2]
+        descriptor = template[2]
+        sessions = [descriptor.replace('"$0"', _q(f"${number}"), 1) for number in range(257)]
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                "\n".join([*headers, *sessions, "Z"]) + "\n",
+                host_id="beta",
+                panes_requested=False,
+                option_names=[],
+            )
+
+        panes = [
+            "P\t" + "\t".join((_q("$0"), _q(f"%{number}"), _q("1"), _q("/tmp"), _q("sh")))
+            for number in range(513)
+        ]
+        with self.assertRaises(ContractError):
+            parse_fast_remote_inventory(
+                "\n".join([*template[:-1], *panes, "Z"]) + "\n",
+                host_id="beta",
+                panes_requested=True,
+                option_names=[],
+            )
+
     def test_transport_fallback_reports_each_attempt_and_wrong_or_duplicate_markers_do_not_count(
         self,
     ) -> None:
@@ -345,7 +710,7 @@ class RemoteInventoryTests(unittest.TestCase):
         remote = self._inventory(
             [
                 _completed("", "Connection refused\n", 255),
-                _completed(_domain_output(), valid),
+                _completed(_fast_domain_output(), valid),
             ]
         )
         row = remote.inventory(
@@ -366,7 +731,7 @@ class RemoteInventoryTests(unittest.TestCase):
         duplicate = valid + valid
         self.adapter.reports.clear()
         remote = self._inventory(
-            [_completed("", duplicate, 0), _completed(_domain_output(), valid)]
+            [_completed("", duplicate, 0), _completed(_fast_domain_output(), valid)]
         )
         row = remote.inventory(
             self.host,
@@ -393,7 +758,7 @@ class RemoteInventoryTests(unittest.TestCase):
             with self.subTest(stderr=stderr):
                 self.adapter.reports.clear()
                 remote = self._inventory(
-                    [_completed("", stderr, code), _completed(_domain_output(), marker)]
+                    [_completed("", stderr, code), _completed(_fast_domain_output(), marker)]
                 )
                 row = remote.inventory(
                     self.host,
@@ -464,7 +829,7 @@ class RemoteInventoryTests(unittest.TestCase):
         self.assertEqual(row["route"], "beta-vpn.test")
         self.assertEqual(len(self.adapter.reports), 1)
         self.adapter.stale = True
-        remote = self._inventory([_completed(_domain_output(), marker)])
+        remote = self._inventory([_completed(_fast_domain_output(), marker)])
         with self.assertRaises(MeshStaleError):
             remote.inventory(
                 self.host,
@@ -478,23 +843,27 @@ class RemoteInventoryTests(unittest.TestCase):
     def test_tmux_missing_no_server_running_empty_and_generic_error_are_distinct(self) -> None:
         marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
         for output, status, generation in (
-            (_hostname_record() + "T\tM\n", "tmux_missing", None),
-            (_hostname_record() + "T\tN\n", "ok", None),
-            ("\n".join(_domain_output().splitlines()[:2]) + "\n", "ok", "tmux-v1:10:20:/tmp/tmux"),
+            (_hostname_record() + "T\tM\nZ\n", "tmux_missing", None),
+            (_hostname_record() + "T\tN\nZ\n", "ok", None),
+            (
+                "\n".join(_fast_domain_output().splitlines()[:2]) + "\nZ\n",
+                "ok",
+                "tmux-v1:10:20:/tmp/tmux",
+            ),
         ):
             remote = self._inventory([_completed(output, marker)])
             row = remote.inventory(
                 self.host,
                 self.policy,
                 "sha256:fixture",
-                panes=False,
+                panes=True,
                 option_names=[],
                 deadline=time.monotonic() + 5,
             )
             self.assertEqual(row["status"], status)
             self.assertEqual(row["serverGeneration"], generation)
             self.assertEqual(row["nativeHostname"], "beta-native")
-        generic = _hostname_record() + "E\t" + _field("tmux access denied") + "\n"
+        generic = _hostname_record() + "E\t" + _field("tmux access denied") + "\nZ\n"
         remote = self._inventory([_completed(generic, marker)])
         row = remote.inventory(
             self.host,

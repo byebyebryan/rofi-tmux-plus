@@ -15,6 +15,7 @@ from .errors import ContractError, clean_message
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshPolicy, MeshStaleError
 from .model import Pane, Session, SessionReference
 from .tmux import validate_session_id, validate_user_option
+from .tmux_wire import TmuxWireError, decode_tmux_argument, parse_explicit_user_options
 
 _MARKER_PREFIX = "\x1eROFI_PLUS_REACHED_V1:"
 _MARKER_SUFFIX = "\x1f\n"
@@ -39,6 +40,7 @@ _MAX_NUMBER = 2**63 - 1
 _HEX = re.compile(r"^[0-9A-Fa-f]*$", re.ASCII)
 _PANE_ID = re.compile(r"^%[0-9]+$", re.ASCII)
 _NATIVE_HOSTNAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,254}$", re.ASCII)
+_PENDING_OPTION = "@rofi_tmux_plus_pending"
 
 
 # This program intentionally contains no dynamic request value. The reached
@@ -108,6 +110,60 @@ tmux list-sessions -F '#{session_id}' | while IFS= read -r sid; do
     done
   fi
 done"""
+
+
+# q/a keeps every tmux format field inside one command argument, so literal
+# tabs/newlines remain safe record delimiters. The explicit Z record is only
+# reached after every normal-path tmux command succeeds; callers may retry the
+# safe legacy program only when it is present and final.
+_REMOTE_FAST_PROGRAM = r"""set -eu
+hex() { LC_ALL=C od -An -v -tx1 | tr -d ' \n'; }
+literal() { printf '\t'; printf '%s' "$1" | hex; }
+complete() { printf 'Z\n'; }
+panes_flag=$1
+shift
+native_hostname=$(hostname 2>/dev/null || uname -n 2>/dev/null || :)
+printf H
+literal "$native_hostname"
+printf '\n'
+if ! command -v tmux >/dev/null 2>&1; then printf 'T\tM\n'; complete; exit 0; fi
+if tmux display-message -p '#{pid}' >/dev/null 2>&1; then :
+elif tmux display-message -p '#{pid}' 2>&1 | grep -E -q 'no server running|failed to connect to server|error connecting to'; then
+  printf 'T\tN\n'
+  complete
+  exit 0
+else
+  printf E
+  literal 'tmux server probe failed'
+  printf '\n'
+  complete
+  exit 0
+fi
+printf 'G\t'
+tmux display-message -p '#{q/a:socket_path}<TAB>#{q/a:start_time}<TAB>#{q/a:pid}'
+tmux list-sessions -F 'D<TAB>#{q/a:session_id}<TAB>#{q/a:session_created}<TAB>#{q/a:session_name}<TAB>#{q/a:session_activity}<TAB>#{q/a:session_last_attached}<TAB>#{q/a:session_attached}<TAB>#{q/a:session_windows}<TAB>#{q/a:session_path}<TAB>#{q/a:window_name}<TAB>#{q/a:pane_current_path}'
+session_ids=$(tmux list-sessions -F '#{session_id}')
+if [ -n "$session_ids" ]; then
+  printf '%s\n' "$session_ids" | while IFS= read -r sid; do
+    [ -n "$sid" ] || continue
+    printf S
+    literal "$sid"
+    printf '\n'
+    snapshot=$(tmux show-options -q -t "$sid")
+    if [ -n "$snapshot" ]; then
+      printf '%s\n' "$snapshot" | while IFS= read -r option_line; do
+        [ -n "$option_line" ] || continue
+        printf O
+        literal "$sid"
+        printf '\t%s\n' "$option_line"
+      done
+    fi
+  done
+fi
+if [ "$panes_flag" = 1 ] && [ -n "$session_ids" ]; then
+  tmux list-panes -a -F 'P<TAB>#{q/a:session_id}<TAB>#{q/a:pane_id}<TAB>#{q/a:pane_pid}<TAB>#{q/a:pane_current_path}<TAB>#{q/a:pane_current_command}'
+fi
+complete""".replace("<TAB>", "\t")
 
 
 def generate_nonce() -> str:
@@ -192,6 +248,10 @@ class ParsedRemoteInventory:
     status: str | None
     native_hostname: str | None
     error_message: str | None = None
+
+
+class _FastInventoryChanged(ContractError):
+    """The fast collector observed a mid-transaction session change."""
 
 
 def parse_remote_inventory(
@@ -367,6 +427,244 @@ def parse_remote_inventory(
     return ParsedRemoteInventory(generation, tuple(sessions), None, native_hostname)
 
 
+def _fast_complete(output: str) -> bool:
+    lines = output.splitlines()
+    return bool(lines) and lines[-1] == "Z" and lines.count("Z") == 1
+
+
+def parse_fast_remote_inventory(
+    output: str,
+    *,
+    host_id: str,
+    panes_requested: bool,
+    option_names: Sequence[str],
+) -> ParsedRemoteInventory:
+    """Parse the q/a fast collector only after its terminal completion record."""
+    encoded = output.encode("utf-8", errors="replace")
+    if len(encoded) > _MAX_OUTPUT:
+        raise ContractError("operation_failed", "remote tmux output exceeded the consumer limit")
+    if not _fast_complete(output):
+        raise ContractError("operation_failed", "remote tmux fast output was incomplete")
+    generation: str | None = None
+    records: dict[str, _SessionParts] = {}
+    option_rows: dict[str, list[str]] = {}
+    snapshots: set[str] = set()
+    seen_generation = False
+    seen_native_hostname = False
+    native_hostname: str | None = None
+    status: str | None = None
+    error_message: str | None = None
+    pane_count = 0
+    seen_panes: set[str] = set()
+    lines = output.splitlines()
+    for index, line in enumerate(lines):
+        if len(line.encode("utf-8", errors="replace")) > _MAX_LINE:
+            raise ContractError(
+                "operation_failed", "remote tmux record exceeded the consumer limit"
+            )
+        if line == "Z":
+            if index != len(lines) - 1:
+                raise ContractError("operation_failed", "remote tmux fast completion is invalid")
+            continue
+        parts = line.split("\t")
+        kind = parts[0]
+        if kind == "H":
+            if (
+                len(parts) != 2
+                or seen_native_hostname
+                or seen_generation
+                or status is not None
+                or records
+            ):
+                raise ContractError("operation_failed", "remote tmux hostname framing is invalid")
+            native_hostname = _native_hostname(_decode_field(parts[1]))
+            seen_native_hostname = True
+            continue
+        if kind == "T":
+            if (
+                len(parts) != 2
+                or parts[1] not in {"M", "N"}
+                or not seen_native_hostname
+                or seen_generation
+                or status is not None
+                or records
+            ):
+                raise ContractError("operation_failed", "remote tmux status framing is invalid")
+            status = "tmux_missing" if parts[1] == "M" else "no_server"
+            continue
+        if kind == "E":
+            if (
+                len(parts) != 2
+                or not seen_native_hostname
+                or seen_generation
+                or status is not None
+                or records
+            ):
+                raise ContractError("operation_failed", "remote tmux error framing is invalid")
+            status = "tmux_error"
+            error_message = clean_message(_decode_field(parts[1]), limit=240)
+            continue
+        if kind == "G":
+            if len(parts) != 4 or not seen_native_hostname or seen_generation or status is not None:
+                raise ContractError("operation_failed", "remote tmux server framing is invalid")
+            try:
+                socket_path, started, pid = (decode_tmux_argument(value) for value in parts[1:])
+            except TmuxWireError as error:
+                raise ContractError(
+                    "operation_failed", "remote tmux fast framing is invalid"
+                ) from error
+            if not socket_path:
+                raise ContractError("operation_failed", "remote tmux server identity is invalid")
+            _number(started)
+            _number(pid)
+            generation = f"tmux-v1:{started}:{pid}:{socket_path}"
+            seen_generation = True
+            continue
+        if kind == "D":
+            if len(parts) != 11 or not seen_generation or status is not None:
+                raise ContractError("operation_failed", "remote tmux session framing is invalid")
+            try:
+                (
+                    session_id,
+                    created,
+                    name,
+                    activity,
+                    last,
+                    attached,
+                    windows,
+                    path,
+                    current_window,
+                    current_path,
+                ) = (decode_tmux_argument(value) for value in parts[1:])
+            except TmuxWireError as error:
+                raise ContractError(
+                    "operation_failed", "remote tmux fast framing is invalid"
+                ) from error
+            try:
+                validate_session_id(session_id)
+            except ContractError as error:
+                raise ContractError(
+                    "operation_failed", "remote tmux session identity is invalid"
+                ) from error
+            if session_id in records or len(records) >= _MAX_SESSIONS:
+                raise ContractError("operation_failed", "remote tmux session framing is invalid")
+            created_at = _number(created)
+            assert created_at is not None
+            records[session_id] = _SessionParts(
+                created_at,
+                name or None,
+                _number(activity, nullable=True),
+                _number(last, nullable=True),
+                _number(attached, nullable=True),
+                False,
+                _number(windows, nullable=True),
+                path or None,
+                current_window or None,
+                current_path or None,
+                {},
+                [],
+            )
+            option_rows[session_id] = []
+            continue
+        if kind == "S":
+            if len(parts) != 2 or not seen_generation or status is not None:
+                raise ContractError("operation_failed", "remote tmux option framing is invalid")
+            session_id = _decode_field(parts[1])
+            if session_id not in records or session_id in snapshots:
+                raise ContractError("operation_failed", "remote tmux option framing is invalid")
+            snapshots.add(session_id)
+            continue
+        if kind == "O":
+            if len(parts) != 3 or not seen_generation or status is not None:
+                raise ContractError("operation_failed", "remote tmux option framing is invalid")
+            session_id = _decode_field(parts[1])
+            option_line = parts[2]
+            if (
+                session_id not in snapshots
+                or "\t" in option_line
+                or any(ord(char) < 0x20 or char == "\x7f" for char in option_line)
+            ):
+                raise ContractError("operation_failed", "remote tmux option framing is invalid")
+            name, separator, encoded_value = option_line.partition(" ")
+            if not name or not separator:
+                raise ContractError("operation_failed", "remote tmux option framing is invalid")
+            try:
+                decode_tmux_argument(encoded_value)
+            except TmuxWireError as error:
+                raise ContractError(
+                    "operation_failed", "remote tmux option framing is invalid"
+                ) from error
+            option_rows[session_id].append(option_line)
+            continue
+        if kind == "P":
+            if len(parts) != 6 or not seen_generation or status is not None:
+                raise ContractError("operation_failed", "remote tmux pane framing is invalid")
+            try:
+                session_id, pane_id, pid, current_path, command = (
+                    decode_tmux_argument(value) for value in parts[1:]
+                )
+            except TmuxWireError as error:
+                raise ContractError(
+                    "operation_failed", "remote tmux fast framing is invalid"
+                ) from error
+            if (
+                not panes_requested
+                or session_id not in records
+                or pane_count >= _MAX_PANES
+                or not _PANE_ID.fullmatch(pane_id)
+                or pane_id in seen_panes
+            ):
+                raise ContractError("operation_failed", "remote tmux pane framing is invalid")
+            seen_panes.add(pane_id)
+            records[session_id].panes.append(
+                Pane(pane_id, _number(pid, nullable=True), current_path or None, command or None)
+            )
+            pane_count += 1
+            continue
+        raise ContractError("operation_failed", "remote tmux emitted an unknown framing record")
+    if status is not None:
+        return ParsedRemoteInventory(None, (), status, native_hostname, error_message)
+    if not seen_generation:
+        raise ContractError("operation_failed", "remote tmux output omitted server identity")
+    assert generation is not None
+    sessions: list[Session] = []
+    for session_id, parts in records.items():
+        if session_id not in snapshots:
+            # A complete q/a program can still observe a session which vanishes
+            # between the core list and its option snapshot. Do not turn that
+            # observable race into a clean empty legacy response.
+            raise _FastInventoryChanged(
+                "operation_failed", "remote tmux session changed during inventory"
+            )
+        try:
+            pending, options = parse_explicit_user_options(
+                "\n".join(option_rows[session_id]),
+                option_names,
+                pending_name=_PENDING_OPTION,
+            )
+        except TmuxWireError as error:
+            raise ContractError(
+                "operation_failed", "remote tmux option framing is invalid"
+            ) from error
+        sessions.append(
+            Session(
+                SessionReference(host_id, generation, session_id, parts.created_at),
+                parts.name,
+                parts.activity_at,
+                parts.last_attached_at,
+                parts.attached_clients,
+                pending,
+                parts.window_count,
+                parts.session_path,
+                parts.current_window,
+                parts.current_path,
+                tuple(parts.panes) if panes_requested else None,
+                options if option_names else None,
+            )
+        )
+    return ParsedRemoteInventory(generation, tuple(sessions), None, native_hostname)
+
+
 def build_remote_inventory_argv(
     route: str,
     policy: MeshPolicy,
@@ -374,6 +672,7 @@ def build_remote_inventory_argv(
     panes: bool,
     option_names: Sequence[str],
     nonce: str,
+    fast: bool = True,
 ) -> list[str]:
     if len(nonce) < 32 or any(char not in "0123456789abcdef" for char in nonce):
         raise ValueError("invalid reached-host nonce")
@@ -385,7 +684,7 @@ exec "$@"'''
     domain = [
         "sh",
         "-c",
-        _REMOTE_PROGRAM,
+        _REMOTE_FAST_PROGRAM if fast else _REMOTE_PROGRAM,
         "rofi-tmux-plus-remote",
         "1" if panes else "0",
         *option_names,
@@ -441,6 +740,104 @@ class RemoteInventory:
             errors="replace",
             check=False,
             timeout=timeout,
+        )
+
+    def _legacy_fallback(
+        self,
+        route: str,
+        policy: MeshPolicy,
+        *,
+        host_id: str,
+        panes: bool,
+        option_names: Sequence[str],
+        deadline: float,
+    ) -> ParsedRemoteInventory | None:
+        """Retry a completed but incompatible fast stream once, on this route."""
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        nonce = self._nonce_factory()
+        argv = build_remote_inventory_argv(
+            route,
+            policy,
+            panes=panes,
+            option_names=option_names,
+            nonce=nonce,
+            fast=False,
+        )
+        timed_out = False
+        overflow_streams: frozenset[str] = frozenset()
+        try:
+            completed = self._run(
+                argv,
+                timeout=min(
+                    remaining, policy.connect_timeout_seconds * policy.connection_attempts + 1
+                ),
+            )
+            stdout, stderr, returncode = (
+                completed.stdout or "",
+                completed.stderr or "",
+                completed.returncode,
+            )
+            timed_out = bool(getattr(completed, "timed_out", False))
+            overflow_streams = frozenset(getattr(completed, "overflow_streams", frozenset()))
+        except subprocess.TimeoutExpired:
+            return None
+        except OSError:
+            return None
+        reached, _remaining_stderr = (
+            parse_reached_marker(stderr, nonce)
+            if "stderr" not in overflow_streams
+            else (False, stderr)
+        )
+        if not reached or overflow_streams or returncode != 0 or timed_out:
+            return None
+        return parse_remote_inventory(
+            stdout,
+            host_id=host_id,
+            panes_requested=panes,
+            option_names=option_names,
+        )
+
+    def _parsed_row(
+        self,
+        host: MeshHost,
+        parsed: ParsedRemoteInventory,
+        route: str,
+    ) -> dict[str, object]:
+        if parsed.status == "tmux_missing":
+            return self._row(
+                host,
+                "tmux_missing",
+                None,
+                [],
+                route,
+                "tmux_missing",
+                "tmux is not available",
+                native_hostname=parsed.native_hostname,
+            )
+        if parsed.status == "tmux_error":
+            return self._row(
+                host,
+                "error",
+                None,
+                [],
+                route,
+                "operation_failed",
+                parsed.error_message or "remote tmux inventory failed",
+                native_hostname=parsed.native_hostname,
+            )
+        # Both a missing server and a live empty server are successful
+        # authoritative inventories; generation captures the distinction.
+        return self._row(
+            host,
+            "ok",
+            parsed.generation,
+            parsed.sessions,
+            route,
+            None,
+            None,
+            native_hostname=parsed.native_hostname,
         )
 
     def inventory(
@@ -548,50 +945,47 @@ class RemoteInventory:
                         ),
                     )
                 try:
-                    parsed = parse_remote_inventory(
+                    parsed = parse_fast_remote_inventory(
                         stdout,
                         host_id=host.host_id,
                         panes_requested=panes,
                         option_names=option_names,
                     )
-                except ContractError as error:
+                except _FastInventoryChanged as error:
                     return self._row(
                         host, "error", None, [], route.destination, error.code, error.message
                     )
-                if parsed.status == "tmux_missing":
+                except ContractError as error:
+                    # The fast program's final Z proves it completed every
+                    # command. Only then may a compatibility retry safely use
+                    # the legacy collector; partial/nonzero streams retain the
+                    # established error instead of hiding a vanished session.
+                    if _fast_complete(stdout):
+                        try:
+                            parsed = self._legacy_fallback(
+                                route.destination,
+                                policy,
+                                host_id=host.host_id,
+                                panes=panes,
+                                option_names=option_names,
+                                deadline=deadline,
+                            )
+                        except ContractError as fallback_error:
+                            return self._row(
+                                host,
+                                "error",
+                                None,
+                                [],
+                                route.destination,
+                                fallback_error.code,
+                                fallback_error.message,
+                            )
+                        if parsed is not None:
+                            return self._parsed_row(host, parsed, route.destination)
                     return self._row(
-                        host,
-                        "tmux_missing",
-                        None,
-                        [],
-                        route.destination,
-                        "tmux_missing",
-                        "tmux is not available",
-                        native_hostname=parsed.native_hostname,
+                        host, "error", None, [], route.destination, error.code, error.message
                     )
-                if parsed.status == "tmux_error":
-                    return self._row(
-                        host,
-                        "error",
-                        None,
-                        [],
-                        route.destination,
-                        "operation_failed",
-                        parsed.error_message or "remote tmux inventory failed",
-                        native_hostname=parsed.native_hostname,
-                    )
-                # Both a missing server and a live empty server are successful
-                # authoritative inventories; generation captures the distinction.
-                return self._row(
-                    host,
-                    "ok",
-                    parsed.generation,
-                    parsed.sessions,
-                    route.destination,
-                    None,
-                    None,
-                    native_hostname=parsed.native_hostname,
-                )
+                return self._parsed_row(host, parsed, route.destination)
             if _transport_failure(remaining_stderr, timed_out=timed_out):
                 last_transport = clean_message(remaining_stderr or "SSH transport failed")
                 try:

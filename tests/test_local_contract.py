@@ -18,7 +18,8 @@ from rofi_tmux_plus.errors import ContractError, NoServer
 from rofi_tmux_plus.host import local_host
 from rofi_tmux_plus.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
 from rofi_tmux_plus.model import Session, SessionReference
-from rofi_tmux_plus.tmux import TmuxClient
+from rofi_tmux_plus.tmux import Completed, TmuxClient, _FastPathUnavailable
+from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument
 
 
 class IsolatedServer(unittest.TestCase):
@@ -79,11 +80,81 @@ class IsolatedServer(unittest.TestCase):
         self.assertEqual(row["options"], {"@present": "provider-id", "@absent": None})
         self.assertEqual(len(row["panes"]), 2)
 
+    def test_batched_inventory_preserves_empty_hostile_options_and_reduces_calls(self) -> None:
+        for number in range(14):
+            self.create_direct(f"session {number}")
+        self.client.run(["new-window", "-d", "-t", "$0", "/bin/sh", "-c", "sleep 30"])
+        hostile = 'unicode ☃\tnewline\n"quote"\\backslash$'
+        self.client.set_option("$0", "@hostile", hostile)
+        self.client.set_option("$0", "@empty", "")
+
+        class CountingClient(TmuxClient):
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                super().__init__(*args, **kwargs)
+                self.calls: list[tuple[str, ...]] = []
+
+            def _run(
+                self, args: tuple[str, ...] | list[str], *, timeout: float | None = None
+            ) -> Completed:
+                self.calls.append(tuple(args))
+                return super()._run(args, timeout=timeout)
+
+        client = CountingClient(self.argv, timeout_seconds=2)
+        generation, sessions = client.inventory(
+            self.host.host_id,
+            panes=True,
+            option_names=["@hostile", "@empty", "@missing"],
+        )
+        self.assertIsNotNone(generation)
+        self.assertEqual(len(sessions), 14)
+        options = sessions[0].as_dict()["options"]
+        self.assertEqual(options, {"@hostile": hostile, "@empty": "", "@missing": None})
+        self.assertEqual(len(client.calls), 17)
+        self.assertEqual(sum(call[0] == "show-options" for call in client.calls), 14)
+        self.assertEqual(sum(call[0] == "list-panes" for call in client.calls), 1)
+        self.assertTrue(any(call[:2] == ("list-panes", "-a") for call in client.calls))
+        self.assertFalse(any("-A" in call for call in client.calls))
+
+    def test_invalid_q_a_output_falls_back_to_the_legacy_collector(self) -> None:
+        class CompatibilityClient(TmuxClient):
+            def __init__(self) -> None:
+                super().__init__(("tmux",))
+                self.calls: list[tuple[str, ...]] = []
+
+            def _run(
+                self, args: tuple[str, ...] | list[str], *, timeout: float | None = None
+            ) -> Completed:
+                del timeout
+                call = tuple(args)
+                self.calls.append(call)
+                if call == (
+                    "display-message",
+                    "-p",
+                    "#{q/a:socket_path}\t#{q/a:start_time}\t#{q/a:pid}",
+                ):
+                    return Completed(0, '"unterminated\n', "")
+                fields = {
+                    "#{socket_path}": "/tmp/tmux\n",
+                    "#{start_time}": "10\n",
+                    "#{pid}": "20\n",
+                }
+                if call[:2] == ("display-message", "-p"):
+                    return Completed(0, fields[call[-1]], "")
+                if call == ("list-sessions", "-F", "#{session_id}"):
+                    return Completed(0, "", "")
+                raise AssertionError(f"unexpected tmux call: {call}")
+
+        client = CompatibilityClient()
+        generation, sessions = client.inventory(self.host.host_id)
+        self.assertEqual(generation, "tmux-v1:10:20:/tmp/tmux")
+        self.assertEqual(sessions, [])
+        self.assertEqual(len(client.calls), 5)
+
     def test_running_empty_server_has_generation_and_authoritative_empty_sessions(self) -> None:
         session_id, _created_at = self.create_direct()
         self.client.run(["set-option", "-g", "exit-empty", "off"])
         self.client.kill(session_id)
-        generation, sessions = self.client.inventory(self.host.host_id)
+        generation, sessions = self.client.inventory(self.host.host_id, panes=True)
         self.assertIsNotNone(generation)
         self.assertEqual(sessions, [])
 
@@ -347,6 +418,50 @@ class IsolatedServer(unittest.TestCase):
 
 
 class UnitContractTests(unittest.TestCase):
+    def test_fast_local_collector_rejects_aggregate_panes_before_constructing_sessions(
+        self,
+    ) -> None:
+        class AggregatePaneClient(TmuxClient):
+            def __init__(self) -> None:
+                super().__init__(("tmux",))
+
+            def _run(
+                self, args: tuple[str, ...] | list[str], *, timeout: float | None = None
+            ) -> Completed:
+                del timeout
+                call = tuple(args)
+                if call[:2] == ("display-message", "-p"):
+                    return Completed(0, "/tmp/tmux\t1\t2\n", "")
+                if call[0] == "list-sessions":
+                    if call[-1] == "#{session_id}":
+                        return Completed(0, "$0\n", "")
+                    return Completed(0, '"$0"\t1\tname\t1\t\t0\t1\t/tmp\ttmux\t/tmp\n', "")
+                if call[0] == "show-options":
+                    return Completed(0, "", "")
+                if call[0] == "list-panes":
+                    rows = [f'"$0"\t"%{number}"\t1\t/tmp\tsh' for number in range(513)]
+                    return Completed(0, "\n".join(rows) + "\n", "")
+                raise AssertionError(f"unexpected tmux call: {call}")
+
+        client = AggregatePaneClient()
+        with self.assertRaises(_FastPathUnavailable):
+            client._inventory_fast("local", panes=True, option_names=())
+
+    def test_q_a_decoder_handles_tmux_escapes_without_evaluation(self) -> None:
+        cases = {
+            '"spaces\\tnew\\nquote\\"slash\\\\dollar\\$"': 'spaces\tnew\nquote"slash\\dollar$',
+            '"unicode ☃"': "unicode ☃",
+            "plain": "plain",
+            "\\001\\377": "\x01ÿ",
+            "''": "",
+        }
+        for encoded, expected in cases.items():
+            with self.subTest(encoded=encoded):
+                self.assertEqual(decode_tmux_argument(encoded), expected)
+        for malformed in ('"unterminated', "raw\tfield", "\\12", "'a' tail"):
+            with self.subTest(malformed=malformed), self.assertRaises(TmuxWireError):
+                decode_tmux_argument(malformed)
+
     def test_host_aliases_are_casefolded_safe(self) -> None:
         host = local_host("Desk.TOP.Example")
         self.assertEqual(host.host_id, "desk")
