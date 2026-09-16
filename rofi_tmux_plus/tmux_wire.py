@@ -101,6 +101,54 @@ def decode_tmux_argument(value: str, *, max_bytes: int = 16 * 1024) -> str:
     return decoded
 
 
+def split_tmux_arguments(value: str, *, delimiter: str = ";") -> tuple[str, ...]:
+    """Split q/a arguments on a delimiter tmux did not quote or escape.
+
+    Remote command transport cannot reliably preserve a literal tab inside a
+    tmux format argument. q/a quotes a semicolon where needed, so a semicolon
+    record grammar is safe as long as this function distinguishes its field
+    separators from a semicolon that belongs to one argument.
+
+    This is only a structural split. Call :func:`decode_tmux_argument` on
+    every returned field before trusting the corresponding value.
+    """
+    if len(delimiter) != 1:
+        raise ValueError("tmux argument delimiter must be one character")
+    fields: list[str] = []
+    start = 0
+    quote: str | None = None
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if quote is not None:
+            if char == "\\" and quote != "'":
+                if index + 1 >= len(value):
+                    raise TmuxWireError("tmux argument ends with an escape")
+                index += 2
+                continue
+            if char == quote:
+                quote = None
+            index += 1
+            continue
+        if char == "\\":
+            if index + 1 >= len(value):
+                raise TmuxWireError("tmux argument ends with an escape")
+            index += 2
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            index += 1
+            continue
+        if char == delimiter:
+            fields.append(value[start:index])
+            start = index + 1
+        index += 1
+    if quote is not None:
+        raise TmuxWireError("tmux argument has an unterminated quote")
+    fields.append(value[start:])
+    return tuple(fields)
+
+
 def parse_explicit_user_options(
     output: str,
     names: Iterable[str],

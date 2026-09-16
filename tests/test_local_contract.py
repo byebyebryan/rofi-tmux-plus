@@ -19,7 +19,7 @@ from rofi_tmux_plus.host import local_host
 from rofi_tmux_plus.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
 from rofi_tmux_plus.model import Session, SessionReference
 from rofi_tmux_plus.tmux import Completed, TmuxClient, _FastPathUnavailable
-from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument
+from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument, split_tmux_arguments
 
 
 class IsolatedServer(unittest.TestCase):
@@ -461,6 +461,22 @@ class UnitContractTests(unittest.TestCase):
         for malformed in ('"unterminated', "raw\tfield", "\\12", "'a' tail"):
             with self.subTest(malformed=malformed), self.assertRaises(TmuxWireError):
                 decode_tmux_argument(malformed)
+
+    def test_q_a_semicolon_splitter_respects_quoted_and_escaped_arguments(self) -> None:
+        fields = split_tmux_arguments('D;"quoted;value";escaped\\;value;;plain')
+        self.assertEqual(fields, ("D", '"quoted;value"', "escaped\\;value", "", "plain"))
+        self.assertEqual(
+            [decode_tmux_argument(value) for value in fields[1:]],
+            [
+                "quoted;value",
+                "escaped;value",
+                "",
+                "plain",
+            ],
+        )
+        for malformed in ('D;"unterminated;value', "D;escaped\\"):
+            with self.subTest(malformed=malformed), self.assertRaises(TmuxWireError):
+                split_tmux_arguments(malformed)
 
     def test_host_aliases_are_casefolded_safe(self) -> None:
         host = local_host("Desk.TOP.Example")

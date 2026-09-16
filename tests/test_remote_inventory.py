@@ -129,13 +129,13 @@ def _q(value: str) -> str:
 def _fast_domain_output(*, panes: bool = False, options: tuple[str, ...] = ()) -> str:
     lines = [
         _hostname_record().removesuffix("\n"),
-        "G\t" + "\t".join((_q("/tmp/tmux"), _q("10"), _q("20"))),
-        "D\t"
-        + "\t".join(
+        "G;" + ";".join((_q("/tmp/tmux"), _q("10"), _q("20"))),
+        "D;"
+        + ";".join(
             (
                 _q("$0"),
                 _q("11"),
-                _q("hostile\tname\npath"),
+                _q("hostile;\tname\npath"),
                 _q("12"),
                 _q(""),
                 _q("0"),
@@ -151,8 +151,8 @@ def _fast_domain_output(*, panes: bool = False, options: tuple[str, ...] = ()) -
         lines.append("O\t" + _field("$0", tmux_output=False) + "\t" + option + " " + _q("value"))
     if panes:
         lines.append(
-            "P\t"
-            + "\t".join(
+            "P;"
+            + ";".join(
                 (
                     _q("$0"),
                     _q("%0"),
@@ -400,7 +400,7 @@ class RemoteInventoryTests(unittest.TestCase):
         self.assertEqual(row["status"], "ok")
         self.assertEqual(row["route"], "beta-vpn.test")
         session = row["sessions"][0]
-        self.assertEqual(session["name"], "hostile\tname\npath")
+        self.assertEqual(session["name"], "hostile;\tname\npath")
         self.assertEqual(session["options"], {"@codex_thread_id": "value"})
         self.assertEqual(len(session["panes"]), 1)
         self.assertEqual(self.adapter.reports[0]["status"], "reachable")
@@ -415,7 +415,7 @@ class RemoteInventoryTests(unittest.TestCase):
             panes_requested=False,
             option_names=("@empty", "@absent"),
         )
-        self.assertEqual(parsed.sessions[0].name, "hostile\tname\npath")
+        self.assertEqual(parsed.sessions[0].name, "hostile;\tname\npath")
         self.assertEqual(parsed.sessions[0].options, {"@empty": "", "@absent": None})
 
     def test_completed_invalid_fast_framing_retries_legacy_once_on_the_same_route(self) -> None:
@@ -479,7 +479,7 @@ class RemoteInventoryTests(unittest.TestCase):
                 panes_requested=False,
                 option_names=[],
             )
-        malformed = _fast_domain_output().replace("\nS\t", '\nD\t"$0"\nS\t', 1)
+        malformed = _fast_domain_output().replace("\nS\t", '\nD;"$0"\nS\t', 1)
         with self.assertRaises(ContractError):
             parse_fast_remote_inventory(
                 malformed, host_id="beta", panes_requested=False, option_names=[]
@@ -521,6 +521,8 @@ class RemoteInventoryTests(unittest.TestCase):
             "beta-vpn.test", self.policy, panes=True, option_names=["@state"], nonce=self.nonce
         )
         self.assertIn("q/a:socket_path", argv[-1])
+        self.assertIn("G;#{q/a:socket_path}", argv[-1])
+        self.assertNotIn("\t", argv[-1])
         self.assertIn("list-panes -a", argv[-1])
         self.assertNotIn("show-options -A", argv[-1])
         self.assertIn("complete", argv[-1])
@@ -534,6 +536,7 @@ class RemoteInventoryTests(unittest.TestCase):
             directory = Path(raw_directory)
             calls = directory / "calls"
             wrapper = directory / "tmux"
+            ssh_wrapper = directory / "ssh"
             wrapper.write_text(
                 "#!/bin/sh\n"
                 'printf \'%s\\n\' "$1" >> "$ROFI_TMUX_PLUS_CALLS"\n'
@@ -541,8 +544,25 @@ class RemoteInventoryTests(unittest.TestCase):
                 encoding="utf-8",
             )
             os.chmod(wrapper, 0o700)
+            ssh_wrapper.write_text(
+                "#!/bin/sh\n"
+                "for argument do remote_command=$argument; done\n"
+                'exec sh -c "$remote_command"\n',
+                encoding="utf-8",
+            )
+            os.chmod(ssh_wrapper, 0o700)
             subprocess.run(
-                [tmux, "-L", socket, "-f", "/dev/null", "new-session", "-d", "-s", "remote"],
+                [
+                    tmux,
+                    "-L",
+                    socket,
+                    "-f",
+                    "/dev/null",
+                    "new-session",
+                    "-d",
+                    "-s",
+                    "remote;hostile",
+                ],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -557,7 +577,7 @@ class RemoteInventoryTests(unittest.TestCase):
                         "/dev/null",
                         "set-option",
                         "-t",
-                        "remote",
+                        "$0",
                         "@state",
                         "",
                     ],
@@ -573,6 +593,20 @@ class RemoteInventoryTests(unittest.TestCase):
                 }
                 completed = subprocess.run(
                     ["sh", "-c", _REMOTE_FAST_PROGRAM, "remote-test", "1", "@state", "@missing"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    env=environment,
+                )
+                full_argv = build_remote_inventory_argv(
+                    "beta-vpn.test",
+                    MeshPolicy(str(ssh_wrapper), 2, 1, 300),
+                    panes=True,
+                    option_names=("@state", "@missing"),
+                    nonce=self.nonce,
+                )
+                nested_completed = subprocess.run(
+                    full_argv,
                     check=True,
                     capture_output=True,
                     text=True,
@@ -595,7 +629,7 @@ class RemoteInventoryTests(unittest.TestCase):
                     text=True,
                 )
                 subprocess.run(
-                    [tmux, "-L", socket, "-f", "/dev/null", "kill-session", "-t", "remote"],
+                    [tmux, "-L", socket, "-f", "/dev/null", "kill-session", "-t", "$0"],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -622,6 +656,19 @@ class RemoteInventoryTests(unittest.TestCase):
             )
             self.assertEqual(parsed.sessions[0].options, {"@state": "", "@missing": None})
             self.assertTrue(completed.stdout.endswith("Z\n"))
+            reached, remaining_stderr = parse_reached_marker(nested_completed.stderr, self.nonce)
+            self.assertTrue(reached)
+            self.assertEqual(remaining_stderr, "")
+            nested = parse_fast_remote_inventory(
+                nested_completed.stdout,
+                host_id="beta",
+                panes_requested=True,
+                option_names=("@state", "@missing"),
+            )
+            self.assertEqual(nested.sessions[0].options, {"@state": "", "@missing": None})
+            self.assertEqual(nested.sessions[0].name, "remote;hostile")
+            self.assertTrue(nested_completed.stdout.splitlines()[1].startswith("G;"))
+            self.assertTrue(nested_completed.stdout.splitlines()[2].startswith("D;"))
             empty = parse_fast_remote_inventory(
                 empty_completed.stdout,
                 host_id="beta",
@@ -642,7 +689,18 @@ class RemoteInventoryTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                calls.read_text(encoding="utf-8").splitlines()[6:],
+                calls.read_text(encoding="utf-8").splitlines()[6:12],
+                [
+                    "display-message",
+                    "display-message",
+                    "list-sessions",
+                    "list-sessions",
+                    "show-options",
+                    "list-panes",
+                ],
+            )
+            self.assertEqual(
+                calls.read_text(encoding="utf-8").splitlines()[12:],
                 ["display-message", "display-message", "list-sessions", "list-sessions"],
             )
 
@@ -692,7 +750,7 @@ class RemoteInventoryTests(unittest.TestCase):
             )
 
         panes = [
-            "P\t" + "\t".join((_q("$0"), _q(f"%{number}"), _q("1"), _q("/tmp"), _q("sh")))
+            "P;" + ";".join((_q("$0"), _q(f"%{number}"), _q("1"), _q("/tmp"), _q("sh")))
             for number in range(513)
         ]
         with self.assertRaises(ContractError):

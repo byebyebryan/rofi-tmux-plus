@@ -15,7 +15,12 @@ from .errors import ContractError, clean_message
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshPolicy, MeshStaleError
 from .model import Pane, Session, SessionReference
 from .tmux import validate_session_id, validate_user_option
-from .tmux_wire import TmuxWireError, decode_tmux_argument, parse_explicit_user_options
+from .tmux_wire import (
+    TmuxWireError,
+    decode_tmux_argument,
+    parse_explicit_user_options,
+    split_tmux_arguments,
+)
 
 _MARKER_PREFIX = "\x1eROFI_PLUS_REACHED_V1:"
 _MARKER_SUFFIX = "\x1f\n"
@@ -112,10 +117,12 @@ tmux list-sessions -F '#{session_id}' | while IFS= read -r sid; do
 done"""
 
 
-# q/a keeps every tmux format field inside one command argument, so literal
-# tabs/newlines remain safe record delimiters. The explicit Z record is only
-# reached after every normal-path tmux command succeeds; callers may retry the
-# safe legacy program only when it is present and final.
+# q/a keeps every tmux format field inside one command argument. Remote command
+# transport cannot reliably preserve a literal tab inside a tmux format
+# argument, so normal-path records use q/a-aware semicolon delimiters instead.
+# The explicit Z record is only reached after every normal-path tmux command
+# succeeds; callers may retry the safe legacy program only when it is present
+# and final.
 _REMOTE_FAST_PROGRAM = r"""set -eu
 hex() { LC_ALL=C od -An -v -tx1 | tr -d ' \n'; }
 literal() { printf '\t'; printf '%s' "$1" | hex; }
@@ -139,9 +146,8 @@ else
   complete
   exit 0
 fi
-printf 'G\t'
-tmux display-message -p '#{q/a:socket_path}<TAB>#{q/a:start_time}<TAB>#{q/a:pid}'
-tmux list-sessions -F 'D<TAB>#{q/a:session_id}<TAB>#{q/a:session_created}<TAB>#{q/a:session_name}<TAB>#{q/a:session_activity}<TAB>#{q/a:session_last_attached}<TAB>#{q/a:session_attached}<TAB>#{q/a:session_windows}<TAB>#{q/a:session_path}<TAB>#{q/a:window_name}<TAB>#{q/a:pane_current_path}'
+tmux display-message -p 'G;#{q/a:socket_path};#{q/a:start_time};#{q/a:pid}'
+tmux list-sessions -F 'D;#{q/a:session_id};#{q/a:session_created};#{q/a:session_name};#{q/a:session_activity};#{q/a:session_last_attached};#{q/a:session_attached};#{q/a:session_windows};#{q/a:session_path};#{q/a:window_name};#{q/a:pane_current_path}'
 session_ids=$(tmux list-sessions -F '#{session_id}')
 if [ -n "$session_ids" ]; then
   printf '%s\n' "$session_ids" | while IFS= read -r sid; do
@@ -161,9 +167,9 @@ if [ -n "$session_ids" ]; then
   done
 fi
 if [ "$panes_flag" = 1 ] && [ -n "$session_ids" ]; then
-  tmux list-panes -a -F 'P<TAB>#{q/a:session_id}<TAB>#{q/a:pane_id}<TAB>#{q/a:pane_pid}<TAB>#{q/a:pane_current_path}<TAB>#{q/a:pane_current_command}'
+  tmux list-panes -a -F 'P;#{q/a:session_id};#{q/a:pane_id};#{q/a:pane_pid};#{q/a:pane_current_path};#{q/a:pane_current_command}'
 fi
-complete""".replace("<TAB>", "\t")
+complete"""
 
 
 def generate_nonce() -> str:
@@ -466,7 +472,16 @@ def parse_fast_remote_inventory(
             if index != len(lines) - 1:
                 raise ContractError("operation_failed", "remote tmux fast completion is invalid")
             continue
-        parts = line.split("\t")
+        try:
+            parts = (
+                split_tmux_arguments(line)
+                if line.startswith(("G;", "D;", "P;"))
+                else tuple(line.split("\t"))
+            )
+        except TmuxWireError as error:
+            raise ContractError(
+                "operation_failed", "remote tmux fast framing is invalid"
+            ) from error
         kind = parts[0]
         if kind == "H":
             if (
