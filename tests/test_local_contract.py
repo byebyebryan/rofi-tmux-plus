@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 from rofi_tmux_plus import cli
 from rofi_tmux_plus.config import Config, load_config
 from rofi_tmux_plus.errors import ContractError, NoServer
-from rofi_tmux_plus.host import local_host
+from rofi_tmux_plus.host import LocalHost, local_host
 from rofi_tmux_plus.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
 from rofi_tmux_plus.model import Session, SessionReference
 from rofi_tmux_plus.tmux import Completed, TmuxClient, _FastPathUnavailable
@@ -727,6 +727,55 @@ class FocusAndCliTests(unittest.TestCase):
             spawn.call_args.args[0],
             ["ghostty", "-e", "tmux", "-u", "attach-session", "-t", "$1"],
         )
+
+    def test_open_focuses_native_hostname_when_mesh_host_id_differs(self) -> None:
+        host = LocalHost("snap", "Snap", "80H1VV3", frozenset({"snap"}))
+        session = Session(
+            SessionReference("snap", "tmux-v1:1:2:/socket", "$0", 1),
+            "agent",
+            1,
+            None,
+            0,
+            False,
+            1,
+            "/tmp",
+            "shell",
+            "/tmp",
+        )
+        tmux = MagicMock()
+        tmux.find.return_value = session
+        spawned = MagicMock()
+        lifecycle = LocalLifecycle(
+            tmux,
+            Config(terminal=("ghostty",)),
+            host=host,
+            niri_command=("niri",),
+            terminal_spawner=spawned,
+        )
+        windows = json.dumps([{"id": 42, "title": "agent:0 workspace @ 80H1VV3"}])
+        with (
+            patch.dict(os.environ, {"NIRI_SOCKET": "/tmp/niri-test"}),
+            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value="/usr/bin/niri"),
+            patch(
+                "rofi_tmux_plus.lifecycle.subprocess.run",
+                side_effect=[
+                    subprocess.CompletedProcess(["niri"], 0, windows, ""),
+                    subprocess.CompletedProcess(["niri"], 0, "", ""),
+                ],
+            ) as run,
+        ):
+            opened = lifecycle.open(
+                "snap",
+                None,
+                session.reference.server_generation,
+                session.reference.session_id,
+                session.reference.created_at,
+            )
+
+        self.assertTrue(opened["focused"])
+        self.assertFalse(opened["terminalLaunched"])
+        self.assertIn("focus-window", run.call_args_list[1].args[0])
+        spawned.assert_not_called()
 
     def test_invalid_stable_reference_is_rejected_before_tmux(self) -> None:
         for generation, session_id, created_at, expected_name in (

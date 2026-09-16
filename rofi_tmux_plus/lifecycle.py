@@ -362,8 +362,10 @@ class LocalLifecycle:
         }
 
     def _focus_matching_window(self, session: Session) -> bool:
-        short_host = resolve_local_host(session.reference.host_id, self.host).host_id
-        return focus_session_window(session.name, short_host, niri_command=self._niri_command)
+        host = resolve_local_host(session.reference.host_id, self.host)
+        return focus_session_window(
+            session.name, host.native_hostname, niri_command=self._niri_command
+        )
 
     def _spawn_terminal(self, session_id: str) -> None:
         spawn_terminal_command(self.config, ["tmux", "-u", "attach-session", "-t", session_id])
