@@ -261,11 +261,11 @@ class RofiRenderTests(unittest.TestCase):
             titles=("open:0 @ alpha",),
         )
         _, rows = rendered_records(result)
+        options_by_name = {
+            json.loads(row_options(row)["info"])["name"]: row_options(row) for row in rows
+        }
         statuses = {
-            json.loads(row_options(row)["info"])["name"]: json.loads(row_options(row)["info"])[
-                "status"
-            ]
-            for row in rows
+            name: json.loads(options["info"])["status"] for name, options in options_by_name.items()
         }
         self.assertEqual(
             {
@@ -276,6 +276,12 @@ class RofiRenderTests(unittest.TestCase):
             },
             statuses,
         )
+        self.assertEqual("true", options_by_name["open"]["active"])
+        self.assertNotIn("urgent", options_by_name["open"])
+        for name in ("attached", "detached", "stale"):
+            with self.subTest(name=name):
+                self.assertNotIn("active", options_by_name[name])
+                self.assertNotIn("urgent", options_by_name[name])
         self.assertFalse(
             rofi._is_open_here(
                 local_open,
@@ -293,21 +299,36 @@ class RofiRenderTests(unittest.TestCase):
             stale=True,
             unavailable=True,
         )
-        statuses = {
-            json.loads(row_options(row)["info"])["name"]: json.loads(row_options(row)["info"])[
-                "status"
-            ]
-            for row in rendered_records(
-                rofi.render_snapshot(
-                    payload(
-                        hosts=[host("alpha", "Alpha", local=True), stale_host],
-                    ),
-                    now=200,
-                    titles=(),
-                )
-            )[1]
-        }
-        self.assertEqual("unavailable", statuses["stale"])
+        _, stale_rows = rendered_records(
+            rofi.render_snapshot(
+                payload(
+                    hosts=[host("alpha", "Alpha", local=True), stale_host],
+                ),
+                now=200,
+                titles=(),
+            )
+        )
+        stale_options = row_options(stale_rows[0])
+        self.assertEqual("unavailable", json.loads(stale_options["info"])["status"])
+        self.assertEqual("true", stale_options["urgent"])
+        self.assertNotIn("active", stale_options)
+        self.assertNotIn("nonselectable", stale_options)
+        _, recovered_rows = rendered_records(
+            rofi.render_snapshot(
+                payload(
+                    hosts=[
+                        host("alpha", "Alpha", local=True),
+                        host("beta", "Beta", local=False, sessions=[remote_stale]),
+                    ]
+                ),
+                now=200,
+                titles=(),
+            )
+        )
+        recovered_options = row_options(recovered_rows[0])
+        self.assertEqual("detached", json.loads(recovered_options["info"])["status"])
+        self.assertNotIn("active", recovered_options)
+        self.assertNotIn("urgent", recovered_options)
 
     def test_flat_scopes_use_complete_catalog_order_and_leaf_rows(self) -> None:
         alpha = host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "one")])
@@ -353,7 +374,49 @@ class RofiRenderTests(unittest.TestCase):
         self.assertEqual(
             [row.split("\0", 1)[0] for row in cold_rows], ["No tmux sessions available on Gamma"]
         )
-        self.assertEqual("true", row_options(cold_rows[0])["nonselectable"])
+        cold_options = row_options(cold_rows[0])
+        self.assertEqual("true", cold_options["nonselectable"])
+        self.assertNotIn("urgent", cold_options)
+        self.assertNotIn("active", cold_options)
+        empty_local = payload(
+            hosts=[host("alpha", "Alpha", local=True)],
+            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
+            revision=None,
+        )
+        _, empty_local_rows = rendered_records(
+            rofi.render_snapshot(empty_local, now=200, titles=())
+        )
+        empty_local_options = row_options(empty_local_rows[0])
+        self.assertEqual("true", empty_local_options["nonselectable"])
+        self.assertNotIn("urgent", empty_local_options)
+        self.assertNotIn("active", empty_local_options)
+        unavailable = host(
+            "gamma",
+            "Gamma",
+            local=False,
+            status="error",
+            stale=True,
+            unavailable=True,
+        )
+        unavailable_value = payload(
+            hosts=[host("alpha", "Alpha", local=True), unavailable],
+            catalog=[
+                {"hostId": "alpha", "display": "Alpha", "local": True},
+                {"hostId": "gamma", "display": "Gamma", "local": False},
+            ],
+        )
+        _, unavailable_rows = rendered_records(
+            rofi.render_snapshot(
+                unavailable_value,
+                navigation=rofi.NavigationState(rofi.VIEW_HOST, "gamma"),
+                now=200,
+                titles=(),
+            )
+        )
+        unavailable_options = row_options(unavailable_rows[0])
+        self.assertEqual("true", unavailable_options["nonselectable"])
+        self.assertEqual("true", unavailable_options["urgent"])
+        self.assertNotIn("active", unavailable_options)
         local_only = payload(
             hosts=[alpha],
             catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
@@ -836,7 +899,13 @@ class RofiMutationTests(unittest.TestCase):
         )
         rows = self.rows(confirmation)
         self.assertEqual("Cancel", rows[0].split("\0", 1)[0])
-        self.assertIn("disconnects 0 live clients", row_options(rows[1])["display"])
+        cancel_options = row_options(rows[0])
+        kill_options = row_options(rows[1])
+        self.assertIn("disconnects 0 live clients", kill_options["display"])
+        self.assertNotIn("active", cancel_options)
+        self.assertNotIn("urgent", cancel_options)
+        self.assertEqual("true", kill_options["active"])
+        self.assertEqual("true", kill_options["urgent"])
         canceled = self.invoke(
             {
                 "ROFI_RETV": "1",
@@ -1052,6 +1121,10 @@ class RofiRefreshTests(unittest.TestCase):
         initial = output.getvalue()
         self.assertIn("Refreshing in background", initial)
         self.assertIn('"refreshDeadline":', initial)
+        _, initial_rows = rendered_records(initial)
+        initial_options = row_options(initial_rows[0])
+        self.assertNotIn("active", initial_options)
+        self.assertNotIn("urgent", initial_options)
         data = initial.split("\0data\x1f", 1)[1].split("\n", 1)[0]
         initial_state = json.loads(data)
         self.assertTrue(rofi.valid_snapshot_key(initial_state["snapshotKey"]))

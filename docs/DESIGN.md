@@ -194,6 +194,30 @@ Attachment count is authoritative only for a live observation. An unavailable
 row says when it was last seen and does not present its old attachment status
 as current fact.
 
+### Observation confidence and row state
+
+Rofi row-state tokens convey confidence and local action state independently of
+the textual status and activity age:
+
+| Row state | `active` | `urgent` | Selectable |
+| --- | --- | --- | --- |
+| Live `open here` session | yes | no | yes |
+| Live attached or detached session | no | no | yes |
+| Retained session from an unavailable host | no | yes | yes |
+| Normal empty scope | no | no | no |
+| Empty concrete scope whose host is unavailable | no | yes | no |
+| Kill-confirmation action | yes | yes | yes |
+
+The `active` token on a session row means that the row is open here now; it is
+not a proxy for recent activity. The `urgent` token means that the current
+observation cannot establish the retained session or concrete host as
+available. A refresh running in the background, a bounded foreground refresh,
+or an old cache/activity timestamp does not add either token beyond the state
+of the rendered session. A successful atomic host snapshot clears the warning
+on its next render. The kill row deliberately combines both tokens so the
+managed theme can distinguish destructive danger from observation uncertainty;
+theme colors remain outside this repository.
+
 ## Navigation
 
 Browsing follows the suite-wide Rofi contract:

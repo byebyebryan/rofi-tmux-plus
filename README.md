@@ -51,6 +51,17 @@ Left/Right callbacks can switch scopes without reading Host Mesh or local tmux.
 The cache keeps the newest 256 owned snapshots and fails closed if the exact
 snapshot in `ROFI_DATA` is missing or corrupt.
 
+The picker also uses Rofi's row-state tokens to separate observation confidence
+from session age. A live `open here` session row is `active`; retained session
+rows whose host observation is unavailable are `urgent` but remain selectable.
+Live attached and detached rows, background refreshes, and old activity times
+remain visually ordinary. A normal empty-scope row is only `nonselectable`,
+while an empty concrete scope whose host is unavailable is also `urgent`.
+The kill-confirmation row combines `active` and `urgent` so the managed theme
+can distinguish destructive danger from an unavailable observation. A
+successful atomic refresh naturally removes the unavailable marker on the next
+render; cache age alone never creates one.
+
 - [Product and interaction design](docs/DESIGN.md)
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)
 - [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md)

@@ -940,17 +940,17 @@ def _session_rows_render(
             if value is not None
         )
         primary = sanitize(session.get("name") or session.get("sessionId") or "tmux session")
-        rows.append(
-            primary
-            + _row_options(
-                (
-                    (ROFI_INFO_KEY, info),
-                    ("meta", metadata),
-                    ("icon", TERMINAL_ICON),
-                    ("display", _session_display(session, scoped_host, status, now)),
-                )
-            )
-        )
+        options: list[tuple[str, object]] = [
+            (ROFI_INFO_KEY, info),
+            ("meta", metadata),
+            ("icon", TERMINAL_ICON),
+        ]
+        if status == "open here":
+            options.append(("active", "true"))
+        elif status == "unavailable":
+            options.append(("urgent", "true"))
+        options.append(("display", _session_display(session, scoped_host, status, now)))
+        rows.append(primary + _row_options(options))
     return rows
 
 
@@ -1086,6 +1086,7 @@ def render_snapshot(
             + _row_options(
                 (
                     (ROFI_INFO_KEY, kill),
+                    ("active", "true"),
                     ("urgent", "true"),
                     ("icon", "edit-delete-symbolic"),
                     (
@@ -1110,21 +1111,18 @@ def render_snapshot(
             text = f"No tmux sessions available on {scope}"
             secondary = "No sessions are available"
             host_row = _host_for(snapshot, active.navigation.host_id or "")
-            if host_row is not None and not _host_live(host_row):
+            host_unavailable = host_row is not None and not _host_live(host_row)
+            if host_unavailable:
                 secondary += " · unavailable"
         else:
             text = "No tmux sessions"
             secondary = "No sessions available"
-        rows = [
-            text
-            + _row_options(
-                (
-                    ("nonselectable", "true"),
-                    ("urgent", "true"),
-                    ("display", text + ROW_SEPARATOR + secondary),
-                )
-            )
-        ]
+            host_unavailable = False
+        empty_options: list[tuple[str, object]] = [("nonselectable", "true")]
+        if host_unavailable:
+            empty_options.append(("urgent", "true"))
+        empty_options.append(("display", text + ROW_SEPARATOR + secondary))
+        rows = [text + _row_options(empty_options)]
     if continuation:
         return ROFI_RECORD_SEPARATOR.join((*headers, *rows)) + ROFI_RECORD_SEPARATOR
     # Change Rofi's record delimiter after the initial LF-delimited headers;
