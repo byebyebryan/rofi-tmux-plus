@@ -1033,14 +1033,14 @@ def _action_hint(state: ContinuationState) -> str:
             color = "#ef5350" if action == ACTION_KILL else "#42a5f5"
             label = f'<span foreground="{color}" weight="bold">[{label}]</span>'
         labels.append(label)
-    return f"Actions: {' · '.join(labels)}  |  Tab: Cycle · Enter: Run"
+    return f"Enter: {' · '.join(labels)}\u2028Tab: Cycle actions"
 
 
 def _action_message(state: ContinuationState, notice: str) -> str:
     hint = _action_hint(state)
     if not notice:
         return hint
-    separator = "  |  "
+    separator = "\u2028"
     available = MAX_MESSAGE_LENGTH - len(hint) - len(separator)
     text = sanitize(notice)
     escaped = _pango_escape(text)
