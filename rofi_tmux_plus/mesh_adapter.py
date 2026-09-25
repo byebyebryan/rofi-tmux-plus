@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from .bounded_process import BoundedCompleted, run_bounded
 from .errors import ContractError, clean_message
-from .wire import WireError, decode_document
+from .wire import WireError, decode_document, validate_string_bounds
 
 _HOST_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", re.ASCII)
 _REVISION = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
@@ -234,6 +234,7 @@ class HostMeshAdapter:
             )
         try:
             payload = decode_document(stdout, limit=_MAX_OUTPUT)
+            validate_string_bounds(payload, limit=_MAX_STRING)
         except WireError as error:
             raise ContractError("operation_failed", "Host Mesh returned malformed JSON") from error
         returncode = getattr(completed, "returncode", 1)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping
 from typing import TextIO
 
@@ -22,6 +23,13 @@ def _strict_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
 
 def _reject_constant(value: str) -> object:
     raise WireError(f"non-finite JSON number: {value}")
+
+
+def _parse_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise WireError("non-finite JSON number")
+    return parsed
 
 
 def decode_document(raw: bytes, *, limit: int) -> object:
@@ -46,6 +54,7 @@ def decode_document(raw: bytes, *, limit: int) -> object:
     try:
         decoder = json.JSONDecoder(
             object_pairs_hook=_strict_pairs,
+            parse_float=_parse_float,
             parse_constant=_reject_constant,
         )
         value, end = decoder.raw_decode(text)

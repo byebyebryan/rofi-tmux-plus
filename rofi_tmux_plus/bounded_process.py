@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import os
+import selectors
 import signal
 import subprocess
-import threading
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 _CHUNK_SIZE = 16 * 1024
-_POLL_SECONDS = 0.005
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,7 +35,7 @@ def run_bounded(
     stdout_limit: int,
     stderr_limit: int,
 ) -> BoundedCompleted:
-    """Run ``argv`` while bounded reader threads drain and always reap the child."""
+    """Capture bounded output, including when a descendant holds a pipe open."""
     if timeout <= 0 or stdout_limit < 1 or stderr_limit < 1:
         raise ValueError("bounded process limits must be positive")
     process = subprocess.Popen(
@@ -49,81 +48,68 @@ def run_bounded(
     )
     assert process.stdout is not None
     assert process.stderr is not None
-    stdout = bytearray()
-    stderr = bytearray()
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
     overflow_streams: set[str] = set()
-    overflow_lock = threading.Lock()
-
-    def read_stream(stream: object, buffer: bytearray, limit: int, label: str) -> None:
-        reader = stream
-        while True:
-            remaining = limit - len(buffer)
-            chunk = reader.read(min(_CHUNK_SIZE, max(1, remaining + 1)))
-            if not chunk:
-                return
-            if len(chunk) <= remaining:
-                buffer.extend(chunk)
-                continue
-            buffer.extend(chunk[:remaining])
-            with overflow_lock:
-                overflow_streams.add(label)
-            # Continue draining after the main thread terminates the child.
-            while reader.read(_CHUNK_SIZE):
-                pass
-            return
-
-    readers = (
-        threading.Thread(
-            target=read_stream, args=(process.stdout, stdout, stdout_limit, "stdout"), daemon=True
-        ),
-        threading.Thread(
-            target=read_stream, args=(process.stderr, stderr, stderr_limit, "stderr"), daemon=True
-        ),
-    )
-    for reader in readers:
-        reader.start()
-
+    limits = {"stdout": stdout_limit, "stderr": stderr_limit}
     deadline = time.monotonic() + timeout
     timed_out = False
-    stopping = False
 
-    def stop_group(sig: signal.Signals) -> None:
+    def stop_group() -> None:
         try:
             if os.name == "posix":
-                os.killpg(process.pid, sig)
-            else:  # pragma: no cover - supported for the subprocess API boundary
-                process.send_signal(sig)
+                # The leader may have exited while its children still own pipes.
+                os.killpg(process.pid, signal.SIGKILL)
+            elif process.poll() is None:  # pragma: no cover - POSIX runtime
+                process.kill()
         except ProcessLookupError:
             pass
 
+    poller = selectors.DefaultSelector()
     try:
-        while process.poll() is None:
-            if overflow_streams or time.monotonic() >= deadline:
-                timed_out = not overflow_streams
-                stopping = True
-                stop_group(signal.SIGTERM)
+        poller.register(process.stdout, selectors.EVENT_READ, "stdout")
+        poller.register(process.stderr, selectors.EVENT_READ, "stderr")
+        while poller.get_map():
+            remaining_time = deadline - time.monotonic()
+            if remaining_time <= 0:
+                timed_out = True
                 break
-            time.sleep(_POLL_SECONDS)
-        if stopping and process.poll() is None:
+            for key, _events in poller.select(remaining_time):
+                label = key.data
+                buffer = buffers[label]
+                remaining_bytes = limits[label] - len(buffer)
+                chunk = os.read(key.fileobj.fileno(), min(_CHUNK_SIZE, remaining_bytes + 1))
+                if not chunk:
+                    poller.unregister(key.fileobj)
+                    continue
+                buffer.extend(chunk[:remaining_bytes])
+                if len(chunk) > remaining_bytes:
+                    overflow_streams.add(label)
+                    break
+            if overflow_streams:
+                break
+        if not timed_out and not overflow_streams:
             try:
-                process.wait(timeout=0.1)
+                process.wait(timeout=max(0, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
-                stop_group(signal.SIGKILL)
-        process.wait()
+                timed_out = True
+        if timed_out or overflow_streams:
+            stop_group()
+            process.wait()
     finally:
         if process.poll() is None:
-            stop_group(signal.SIGKILL)
+            stop_group()
             process.wait()
-        for reader in readers:
-            reader.join()
+        poller.close()
         process.stdout.close()
         process.stderr.close()
+    stdout = bytes(buffers["stdout"])
+    stderr = bytes(buffers["stderr"])
     return BoundedCompleted(
         process.returncode,
-        bytes(stdout).decode("utf-8", errors="replace"),
-        bytes(stderr).decode("utf-8", errors="replace"),
+        stdout.decode("utf-8", errors="replace"),
+        stderr.decode("utf-8", errors="replace"),
         timed_out=timed_out,
         overflow_streams=frozenset(overflow_streams),
-        stdout_bytes=bytes(stdout),
-        stderr_bytes=bytes(stderr),
+        stdout_bytes=stdout,
+        stderr_bytes=stderr,
     )

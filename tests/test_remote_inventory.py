@@ -360,6 +360,24 @@ class BoundedProcessTests(unittest.TestCase):
         self.assertIsInstance(result.returncode, int)
         self.assertLess(time.monotonic() - started, 0.5)
 
+    def test_timeout_when_exited_parent_leaves_child_holding_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            marker = Path(raw_directory) / "descendant-survived"
+            script = self._script(
+                Path(raw_directory),
+                "inherited-pipe",
+                '(sleep .25; touch "$1") &\nexit 0\n',
+            )
+            started = time.monotonic()
+            result = run_bounded(
+                [str(script), str(marker)], timeout=0.05, stdout_limit=128, stderr_limit=128
+            )
+            elapsed = time.monotonic() - started
+            time.sleep(0.3)
+            self.assertFalse(marker.exists())
+        self.assertTrue(result.timed_out)
+        self.assertLess(elapsed, 0.5)
+
     def test_host_mesh_and_ssh_default_runners_reject_bounded_overflow(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:
             script = self._script(Path(raw_directory), "overflow", "yes x\n")

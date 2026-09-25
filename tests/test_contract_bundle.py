@@ -860,6 +860,19 @@ class WireAndProducerTests(unittest.TestCase):
             with self.subTest(completed=completed), self.assertRaises(ContractError):
                 adapter.load()
 
+    def test_host_mesh_rejects_nonfinite_numbers_and_oversized_extensions(self) -> None:
+        source = (HOST_BUNDLE / "fixtures/valid/list-local-only.json").read_text()
+        for raw in (
+            source.replace('"generatedAt": 1000000', '"generatedAt": 1e999').encode(),
+            json.dumps({**json.loads(source), "extension": "x" * 16_385}).encode(),
+        ):
+            response = subprocess.CompletedProcess(["fake"], 0, raw.rstrip() + b"\n", b"")
+            adapter = HostMeshAdapter(
+                which=lambda _name: "/fake", runner=lambda *_a, response=response, **_k: response
+            )
+            with self.subTest(raw=raw[:80]), self.assertRaises(ContractError):
+                adapter.load()
+
     def test_consumer_rejects_host_id_alias_and_route_collisions(self) -> None:
         source = json.loads((HOST_BUNDLE / "fixtures/valid/list-multi-route.json").read_text())
         for field in ("aliases", "routes"):
