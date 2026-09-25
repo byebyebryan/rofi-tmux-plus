@@ -642,7 +642,7 @@ class RofiProtocolTests(unittest.TestCase):
         del selection["meshRevision"]
         output = self.invoke({"ROFI_RETV": "1", "ROFI_INFO": json.dumps(selection)})
         self.assertIn(
-            "[Open]</span> · Kill\u2028Tab: Cycle actions\u2028Unable to open session", output
+            "[Open]</span> · Kill  │  Tab: Cycle actions\u2028\u2028Unable to open session", output
         )
         self.assertEqual([], self.lifecycle.opens)
 
@@ -677,7 +677,7 @@ class RofiProtocolTests(unittest.TestCase):
             lifecycle=lifecycle,
         )
         self.assertIn(
-            "[Open]</span> · Kill\u2028Tab: Cycle actions\u2028Unable to open session", output
+            "[Open]</span> · Kill  │  Tab: Cycle actions\u2028\u2028Unable to open session", output
         )
         self.assertIn("keep-selection", output)
         self.assertIn("keep-filter", output)
@@ -701,10 +701,10 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertIn(
             'Enter: <span foreground="#42a5f5" weight="bold">[Open]</span> · Kill', rendered
         )
-        self.assertIn("\u2028Tab: Cycle actions", rendered)
+        self.assertIn("  │  Tab: Cycle actions", rendered)
         self.assertNotIn("Shift+Tab:", rendered)
         self.assertIn(
-            "&lt;offline&gt; &amp; busy",
+            "Tab: Cycle actions\u2028\u2028&lt;offline&gt; &amp; busy",
             rofi._action_message(rofi.ContinuationState(), "<offline> & busy"),
         )
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
