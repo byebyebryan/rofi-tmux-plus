@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rofi-tmux-plus"
-version = "0.2.3"
+version = "0.2.4"
 description = "Versioned local and remote tmux lifecycle foundation for the Rofi Plus suite"
 requires-python = ">=3.11"
 readme = "README.md"
