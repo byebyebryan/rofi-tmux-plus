@@ -641,7 +641,7 @@ class RofiProtocolTests(unittest.TestCase):
         selection = json.loads(row_options(rows[0])["info"])
         del selection["meshRevision"]
         output = self.invoke({"ROFI_RETV": "1", "ROFI_INFO": json.dumps(selection)})
-        self.assertIn("Enter: Open · Tab: Kill · Unable to open session", output)
+        self.assertIn("Enter: Open · Tab: Cycle actions · Unable to open session", output)
         self.assertEqual([], self.lifecycle.opens)
 
     def test_selection_rejects_unicode_format_controls_before_lifecycle(self) -> None:
@@ -674,7 +674,7 @@ class RofiProtocolTests(unittest.TestCase):
             },
             lifecycle=lifecycle,
         )
-        self.assertIn("Enter: Open · Tab: Kill · Unable to open session", output)
+        self.assertIn("Enter: Open · Tab: Cycle actions · Unable to open session", output)
         self.assertIn("keep-selection", output)
         self.assertIn("keep-filter", output)
         self.assertIn("errorDeadline", output)
@@ -694,7 +694,7 @@ class RofiProtocolTests(unittest.TestCase):
 
     def test_action_hint_advertises_tab_and_retired_custom_input_is_inert(self) -> None:
         rendered = rofi.render_snapshot(self.value)
-        self.assertIn("Enter: Open · Tab: Kill", rendered)
+        self.assertIn("Enter: Open · Tab: Cycle actions", rendered)
         self.assertNotIn("Shift+Tab:", rendered)
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
         self.assertEqual("", output)
@@ -806,7 +806,7 @@ class RofiMutationTests(unittest.TestCase):
         )
         self.assertIn("\x00prompt\x1fTmux › All", kill)
         self.assertNotIn("Tmux › All › Kill", kill)
-        self.assertIn("Enter: Kill · Tab: Open", kill)
+        self.assertIn("Enter: Kill · Tab: Cycle actions", kill)
         self.assertIn("keep-selection", kill)
         self.assertIn("keep-filter", kill)
         self.assertIn("\0new-selection\x1f1", kill)

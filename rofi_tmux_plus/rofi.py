@@ -1026,8 +1026,7 @@ def _action_hint(state: ContinuationState) -> str:
         return "Invalid action state"
     if state.pending_action is not None:
         return "Choose Kill or Cancel"
-    next_action = _action_label(_cycle_action(state.action, 1))
-    return f"Enter: {_action_label(state.action)} · Tab: {next_action}"
+    return f"Enter: {_action_label(state.action)} · Tab: Cycle actions"
 
 
 def _prompt(
