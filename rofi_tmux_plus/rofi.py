@@ -1026,7 +1026,29 @@ def _action_hint(state: ContinuationState) -> str:
         return "Invalid action state"
     if state.pending_action is not None:
         return "Choose Kill or Cancel"
-    return f"Enter: {_action_label(state.action)} · Tab: Cycle actions"
+    labels = []
+    for action in _BROWSE_ACTIONS:
+        label = _action_label(action)
+        if action == state.action:
+            color = "#ef5350" if action == ACTION_KILL else "#42a5f5"
+            label = f'<span foreground="{color}" weight="bold">[{label}]</span>'
+        labels.append(label)
+    return f"Actions: {' · '.join(labels)}  |  Tab: Cycle · Enter: Run"
+
+
+def _action_message(state: ContinuationState, notice: str) -> str:
+    hint = _action_hint(state)
+    if not notice:
+        return hint
+    separator = "  |  "
+    available = MAX_MESSAGE_LENGTH - len(hint) - len(separator)
+    text = sanitize(notice)
+    escaped = _pango_escape(text)
+    if len(escaped) > available:
+        while text and len(_pango_escape(text + "…")) > available:
+            text = text[:-1]
+        escaped = _pango_escape(text + "…")
+    return hint + separator + escaped
 
 
 def _prompt(
@@ -1124,8 +1146,7 @@ def render_snapshot(
         effective_message = active.error_message
     if not effective_message and not clear_message and active.refresh_deadline is not None:
         effective_message = "Refreshing in background"
-    hint = _action_hint(active)
-    effective_message = _notice(hint + (" · " + effective_message if effective_message else ""))
+    effective_message = _action_message(active, effective_message)
     headers.append(_protocol("message", effective_message))
     lifecycle_was_present = state.has_lifecycle
     lifecycle_is_present = active.has_lifecycle

@@ -34,10 +34,10 @@ rofi -show tmux-plus -modes "tmux-plus:$(pwd)/bin/rofi-tmux-plus" \
 Rofi must invoke the executable as a script mode and provide the callbacks
 above. Open is the initial action; Tab advances to Kill and Shift+Tab reverses
 the ordered action cycle, with wraparound. The prompt shows the host scope;
-the persistent message shows the active Enter action, a Tab cycle hint, and any
-notice. Enter opens or begins a kill confirmation for the session
-highlighted at that moment. It never acts on Tab. Right and Left wrap the flat
-`All`, `Local`, and Host Mesh remote scopes, while `Alt+R` performs a bounded
+the persistent message lists the actions, highlights the selected one, and shows
+Tab/Enter hints and any notice. Enter opens or begins a kill confirmation for
+the session highlighted at that moment. It never acts on Tab. Right and Left
+wrap the flat `All`, `Local`, and Host Mesh remote scopes, while `Alt+R` performs a bounded
 foreground refresh. Escape and `Ctrl+G` use Rofi's native cancel action and
 always close the picker. Up and Down move rows; `Ctrl+B` and `Ctrl+F` move the
 filter cursor. `-eh 2` reserves the two physical Pango display lines used by

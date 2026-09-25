@@ -641,7 +641,9 @@ class RofiProtocolTests(unittest.TestCase):
         selection = json.loads(row_options(rows[0])["info"])
         del selection["meshRevision"]
         output = self.invoke({"ROFI_RETV": "1", "ROFI_INFO": json.dumps(selection)})
-        self.assertIn("Enter: Open · Tab: Cycle actions · Unable to open session", output)
+        self.assertIn(
+            "[Open]</span> · Kill  |  Tab: Cycle · Enter: Run  |  Unable to open session", output
+        )
         self.assertEqual([], self.lifecycle.opens)
 
     def test_selection_rejects_unicode_format_controls_before_lifecycle(self) -> None:
@@ -674,7 +676,9 @@ class RofiProtocolTests(unittest.TestCase):
             },
             lifecycle=lifecycle,
         )
-        self.assertIn("Enter: Open · Tab: Cycle actions · Unable to open session", output)
+        self.assertIn(
+            "[Open]</span> · Kill  |  Tab: Cycle · Enter: Run  |  Unable to open session", output
+        )
         self.assertIn("keep-selection", output)
         self.assertIn("keep-filter", output)
         self.assertIn("errorDeadline", output)
@@ -694,8 +698,15 @@ class RofiProtocolTests(unittest.TestCase):
 
     def test_action_hint_advertises_tab_and_retired_custom_input_is_inert(self) -> None:
         rendered = rofi.render_snapshot(self.value)
-        self.assertIn("Enter: Open · Tab: Cycle actions", rendered)
+        self.assertIn(
+            'Actions: <span foreground="#42a5f5" weight="bold">[Open]</span> · Kill', rendered
+        )
+        self.assertIn("Tab: Cycle · Enter: Run", rendered)
         self.assertNotIn("Shift+Tab:", rendered)
+        self.assertIn(
+            "&lt;offline&gt; &amp; busy",
+            rofi._action_message(rofi.ContinuationState(), "<offline> & busy"),
+        )
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
         self.assertEqual("", output)
         self.assertEqual([], self.lifecycle.opens)
@@ -806,7 +817,7 @@ class RofiMutationTests(unittest.TestCase):
         )
         self.assertIn("\x00prompt\x1fTmux › All", kill)
         self.assertNotIn("Tmux › All › Kill", kill)
-        self.assertIn("Enter: Kill · Tab: Cycle actions", kill)
+        self.assertIn('Open · <span foreground="#ef5350" weight="bold">[Kill]</span>', kill)
         self.assertIn("keep-selection", kill)
         self.assertIn("keep-filter", kill)
         self.assertIn("\0new-selection\x1f1", kill)
@@ -1227,7 +1238,7 @@ class RofiRefreshTests(unittest.TestCase):
             )
         rendered = output.getvalue()
         self.assertIn("Tmux › All", rendered)
-        self.assertIn("Enter: Kill", rendered)
+        self.assertIn("[Kill]</span>", rendered)
         self.assertIn("\0new-selection\x1f0", rendered)
         rows = rendered_records(rendered)[1]
         self.assertEqual("beta", json.loads(row_options(rows[0])["info"])["name"])
@@ -1342,7 +1353,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertEqual(1, model.refresh_calls)
         self.assertNotIn("Refreshing in background", output.getvalue())
         self.assertIn("Tmux › Local", output.getvalue())
-        self.assertIn("Enter: Kill", output.getvalue())
+        self.assertIn("[Kill]</span>", output.getvalue())
         self.assertIn("\0new-selection\x1f0", output.getvalue())
 
 
