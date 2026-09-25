@@ -1,19 +1,14 @@
 # Design: rofi-tmux-plus
 
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
-private retained remote cache and refresh lifecycle, the complete Rofi
-browse/open/create/rename/kill UI, fail-closed callback recovery, deployment,
-and automated fleet acceptance are complete; operator acceptance is complete on
-Snap and Starship, while Carbon is in a daily-drive soak for the published
-suite/P9 behavior. P7 removed the
-redundant
-picker-model read before a successful typed open; lifecycle still revalidates
-the current Mesh and exact stable reference. The coordinated P8 flat-scope
-navigation cutover is published and deployed, with operator acceptance
-complete on Snap and Starship; Carbon's soak applies to that published
-behavior. The P9
-producer and consumer implementation and canonical bundles are published in
-this repository; managed suite deployment is coordinated through chezmoi.
+private retained remote cache and refresh lifecycle, fail-closed callback
+recovery, and automated fleet acceptance are complete. P7 removed the
+redundant picker-model read before a successful typed open; lifecycle still
+revalidates the current Mesh and exact stable reference. The coordinated P8
+flat-scope navigation cutover and P9 producer/consumer implementation and
+canonical bundles are published in this repository. Chezmoi's current
+`docs/rofi-plus-status.md` ledger is the authority for managed deployment and
+acceptance.
 
 ## P9 locked CLI contracts
 
@@ -47,6 +42,52 @@ leaves Tmux behavior, Host Mesh v1, and both P9 wire contracts unchanged. That
 SSH refinement is published separately; chezmoi owns its managed deployment and
 acceptance status.
 
+## P10 action cycle
+
+P10 replaces the old in-picker custom creation, rename, and direct-delete
+paths with a two-item browse action cycle:
+
+```text
+Open → Kill → Open
+```
+
+`ROFI_DATA` persists the named `action` (`open` or `kill`) rather than a
+position. A missing action is Open for a new invocation. An unknown or
+malformed action blocks Enter with a visible error; it never falls back to
+Open. `pendingAction` is separate typed confirmation state and stores the
+exact selected reference for Kill.
+
+The prompt and persistent message always show the active action. Tab
+(`custom-7`, return value 16) moves forward and Shift+Tab (`custom-8`, return
+value 17) moves backward, wrapping through the action list. Their callbacks
+load only the exact presentation snapshot named by `ROFI_DATA`; they do not
+read a model, contact a remote, or mutate state outside Rofi continuation
+data. Tab itself performs no lifecycle operation. Up and Down retain native
+row navigation.
+
+Open Enter uses the highlighted typed session reference. Kill Enter first
+enters confirmation using that same complete reference. Confirmation names the
+host and session and reports the attached-client impact. Cancel returns to
+Open browsing. A failed kill remains in confirmation with an attempted guard,
+so another Enter cannot issue a second kill; Cancel and selecting Kill again is
+the explicit retry path. A successful kill returns to Open browsing.
+
+Kill requires a freshly loaded live host row. An unavailable host leaves its
+session row visible, restores Open, preserves the typed selection, and shows a
+notice instead of entering confirmation.
+
+Kill browse rows combine Rofi `active` and `urgent` tokens so the managed
+selected-row theme can render the danger treatment. Open preserves its existing
+`open here` active and unavailable urgent semantics. Alt+R, scope changes, and
+automatic refresh retain the active action. Refresh records the typed stable
+row identity and emits Rofi `new-selection` when exactly one matching row
+survives a reorder.
+
+The retired `ROFI_RETV` values 2 (custom input), 3 (direct delete), and 13
+(F2 rename) are no-ops even for already-open Rofi windows. CLI `create` and
+`rename` remain public lifecycle commands; P10 removes only their picker UI
+paths.
+
 ## P8 flat-scope implementation
 
 P8 replaces the previously deployed `Recent` / `Hosts` root pair and per-host
@@ -67,9 +108,9 @@ host scope between invocations.
 
 Left and Right wrap through scopes without discovery or network work, preserve
 the current filter, and reset selection to the first eligible matching row.
-Tab and Shift+Tab retain native row navigation. Enter opens the selected
-session. Escape and Ctrl+G always close through Rofi's native cancel action and
-are never script callbacks.
+P10 supersedes the former Tab row-navigation rule with its named action cycle.
+Enter follows the visible P10 action for the selected session. Escape and Ctrl+G
+always close through Rofi's native cancel action and are never script callbacks.
 
 Each model render is also written as a private, content-addressed presentation
 snapshot. The continuation state carries only its opaque snapshot key. Left and
@@ -80,12 +121,10 @@ The cache retains the newest 256 owned snapshots (plus the snapshot being
 written), which bounds disk growth while leaving room for concurrent and
 long-lived picker windows.
 
-Ctrl+Enter creates or opens a typed session only from a concrete host scope.
-From `All`, it renders the bounded instruction `Choose a concrete host view
-before creating a session.` rather than guessing a host or entering a chooser
-layer. Rename and kill confirmation stay transient action states; Left and
-Right do nothing there, and native Escape closes the picker without committing
-the action. Host Mesh v1 and Tmux Session v1 do not change.
+P10 removes Ctrl+Enter creation and F2 rename from the picker. Kill
+confirmation remains transient state; Left and Right do nothing there, and
+native Escape closes the picker without committing the action. Host Mesh v1
+and Tmux Session v1 do not change.
 
 ## Product boundary
 
@@ -204,19 +243,20 @@ the textual status and activity age:
 | Live `open here` session | yes | no | yes |
 | Live attached or detached session | no | no | yes |
 | Retained session from an unavailable host | no | yes | yes |
+| Kill-mode session | yes | yes | yes |
 | Normal empty scope | no | no | no |
 | Empty concrete scope whose host is unavailable | no | yes | no |
 | Kill-confirmation action | yes | yes | yes |
 
-The `active` token on a session row means that the row is open here now; it is
-not a proxy for recent activity. The `urgent` token means that the current
-observation cannot establish the retained session or concrete host as
-available. A refresh running in the background, a bounded foreground refresh,
-or an old cache/activity timestamp does not add either token beyond the state
-of the rendered session. A successful atomic host snapshot clears the warning
-on its next render. The kill row deliberately combines both tokens so the
-managed theme can distinguish destructive danger from observation uncertainty;
-theme colors remain outside this repository.
+In Open mode, the `active` token on a session row means that the row is open
+here now; it is not a proxy for recent activity. The `urgent` token means that
+the current observation cannot establish the retained session or concrete host
+as available. Kill mode deliberately applies both tokens to every selectable
+session row so the managed selected state can show danger. A refresh running in
+the background, a bounded foreground refresh, or an old cache/activity
+timestamp does not otherwise add either token. A successful atomic host
+snapshot clears the unavailable warning on its next render; theme colors remain
+outside this repository.
 
 ## Navigation
 
@@ -224,56 +264,37 @@ Browsing follows the suite-wide Rofi contract:
 
 | Key | Behavior |
 | --- | --- |
-| Tab / Shift+Tab | Move to the next or previous row |
+| Tab / Shift+Tab | Cycle the visible action forward or backward |
 | Left / Right | Wrap through the `All`, `Local`, and remote scopes |
-| Enter | Open the selected session |
+| Enter | Open or begin Kill confirmation for the selected session |
 | Escape | Close Rofi through its native cancel action |
 | Ctrl+G | Close Rofi through the same native cancel action |
 | Alt+R | Perform a bounded refresh |
-| Typed name + Ctrl+Enter | Create or open on a concrete host scope |
-| F2 | Begin renaming the selected session; Ctrl+Enter commits |
-| Shift+Delete | Enter kill confirmation for the selected session |
 
 Ctrl+B and Ctrl+F replace the text cursor actions displaced by Left and Right.
-Rofi's default Ctrl+N remains row-down and is not reused for session creation.
+Rofi's default Ctrl+N remains row-down. The managed invocation assigns Alt+R,
+Right, Left, Tab, and Shift+Tab to callbacks 1, 2, 3, 7, and 8. It unbinds
+Rofi's native element-next and element-prev Tab actions. Escape and Ctrl+G are
+native cancel bindings and never enter the script callback path.
 
-The managed invocation assigns Alt+R, Right, Left, and F2 to script callbacks
-1, 2, 3, and 4; Shift+Delete uses the delete-entry callback; and Ctrl+Enter
-remains the custom-input binding. Escape and Ctrl+G are Rofi's native cancel
-bindings and never enter the script callback path. `ROFI_RETV=2` therefore
-means create/open while browsing and commit while in rename state. `ROFI_DATA`
-carries typed scope and action state across callbacks.
-
-Custom creation is enabled only in a concrete host scope. From `All`, Tmux
-Plus renders `Choose a concrete host view before creating a session.` and does
-not open a host chooser, guess a destination, or invoke lifecycle code.
-
-The non-browsing states are explicit:
+The only non-browsing state is explicit Kill confirmation:
 
 ```text
-concrete scope ──Ctrl+Enter name──> create/open
-session ────────F2───────────────> rename input
-session ────────Shift+Delete─────> kill confirmation
+session + Kill action ──Enter──> kill confirmation ──Cancel──> Open browsing
 ```
 
-Left and Right do nothing in rename and confirmation states so a pending
-operation cannot be changed accidentally. Native Escape closes the picker from
-every state, discarding an uncommitted action. Rename input is submitted only
-with Ctrl+Enter; plain Enter retains its browse meaning and does not
-ambiguously select a row while editing. Rename and kill leave the picker open
-and refresh the affected host. Opening or creating a session closes the picker
-after focusing or launching the terminal. A selected session is handed
-directly to the lifecycle service from its typed Rofi metadata. The picker
-model is reloaded only when an open fails and the dialog must reconcile visible
-state; the lifecycle service independently revalidates Mesh authority and the
-full stable reference before acting.
+Left and Right do nothing in confirmation so a pending operation cannot change
+accidentally. Native Escape closes the picker from every state, discarding an
+uncommitted action. A selected session is handed directly to the lifecycle
+service from typed Rofi metadata. The lifecycle service independently
+revalidates Mesh authority and the full stable reference before acting.
 
 Configuration, model, and callback failures are bounded at the Rofi process
 boundary. Escape and Ctrl+G remain native cancel actions even when a
 configuration, model, callback state, or companion contract is malformed. The
-legacy callback number 15 is an immediate no-op for stale pre-P8 invocations;
-it never renders state or performs an action. Arrow callback failures render a
-bounded diagnostic while retaining a safe picker state.
+legacy callback numbers 2, 3, 13, and 15 are immediate no-ops for stale
+windows; none renders state or performs an action. Snapshot callback failures
+render a bounded diagnostic while retaining a safe picker state.
 
 Kill confirmation selects `Cancel` by default. Its destructive row names the
 logical host and session and reports how many clients the live observation

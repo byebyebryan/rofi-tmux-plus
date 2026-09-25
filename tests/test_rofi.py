@@ -692,10 +692,11 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertTrue(message.endswith("…"))
         self.assertEqual([False], self.model.calls)
 
-    def test_tab_is_not_a_view_callback_and_all_custom_input_requires_concrete_scope(self) -> None:
-        self.assertNotIn("Tab", rofi.render_snapshot(self.value))
+    def test_action_hint_advertises_tab_and_retired_custom_input_is_inert(self) -> None:
+        rendered = rofi.render_snapshot(self.value)
+        self.assertIn("Action: Open · Tab: Kill · Shift+Tab: Kill", rendered)
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
-        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, output)
+        self.assertEqual("", output)
         self.assertEqual([], self.lifecycle.opens)
         self.assertEqual([], self.lifecycle.creates)
 
@@ -750,152 +751,89 @@ class RofiMutationTests(unittest.TestCase):
                 return row_options(row)["info"]
         raise AssertionError("session row missing")
 
-    def test_all_create_requires_a_concrete_scope(self) -> None:
-        result = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "fresh"})
-        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, result)
-        self.assertEqual(
-            [],
-            self.lifecycle.creates,
-        )
-
-    def test_concrete_scope_create_and_existing_name_open_use_exact_host(self) -> None:
-        self.invoke(
+    def kill_mode(self, *, host_id: str = "alpha") -> str:
+        return self.invoke(
             {
-                "ROFI_RETV": "2",
-                "ROFI_INPUT": "one",
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_LOCAL, "alpha")),
+                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_7),
+                "ROFI_DATA": rofi._state_data(
+                    rofi.ContinuationState(snapshot_key=self.presentation_cache.store(self.value))
+                ),
+                "ROFI_INFO": self.session_info(host_id=host_id),
             }
         )
-        self.assertEqual(
-            [("alpha", "sha256:fixture", "tmux-v1:alpha:generation", "$0", 10, None)],
-            self.lifecycle.opens,
-        )
-        result = self.invoke(
-            {
-                "ROFI_RETV": "2",
-                "ROFI_INPUT": "fresh",
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta")),
-            }
-        )
-        self.assertEqual("", result)
-        self.assertEqual(
-            [("beta", "sha256:fixture", "fresh", None, (), (), False, None, True)],
-            self.lifecycle.creates,
-        )
 
-    def test_local_only_ring_collapses_all_to_local_for_custom_create(self) -> None:
-        value = payload(
-            hosts=[host("alpha", "Alpha", local=True)],
-            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
-            revision=None,
+    def test_retired_browse_callbacks_are_inert_even_with_existing_state(self) -> None:
+        state = rofi._state_data(
+            rofi.ContinuationState(snapshot_key=self.presentation_cache.store(self.value))
         )
-        model = FakeModel(value)
-        self.assertEqual(
-            "",
-            self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "fresh"}, model=model),
-        )
-        self.assertEqual(
-            [("alpha", None, "fresh", None, (), (), False, None, True)],
-            self.lifecycle.creates,
-        )
-
-    def test_concrete_scope_custom_create_and_hostile_input_never_mutates(self) -> None:
-        concrete = rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta"))
-        self.assertEqual(
-            "",
-            self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "nested", "ROFI_DATA": concrete}),
-        )
-        self.assertEqual(
-            [("beta", "sha256:fixture", "nested", None, (), (), False, None, True)],
-            self.lifecycle.creates,
-        )
-        failed = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "\u2066", "ROFI_DATA": concrete})
-        self.assertIn("Unable to create or open", failed)
-        self.assertEqual(1, len(self.lifecycle.creates))
-        empty = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "", "ROFI_DATA": concrete})
-        self.assertIn("session name is empty", empty)
-        self.assertEqual(1, len(self.lifecycle.creates))
-        oversized = self.invoke(
-            {
-                "ROFI_RETV": "2",
-                "ROFI_INPUT": "x" * (rofi.MAX_TYPED_NAME_LENGTH + 1),
-                "ROFI_DATA": concrete,
-            }
-        )
-        self.assertIn("session name is too large", oversized)
-        self.assertEqual(1, len(self.lifecycle.creates))
-
-    def test_removed_concrete_scope_never_falls_back_to_another_host(self) -> None:
-        local_only = payload(
-            hosts=[host("alpha", "Alpha", local=True)],
-            catalog=[{"hostId": "alpha", "display": "Alpha", "local": True}],
-            revision=None,
-        )
-        model = FakeModel(local_only)
-        output = self.invoke(
-            {
-                "ROFI_RETV": "2",
-                "ROFI_INPUT": "must-not-move",
-                "ROFI_DATA": rofi._navigation_data(rofi.NavigationState(rofi.VIEW_HOST, "beta")),
-            },
-            model=model,
-        )
-        self.assertIn(rofi.CHOOSE_CONCRETE_HOST_MESSAGE, output)
-        self.assertEqual([], self.lifecycle.creates)
-
-    def test_rename_is_explicit_and_reconciles_only_affected_host(self) -> None:
-        editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
-        self.assertIn("Tmux › Rename session", editing)
-        self.assertIn("Enter a new name", editing)
-        # Left/Right are deliberately inert in rename mode and must use only
-        # the exact snapshot that created the pending action.
-        self.model.calls.clear()
-        inert = self.invoke(
-            {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2), "ROFI_DATA": self.data(editing)}
-        )
-        self.assertIn("Tmux › Rename session", inert)
-        self.assertEqual([], self.model.calls)
-        # Enter is deliberately inert in rename mode.
-        self.invoke(
-            {"ROFI_RETV": "1", "ROFI_DATA": self.data(editing), "ROFI_INFO": self.session_info()}
-        )
-        self.assertEqual([], self.lifecycle.renames)
-        result = self.invoke(
-            {"ROFI_RETV": "2", "ROFI_DATA": self.data(editing), "ROFI_INPUT": "renamed"}
-        )
-        self.assertIn("Session renamed.", result)
-        self.assertEqual(
-            [
-                (
-                    "alpha",
-                    "sha256:fixture",
-                    "tmux-v1:alpha:generation",
-                    "$0",
-                    10,
-                    "one",
-                    "renamed",
+        for retv in (
+            rofi.ROFI_RETV_CUSTOM_INPUT,
+            rofi.ROFI_RETV_DELETE_ENTRY,
+            rofi.ROFI_RETV_CUSTOM_4,
+        ):
+            with self.subTest(retv=retv):
+                self.assertEqual(
+                    "",
+                    self.invoke(
+                        {
+                            "ROFI_RETV": str(retv),
+                            "ROFI_DATA": state,
+                            "ROFI_INFO": self.session_info(),
+                            "ROFI_INPUT": "must-not-mutate",
+                        }
+                    ),
                 )
-            ],
-            self.lifecycle.renames,
-        )
-        self.assertEqual([("alpha", "sha256:fixture")], self.model.host_refreshes)
-        self.assertNotIn('"action"', self.data(result))
+        self.assertEqual([], self.model.calls)
+        self.assertEqual([], self.lifecycle.opens)
+        self.assertEqual([], self.lifecycle.creates)
+        self.assertEqual([], self.lifecycle.renames)
+        self.assertEqual([], self.lifecycle.kills)
 
-    def test_rename_oversized_input_never_reaches_lifecycle(self) -> None:
-        editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
-        output = self.invoke(
+    def test_tab_and_shift_tab_cycle_actions_without_model_reads_and_preserve_row_identity(
+        self,
+    ) -> None:
+        state = rofi._state_data(
+            rofi.ContinuationState(snapshot_key=self.presentation_cache.store(self.value))
+        )
+        selected = self.session_info(host_id="beta")
+        kill = self.invoke(
             {
-                "ROFI_RETV": "2",
-                "ROFI_DATA": self.data(editing),
-                "ROFI_INPUT": "x" * (rofi.MAX_TYPED_NAME_LENGTH + 1),
+                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_7),
+                "ROFI_DATA": state,
+                "ROFI_INFO": selected,
             }
         )
-        self.assertIn("session name is too large", output)
-        self.assertEqual([], self.lifecycle.renames)
+        self.assertIn("Tmux › All › Kill", kill)
+        self.assertIn("Action: Kill · Tab: Open · Shift+Tab: Open", kill)
+        self.assertIn("keep-selection", kill)
+        self.assertIn("keep-filter", kill)
+        self.assertIn("\0new-selection\x1f1", kill)
+        self.assertEqual("kill", json.loads(self.data(kill))["action"])
+        for row in self.rows(kill):
+            options = row_options(row)
+            self.assertEqual("true", options["active"])
+            self.assertEqual("true", options["urgent"])
+        self.assertEqual([], self.model.calls)
+        self.assertEqual([], self.lifecycle.kills)
+
+        opened = self.invoke(
+            {
+                "ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_8),
+                "ROFI_DATA": self.data(kill),
+            }
+        )
+        self.assertIn("Tmux › All › Open", opened)
+        self.assertEqual("open", json.loads(self.data(opened))["action"])
+        self.assertEqual([], self.model.calls)
 
     def test_confirmation_defaults_cancel_and_kill_uses_exact_reference(self) -> None:
+        kill_mode = self.kill_mode(host_id="beta")
         confirmation = self.invoke(
-            {"ROFI_RETV": "3", "ROFI_INFO": self.session_info(host_id="beta")}
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(kill_mode),
+                "ROFI_INFO": self.session_info(host_id="beta"),
+            }
         )
         rows = self.rows(confirmation)
         self.assertEqual("Cancel", rows[0].split("\0", 1)[0])
@@ -913,10 +851,15 @@ class RofiMutationTests(unittest.TestCase):
                 "ROFI_INFO": row_options(rows[0])["info"],
             }
         )
-        self.assertIn("Tmux › All", canceled)
+        self.assertIn("Tmux › All › Open", canceled)
+        self.assertEqual("open", json.loads(self.data(canceled))["action"])
         self.assertEqual([], self.lifecycle.kills)
         confirmation = self.invoke(
-            {"ROFI_RETV": "3", "ROFI_INFO": self.session_info(host_id="beta")}
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(self.kill_mode(host_id="beta")),
+                "ROFI_INFO": self.session_info(host_id="beta"),
+            }
         )
         result = self.invoke(
             {
@@ -932,25 +875,54 @@ class RofiMutationTests(unittest.TestCase):
         )
         self.assertEqual([("beta", "sha256:fixture")], self.model.host_refreshes)
 
-    def test_action_navigation_is_inert_and_legacy_escape_does_not_render(
-        self,
-    ) -> None:
-        editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
-        inert = self.invoke({"ROFI_RETV": "11", "ROFI_DATA": self.data(editing)})
-        self.assertIn("Tmux › Rename session", inert)
-        backed = self.invoke({"ROFI_RETV": "15", "ROFI_DATA": self.data(editing)})
-        self.assertEqual("", backed)
-        stale_lifecycle = FakeLifecycle(ContractError("stale_session", "session changed"))
-        failed = self.invoke(
-            {"ROFI_RETV": "2", "ROFI_DATA": self.data(editing), "ROFI_INPUT": "again"},
-            lifecycle=stale_lifecycle,
+    def test_confirmation_tab_is_inert_and_failed_kill_cannot_repeat(self) -> None:
+        kill_mode = self.kill_mode()
+        confirmation = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(kill_mode),
+                "ROFI_INFO": self.session_info(),
+            }
         )
-        self.assertIn("Unable to rename", failed)
-        self.assertEqual(1, len(stale_lifecycle.renames))
-        self.assertEqual(["alpha"], self.model.current_host_refreshes)
+        self.model.calls.clear()
+        inert = self.invoke(
+            {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_7), "ROFI_DATA": self.data(confirmation)}
+        )
+        self.assertIn("Tmux › Confirm kill", inert)
+        self.assertEqual([], self.model.calls)
+        self.assertEqual("", self.invoke({"ROFI_RETV": "15", "ROFI_DATA": self.data(confirmation)}))
+
+        failed_lifecycle = FakeLifecycle(ContractError("stale_session", "session changed"))
+        failed = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(confirmation),
+                "ROFI_INFO": row_options(self.rows(confirmation)[1])["info"],
+            },
+            lifecycle=failed_lifecycle,
+        )
+        self.assertIn("Unable to kill session", failed)
+        self.assertEqual(1, len(failed_lifecycle.kills))
+        guarded = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(failed),
+                "ROFI_INFO": row_options(self.rows(failed)[1])["info"],
+            },
+            lifecycle=failed_lifecycle,
+        )
+        self.assertIn("kill already attempted", guarded)
+        self.assertEqual(1, len(failed_lifecycle.kills))
 
     def test_confirmation_refuses_changed_typed_selection(self) -> None:
-        confirmation = self.invoke({"ROFI_RETV": "3", "ROFI_INFO": self.session_info()})
+        kill_mode = self.kill_mode()
+        confirmation = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(kill_mode),
+                "ROFI_INFO": self.session_info(),
+            }
+        )
         changed = json.loads(row_options(self.rows(confirmation)[1])["info"])
         changed["selection"]["sessionId"] = "$999"
         output = self.invoke(
@@ -966,38 +938,94 @@ class RofiMutationTests(unittest.TestCase):
     def test_destructive_action_requires_current_rendered_mesh_revision(self) -> None:
         changed = {**self.value, "meshRevision": "sha256:changed"}
         self.model.values = [changed]
-        editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
+        kill_mode = self.kill_mode()
+        editing = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(kill_mode),
+                "ROFI_INFO": self.session_info(),
+            }
+        )
         self.assertIn("selected host mesh changed", editing)
-        self.assertNotIn('"action"', editing)
+        self.assertEqual("open", json.loads(self.data(editing))["action"])
         self.assertEqual([], self.lifecycle.renames)
         self.assertEqual([], self.lifecycle.kills)
 
+    def test_kill_mode_rejects_an_unavailable_selected_host_before_confirmation(self) -> None:
+        unavailable = payload(
+            hosts=[
+                host(
+                    "alpha",
+                    "Alpha",
+                    local=True,
+                    sessions=[session("alpha", "$0", "one")],
+                    status="error",
+                    stale=True,
+                    unavailable=True,
+                ),
+                host("beta", "Beta", local=False, sessions=[session("beta", "$1", "two")]),
+            ]
+        )
+        self.model.values = [unavailable]
+        output = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(self.kill_mode()),
+                "ROFI_INFO": self.session_info(),
+            }
+        )
+        self.assertIn("selected host is unavailable", output)
+        self.assertIn("Tmux › All › Open", output)
+        data = self.data(output)
+        self.assertEqual("open", json.loads(data)["action"])
+        self.assertNotIn('"pendingAction"', data)
+        rows = self.rows(output)
+        selected_index = next(
+            index
+            for index, row in enumerate(rows)
+            if json.loads(row_options(row)["info"])["hostId"] == "alpha"
+        )
+        self.assertIn(f"\0new-selection\x1f{selected_index}", output)
+        self.assertEqual([], self.lifecycle.kills)
+
     def test_success_is_not_reclassified_when_affected_refresh_fails(self) -> None:
-        editing = self.invoke({"ROFI_RETV": "13", "ROFI_INFO": self.session_info()})
+        kill_mode = self.kill_mode()
+        confirmation = self.invoke(
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(kill_mode),
+                "ROFI_INFO": self.session_info(),
+            }
+        )
         self.model.host_refresh_error = ContractError(
             "operation_failed", "remote inventory unavailable"
         )
         output = self.invoke(
-            {"ROFI_RETV": "2", "ROFI_DATA": self.data(editing), "ROFI_INPUT": "renamed"}
+            {
+                "ROFI_RETV": "1",
+                "ROFI_DATA": self.data(confirmation),
+                "ROFI_INFO": row_options(self.rows(confirmation)[1])["info"],
+            }
         )
-        self.assertIn("Session renamed.", output)
+        self.assertIn("Session killed.", output)
         self.assertIn("Refresh warning", output)
-        self.assertEqual(1, len(self.lifecycle.renames))
-        self.assertIn("Tmux › All", output)
+        self.assertEqual(1, len(self.lifecycle.kills))
+        self.assertIn("Tmux › All › Open", output)
         self.assertIn("one", output)
         data = self.data(output)
-        self.assertNotIn('"action"', data)
+        self.assertEqual("open", json.loads(data)["action"])
+        self.assertNotIn('"pendingAction"', data)
         self.assertEqual(rofi.VIEW_ALL, json.loads(data)["navigation"]["view"])
 
-    def test_invalid_pending_action_blocks_all_mutation_callbacks_and_escape_cancels(self) -> None:
+    def test_unknown_action_blocks_enter_visibly_and_retired_callbacks_remain_inert(self) -> None:
         invalid = json.dumps(
             {
                 "version": 1,
                 "navigation": {"view": rofi.VIEW_ALL},
-                "action": {"kind": "rename"},
+                "action": "rename",
             }
         )
-        for retv in ("1", "2", "13", "3"):
+        for retv in ("1", str(rofi.ROFI_RETV_CUSTOM_7)):
             with self.subTest(retv=retv):
                 output = self.invoke(
                     {
@@ -1007,27 +1035,31 @@ class RofiMutationTests(unittest.TestCase):
                         "ROFI_INPUT": "new-name",
                     }
                 )
-                self.assertIn("Pending action state is invalid", output)
+                self.assertIn("Action state is invalid", output)
                 self.assertIn('"blockedAction":true', self.data(output))
         self.assertEqual([], self.lifecycle.opens)
         self.assertEqual([], self.lifecycle.creates)
         self.assertEqual([], self.lifecycle.renames)
         self.assertEqual([], self.lifecycle.kills)
+        self.assertEqual("", self.invoke({"ROFI_RETV": "2", "ROFI_DATA": invalid}))
         self.assertEqual("", self.invoke({"ROFI_RETV": "15", "ROFI_DATA": invalid}))
 
     def test_pending_action_state_budget_handles_unicode_and_selection_boundary(self) -> None:
         selection = json.loads(self.session_info())
         selection["name"] = "é" * 1800
-        safe = rofi._new_action("rename", rofi.NavigationState(), selection=selection)
+        safe = rofi._new_action("confirm-kill", rofi.NavigationState(), selection=selection)
         state = rofi._error_state(
-            rofi.ContinuationState(action=safe), "é" * rofi.MAX_MESSAGE_LENGTH, now=100, key="test"
+            rofi.ContinuationState(action=rofi.ACTION_KILL, pending_action=safe),
+            "é" * rofi.MAX_MESSAGE_LENGTH,
+            now=100,
+            key="test",
         )
         encoded = rofi._state_data(state)
         self.assertLessEqual(len(encoded), rofi.MAX_DATA_LENGTH)
         self.assertFalse(rofi.parse_continuation_state(encoded).blocked_action)
         with self.assertRaises(ContractError):
             rofi._new_action(
-                "rename",
+                "confirm-kill",
                 rofi.NavigationState(),
                 selection={**selection, "name": "é" * 2048},
             )
@@ -1038,7 +1070,8 @@ class RofiMutationTests(unittest.TestCase):
             {
                 "version": 1,
                 "navigation": {"view": rofi.VIEW_ALL},
-                "action": {
+                "action": "kill",
+                "pendingAction": {
                     "kind": "rename",
                     "origin": {"view": rofi.VIEW_ALL},
                     "selection": selection,
@@ -1049,9 +1082,9 @@ class RofiMutationTests(unittest.TestCase):
         self.assertLessEqual(len(oversized_action), rofi.MAX_DATA_LENGTH)
         self.assertTrue(rofi.parse_continuation_state(oversized_action).blocked_action)
         output = self.invoke(
-            {"ROFI_RETV": "2", "ROFI_DATA": oversized_action, "ROFI_INPUT": "new-name"}
+            {"ROFI_RETV": "1", "ROFI_DATA": oversized_action, "ROFI_INPUT": "new-name"}
         )
-        self.assertIn("Pending action state is invalid", output)
+        self.assertIn("Action state is invalid", output)
         self.assertEqual([], self.lifecycle.renames)
 
 
@@ -1150,6 +1183,99 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertIn("delay: 0", completed)
         self.assertEqual([True, False], model.calls)
 
+    def test_refresh_preserves_kill_mode_and_highlighted_identity_through_reorder(self) -> None:
+        before = payload(
+            hosts=[
+                host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "alpha")]),
+                host("beta", "Beta", local=False, sessions=[session("beta", "$1", "beta")]),
+            ]
+        )
+        after = payload(
+            hosts=[
+                host(
+                    "alpha",
+                    "Alpha",
+                    local=True,
+                    sessions=[session("alpha", "$0", "alpha", activity=20)],
+                ),
+                host(
+                    "beta",
+                    "Beta",
+                    local=False,
+                    sessions=[session("beta", "$1", "beta", activity=30)],
+                ),
+            ]
+        )
+        _, before_rows = rendered_records(rofi.render_snapshot(before, now=200, titles=()))
+        selected = json.loads(row_options(before_rows[1])["info"])
+        state = rofi._state_data(
+            rofi.ContinuationState(
+                action=rofi.ACTION_KILL,
+                highlighted=rofi._highlighted_selection(selected),
+            )
+        )
+        output = io.StringIO()
+        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+            rofi.run_rofi(
+                {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_19), "ROFI_DATA": state},
+                model_service=FakeModel(after),
+                lifecycle_service=FakeLifecycle(),
+                config=Config(),
+                presentation_cache=self.presentation_cache,
+            )
+        rendered = output.getvalue()
+        self.assertIn("Tmux › All › Kill", rendered)
+        self.assertIn("Action: Kill", rendered)
+        self.assertIn("\0new-selection\x1f0", rendered)
+        rows = rendered_records(rendered)[1]
+        self.assertEqual("beta", json.loads(row_options(rows[0])["info"])["name"])
+        self.assertEqual(
+            "kill",
+            json.loads(rendered.split("\0data\x1f", 1)[1].split(rofi.ROFI_RECORD_SEPARATOR, 1)[0])[
+                "action"
+            ],
+        )
+
+    def test_scope_change_clears_prior_highlight_before_later_timeout(self) -> None:
+        snapshot = payload(
+            hosts=[
+                host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "alpha")]),
+                host("beta", "Beta", local=False, sessions=[session("beta", "$1", "beta")]),
+            ]
+        )
+        _, rows = rendered_records(rofi.render_snapshot(snapshot, now=200, titles=()))
+        selected = json.loads(row_options(rows[0])["info"])
+        state = rofi._state_data(
+            rofi.ContinuationState(
+                snapshot_key=self.presentation_cache.store(snapshot),
+                highlighted=rofi._highlighted_selection(selected),
+            )
+        )
+        output = io.StringIO()
+        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+            rofi.run_rofi(
+                {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2), "ROFI_DATA": state},
+                presentation_cache=self.presentation_cache,
+            )
+        scoped = output.getvalue()
+        scoped_data = scoped.split("\0data\x1f", 1)[1].split(rofi.ROFI_RECORD_SEPARATOR, 1)[0]
+        scoped_state = json.loads(scoped_data)
+        self.assertEqual({"view": rofi.VIEW_LOCAL, "hostId": "alpha"}, scoped_state["navigation"])
+        self.assertNotIn("highlighted", scoped_state)
+
+        output = io.StringIO()
+        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+            rofi.run_rofi(
+                {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_19), "ROFI_DATA": scoped_data},
+                model_service=FakeModel(snapshot),
+                lifecycle_service=FakeLifecycle(),
+                config=Config(),
+                presentation_cache=self.presentation_cache,
+            )
+        refreshed = output.getvalue()
+        self.assertIn("keep-selection", refreshed)
+        self.assertNotIn("\0new-selection\x1f", refreshed)
+
     def test_failure_stall_and_stale_stop_polling_and_show_self_clearing_notice_without_retry(
         self,
     ) -> None:
@@ -1194,10 +1320,18 @@ class RofiRefreshTests(unittest.TestCase):
 
     def test_alt_r_is_bounded_foreground_refresh_without_background_restart(self) -> None:
         model = FakeModel(self.fresh)
+        _, rows = rendered_records(rofi.render_snapshot(self.fresh, now=200, titles=()))
+        selected = json.loads(row_options(rows[0])["info"])
+        state = rofi._state_data(
+            rofi.ContinuationState(
+                action=rofi.ACTION_KILL,
+                highlighted=rofi._highlighted_selection(selected),
+            )
+        )
         output = io.StringIO()
         with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
             rofi.run_rofi(
-                {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_1)},
+                {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_1), "ROFI_DATA": state},
                 model_service=model,
                 lifecycle_service=FakeLifecycle(),
                 config=Config(),
@@ -1205,6 +1339,8 @@ class RofiRefreshTests(unittest.TestCase):
             )
         self.assertEqual(1, model.refresh_calls)
         self.assertNotIn("Refreshing in background", output.getvalue())
+        self.assertIn("Tmux › Local › Kill", output.getvalue())
+        self.assertIn("\0new-selection\x1f0", output.getvalue())
 
 
 class EntryPointTests(unittest.TestCase):
