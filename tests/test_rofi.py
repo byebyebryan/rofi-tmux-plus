@@ -641,7 +641,7 @@ class RofiProtocolTests(unittest.TestCase):
         selection = json.loads(row_options(rows[0])["info"])
         del selection["meshRevision"]
         output = self.invoke({"ROFI_RETV": "1", "ROFI_INFO": json.dumps(selection)})
-        self.assertIn("Unable to open session", output)
+        self.assertIn("Enter: Open · Tab: Kill · Unable to open session", output)
         self.assertEqual([], self.lifecycle.opens)
 
     def test_selection_rejects_unicode_format_controls_before_lifecycle(self) -> None:
@@ -674,7 +674,7 @@ class RofiProtocolTests(unittest.TestCase):
             },
             lifecycle=lifecycle,
         )
-        self.assertIn("Unable to open session", output)
+        self.assertIn("Enter: Open · Tab: Kill · Unable to open session", output)
         self.assertIn("keep-selection", output)
         self.assertIn("keep-filter", output)
         self.assertIn("errorDeadline", output)
@@ -694,7 +694,8 @@ class RofiProtocolTests(unittest.TestCase):
 
     def test_action_hint_advertises_tab_and_retired_custom_input_is_inert(self) -> None:
         rendered = rofi.render_snapshot(self.value)
-        self.assertIn("Action: Open · Tab: Kill · Shift+Tab: Kill", rendered)
+        self.assertIn("Enter: Open · Tab: Kill", rendered)
+        self.assertNotIn("Shift+Tab:", rendered)
         output = self.invoke({"ROFI_RETV": "2", "ROFI_INPUT": "new-name"})
         self.assertEqual("", output)
         self.assertEqual([], self.lifecycle.opens)
@@ -803,8 +804,9 @@ class RofiMutationTests(unittest.TestCase):
                 "ROFI_INFO": selected,
             }
         )
-        self.assertIn("Tmux › All › Kill", kill)
-        self.assertIn("Action: Kill · Tab: Open · Shift+Tab: Open", kill)
+        self.assertIn("\x00prompt\x1fTmux › All", kill)
+        self.assertNotIn("Tmux › All › Kill", kill)
+        self.assertIn("Enter: Kill · Tab: Open", kill)
         self.assertIn("keep-selection", kill)
         self.assertIn("keep-filter", kill)
         self.assertIn("\0new-selection\x1f1", kill)
@@ -822,7 +824,7 @@ class RofiMutationTests(unittest.TestCase):
                 "ROFI_DATA": self.data(kill),
             }
         )
-        self.assertIn("Tmux › All › Open", opened)
+        self.assertIn("Tmux › All", opened)
         self.assertEqual("open", json.loads(self.data(opened))["action"])
         self.assertEqual([], self.model.calls)
 
@@ -851,7 +853,7 @@ class RofiMutationTests(unittest.TestCase):
                 "ROFI_INFO": row_options(rows[0])["info"],
             }
         )
-        self.assertIn("Tmux › All › Open", canceled)
+        self.assertIn("Tmux › All", canceled)
         self.assertEqual("open", json.loads(self.data(canceled))["action"])
         self.assertEqual([], self.lifecycle.kills)
         confirmation = self.invoke(
@@ -975,7 +977,7 @@ class RofiMutationTests(unittest.TestCase):
             }
         )
         self.assertIn("selected host is unavailable", output)
-        self.assertIn("Tmux › All › Open", output)
+        self.assertIn("Tmux › All", output)
         data = self.data(output)
         self.assertEqual("open", json.loads(data)["action"])
         self.assertNotIn('"pendingAction"', data)
@@ -1010,7 +1012,7 @@ class RofiMutationTests(unittest.TestCase):
         self.assertIn("Session killed.", output)
         self.assertIn("Refresh warning", output)
         self.assertEqual(1, len(self.lifecycle.kills))
-        self.assertIn("Tmux › All › Open", output)
+        self.assertIn("Tmux › All", output)
         self.assertIn("one", output)
         data = self.data(output)
         self.assertEqual("open", json.loads(data)["action"])
@@ -1224,8 +1226,8 @@ class RofiRefreshTests(unittest.TestCase):
                 presentation_cache=self.presentation_cache,
             )
         rendered = output.getvalue()
-        self.assertIn("Tmux › All › Kill", rendered)
-        self.assertIn("Action: Kill", rendered)
+        self.assertIn("Tmux › All", rendered)
+        self.assertIn("Enter: Kill", rendered)
         self.assertIn("\0new-selection\x1f0", rendered)
         rows = rendered_records(rendered)[1]
         self.assertEqual("beta", json.loads(row_options(rows[0])["info"])["name"])
@@ -1339,7 +1341,8 @@ class RofiRefreshTests(unittest.TestCase):
             )
         self.assertEqual(1, model.refresh_calls)
         self.assertNotIn("Refreshing in background", output.getvalue())
-        self.assertIn("Tmux › Local › Kill", output.getvalue())
+        self.assertIn("Tmux › Local", output.getvalue())
+        self.assertIn("Enter: Kill", output.getvalue())
         self.assertIn("\0new-selection\x1f0", output.getvalue())
 
 

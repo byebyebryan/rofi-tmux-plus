@@ -57,7 +57,8 @@ malformed action blocks Enter with a visible error; it never falls back to
 Open. `pendingAction` is separate typed confirmation state and stores the
 exact selected reference for Kill.
 
-The prompt and persistent message always show the active action. Tab
+The prompt shows the picker and host scope; the persistent message is the
+single place showing the active Enter action and next Tab action. Tab
 (`custom-7`, return value 16) moves forward and Shift+Tab (`custom-8`, return
 value 17) moves backward, wrapping through the action list. Their callbacks
 load only the exact presentation snapshot named by `ROFI_DATA`; they do not

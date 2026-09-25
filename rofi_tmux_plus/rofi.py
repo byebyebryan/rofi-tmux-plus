@@ -1023,25 +1023,21 @@ def _cycle_action(action: str, direction: int) -> str:
 
 def _action_hint(state: ContinuationState) -> str:
     if state.blocked_action:
-        return "Action: invalid"
+        return "Invalid action state"
     if state.pending_action is not None:
-        return "Action: Kill · Select Kill to confirm or Cancel"
+        return "Choose Kill or Cancel"
     next_action = _action_label(_cycle_action(state.action, 1))
-    previous_action = _action_label(_cycle_action(state.action, -1))
-    return (
-        f"Action: {_action_label(state.action)} · Tab: {next_action} · Shift+Tab: {previous_action}"
-    )
+    return f"Enter: {_action_label(state.action)} · Tab: {next_action}"
 
 
 def _prompt(
     payload: Mapping[str, object] | None,
     navigation: NavigationState,
-    action: str,
     pending_action: ActionState | None = None,
 ) -> str:
     if pending_action is not None:
         return "Tmux › Confirm kill"
-    return "Tmux › " + _scope_label(payload, navigation) + " › " + _action_label(action)
+    return "Tmux › " + _scope_label(payload, navigation)
 
 
 def _highlighted_row_index(
@@ -1112,7 +1108,7 @@ def render_snapshot(
     headers = [
         _protocol(
             "prompt",
-            _prompt(snapshot, active.navigation, active.action, active.pending_action),
+            _prompt(snapshot, active.navigation, active.pending_action),
         ),
         _protocol("use-hot-keys", "true"),
         _protocol("markup-rows", "true"),
