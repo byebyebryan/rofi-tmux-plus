@@ -340,16 +340,16 @@ def inspect_viewers(
             "matching Kitty window identity is unverified",
             tuple(sorted(pending_launch_ids)),
         )
+    if unsupported_candidate:
+        return ViewerInspection(
+            "unsupported", (), close_safe, "matching attachment is in an unsupported terminal"
+        )
     if matches:
         reason = None if close_safe else "destroy-unattached is not provably off"
         return ViewerInspection(
             "verified", tuple(sorted(matches, key=lambda row: row.window_id)), close_safe, reason
         )
     reason = None if close_safe else "destroy-unattached is not provably off"
-    if unsupported_candidate:
-        return ViewerInspection(
-            "unsupported", (), close_safe, "matching attachment is in an unsupported terminal"
-        )
     if title_candidate and remote_route is not None:
         return ViewerInspection(
             "unverified", (), close_safe, "unmarked remote Kitty window is unverified"

@@ -363,6 +363,20 @@ class ViewerInspectionTests(unittest.TestCase):
         )
         self.assertEqual(inspection.status, "unsupported")
 
+        # A proven Kitty viewer cannot hide another unsupported attachment
+        # from the preview for the same session.
+        kitty_root = _proc(11, 1, 101, 0, ("kitty",))
+        kitty_client = _proc(21, 11, 201, 42, ("tmux", "-u", "attach-session", "-t", "$7"))
+        mixed = self._inspect(
+            [matched, _kitty_window(102, 11)],
+            roots={10: root, 11: kitty_root},
+            direct={10: [client], 11: [kitty_client]},
+            trees={10: [client], 11: [kitty_client]},
+            client_pids=[20, 21],
+        )
+        self.assertEqual(mixed.status, "unsupported")
+        self.assertEqual(mixed.viewers, ())
+
         unrelated = {"id": 102, "pid": 10, "app_id": "com.mitchellh.ghostty", "title": "other"}
         ignored = self._inspect(
             [unrelated],
