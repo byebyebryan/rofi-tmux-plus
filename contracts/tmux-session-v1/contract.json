@@ -22,6 +22,22 @@
       "errorExit": "nonzero",
       "stdoutBytes": 262144
     },
+    "viewers": {
+      "argv": ["viewers", "--json"],
+      "successSchema": "schemas/viewers.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    },
+    "close-viewer": {
+      "argv": ["close-viewer", "--json"],
+      "successSchema": "schemas/close-viewer.schema.json",
+      "errorSchema": "schemas/error.schema.json",
+      "successExit": 0,
+      "errorExit": "nonzero",
+      "stdoutBytes": 262144
+    },
     "create": {
       "argv": ["create", "--json"],
       "successSchema": "schemas/create.schema.json",
@@ -52,6 +68,8 @@
     "error": "schemas/error.schema.json",
     "inventory": "schemas/inventory.schema.json",
     "open": "schemas/open.schema.json",
+    "viewers": "schemas/viewers.schema.json",
+    "close-viewer": "schemas/close-viewer.schema.json",
     "create": "schemas/create.schema.json",
     "rename": "schemas/rename.schema.json",
     "kill": "schemas/kill.schema.json"

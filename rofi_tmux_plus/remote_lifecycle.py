@@ -30,6 +30,13 @@ from .remote_inventory import (
     parse_remote_inventory,
 )
 from .tmux import validate_required_options, validate_session_id, validate_user_option
+from .viewer_service import (
+    ViewerInspection,
+    focus_window,
+    inspect_viewers,
+    kitty_configured,
+    launch_metadata,
+)
 
 _REMOTE_TIMEOUT_SECONDS = 12.0
 _MAX_ACTION_OUTPUT = _MAX_OUTPUT
@@ -189,6 +196,43 @@ case "$action" in
     [ "$open_expected_present" = 0 ] || [ "$descriptor_name" = "$open_expected" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
     printf 'R\tOPEN\n'
     ;;
+  viewers)
+    [ "$#" -ge 5 ] || reply_error operation_failed 'invalid viewers request'
+    [ "$4" = 0 ] || [ "$4" = 1 ] || reply_error operation_failed 'invalid viewers request'
+    viewer_generation=$1; viewer_sid=$2; viewer_created=$3; viewer_expected_present=$4; viewer_expected=$5
+    viewer_required_count=0
+    if [ "$#" -gt 5 ]; then
+      viewer_required_count=$6
+      case "$viewer_required_count" in ''|*[!0-9]*) reply_error operation_failed 'invalid viewers request' ;; esac
+      [ "$#" -eq $((6 + viewer_required_count * 2)) ] || reply_error operation_failed 'invalid viewers request'
+      shift 6
+    else
+      shift 5
+    fi
+    [ "$viewer_expected_present" = 0 ] && viewer_expected=''
+    validate "$viewer_generation" "$viewer_sid" "$viewer_created" "$viewer_expected"
+    while [ "$viewer_required_count" -gt 0 ]; do
+      viewer_option=$1; viewer_value=$2; shift 2
+      tmux show-options -q -t "$viewer_sid" | awk -v option="$viewer_option" '$0 == option || index($0, option " ") == 1 {{ found=1 }} END {{ exit !found }}' || reply_error stale_session 'the selected tmux session no longer satisfies required options; refresh and try again'
+      viewer_actual="$(tmux show-options -qv -t "$viewer_sid" "$viewer_option" 2>/dev/null || :)"
+      [ "$viewer_actual" = "$viewer_value" ] || reply_error stale_session 'the selected tmux session no longer satisfies required options; refresh and try again'
+      viewer_required_count=$((viewer_required_count - 1))
+    done
+    viewer_override="$(tmux show-options -q -t "$viewer_sid" 2>/dev/null | awk '$1 == "destroy-unattached" {{ $1=""; sub(/^ /, ""); print; found=1; exit }}')"
+    if [ -n "$viewer_override" ]; then
+      viewer_destroy=$viewer_override
+    else
+      viewer_destroy="$(tmux show-options -gqv destroy-unattached 2>/dev/null || :)"
+    fi
+    case "$viewer_destroy" in off|on) ;; *) viewer_destroy=unknown ;; esac
+    emit_records=1
+    generation || reply_error operation_failed 'tmux could not read the server identity'
+    [ "$current_generation" = "$viewer_generation" ] || reply_error stale_session 'the selected tmux server changed; refresh and try again'
+    descriptor "$viewer_sid" || reply_error session_not_found 'the selected tmux session no longer exists'
+    [ "$descriptor_created" = "$viewer_created" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
+    [ "$viewer_expected_present" = 0 ] || [ "$descriptor_name" = "$viewer_expected" ] || reply_error stale_session 'the selected tmux session changed; refresh and try again'
+    printf 'R\tVIEWERS\t%s\n' "$viewer_destroy"
+    ;;
   rename)
     [ "$#" -eq 5 ] || reply_error operation_failed 'invalid rename request'
     validate "$1" "$2" "$3" "$4"
@@ -287,7 +331,7 @@ def build_remote_lifecycle_argv(
     """Build the only remote command shape used by lifecycle actions."""
     if len(nonce) < 32 or any(char not in "0123456789abcdef" for char in nonce):
         raise ValueError("invalid reached-host nonce")
-    if action not in {"open", "create", "rename", "kill"}:
+    if action not in {"open", "viewers", "create", "rename", "kill"}:
         raise ValueError("invalid lifecycle action")
     domain = ["sh", "-c", _REMOTE_PROGRAM, "rofi-tmux-plus-remote", action, *values]
     remote = " ".join(
@@ -316,6 +360,7 @@ class RemoteAction:
     observed_clients: int | None
     route: str
     native_hostname: str | None
+    destroy_unattached: str | None = None
 
 
 def _parse_action(output: str, *, host_id: str, route: str) -> RemoteAction:
@@ -346,13 +391,22 @@ def _parse_action(output: str, *, host_id: str, route: str) -> RemoteAction:
             "operation_failed", "remote lifecycle output omitted its result", host_id
         )
     result = action_records[0].split("\t")
-    if len(result) not in {2, 3} or result[1] not in {"OPEN", "CREATE", "RENAME", "KILL"}:
+    if len(result) not in {2, 3} or result[1] not in {
+        "OPEN",
+        "VIEWERS",
+        "CREATE",
+        "RENAME",
+        "KILL",
+    }:
         raise ContractError("operation_failed", "remote lifecycle framing is invalid", host_id)
     observed: int | None = None
     if result[1] == "KILL":
         if len(result) != 3:
             raise ContractError("operation_failed", "remote lifecycle framing is invalid", host_id)
         observed = _number(result[2])
+    elif result[1] == "VIEWERS":
+        if len(result) != 3 or result[2] not in {"off", "on", "unknown"}:
+            raise ContractError("operation_failed", "remote lifecycle framing is invalid", host_id)
     elif len(result) != 2:
         raise ContractError("operation_failed", "remote lifecycle framing is invalid", host_id)
     inventory_lines = [line for line in records if not line.startswith("R\t")]
@@ -366,7 +420,10 @@ def _parse_action(output: str, *, host_id: str, route: str) -> RemoteAction:
         raise ContractError(
             "operation_failed", "remote lifecycle output omitted its session", host_id
         )
-    return RemoteAction(result[1], parsed.sessions[0], observed, route, parsed.native_hostname)
+    destroy = result[2] if result[1] == "VIEWERS" else None
+    return RemoteAction(
+        result[1], parsed.sessions[0], observed, route, parsed.native_hostname, destroy
+    )
 
 
 class RemoteLifecycle:
@@ -380,6 +437,7 @@ class RemoteLifecycle:
         now_millis: Callable[[], int] = lambda: time.time_ns() // 1_000_000,
         focus: Callable[[Session, str | None], bool] | None = None,
         terminal_spawner: Callable[[Sequence[str]], None] | None = None,
+        niri_command: Sequence[str] = ("niri",),
     ) -> None:
         self._adapter = adapter
         self._config = config
@@ -388,6 +446,7 @@ class RemoteLifecycle:
         self._now_millis = now_millis
         self._focus = focus
         self._terminal_spawner = terminal_spawner
+        self._niri_command = tuple(niri_command)
 
     def _run(
         self, argv: Sequence[str], *, timeout: float
@@ -534,9 +593,139 @@ class RemoteLifecycle:
         created_at: int,
         expected_name: str | None,
         required_options: Sequence[tuple[str, str]] = (),
+        verified_viewer: bool = False,
     ) -> dict[str, object]:
         _validate_reference_inputs(generation, session_id, created_at, expected_name)
         required_options = validate_required_options(required_options)
+        if verified_viewer:
+            with local_mutation_lock(host.host_id):
+                result = self.viewers(
+                    host,
+                    policy,
+                    revision,
+                    generation,
+                    session_id,
+                    created_at,
+                    expected_name,
+                    required_options,
+                )
+                assert result.session is not None and result.destroy_unattached is not None
+                inspection = self._inspect_remote_viewer(result, policy)
+                if inspection.status == "unsupported":
+                    raise ContractError(
+                        "viewer_unsupported",
+                        inspection.reason or "Kitty viewer support is unavailable",
+                        host.host_id,
+                    )
+                if inspection.status == "verified":
+                    viewer = inspection.viewers[0]
+                    if not focus_window(viewer.window_id, niri_command=self._niri_command):
+                        raise ContractError(
+                            "viewer_focus_failed",
+                            "verified Kitty viewer could not be focused",
+                            host.host_id,
+                        )
+                    return self._open_response(
+                        result.session,
+                        revision,
+                        focused=True,
+                        launched=False,
+                        viewer_id=viewer.viewer_id,
+                    )
+                if inspection.status != "none":
+                    code = (
+                        "viewer_ambiguous"
+                        if inspection.status == "ambiguous"
+                        else "viewer_unverified"
+                    )
+                    raise ContractError(
+                        code,
+                        inspection.reason or "matching Kitty viewer is not verified",
+                        host.host_id,
+                    )
+                launch_id = self._launch(
+                    result.route,
+                    policy,
+                    session_id,
+                    reference=result.session.reference.as_dict(),
+                )
+                deadline = time.monotonic() + 1.5
+                while time.monotonic() < deadline:
+                    current = self._inspect_remote_viewer(result, policy)
+                    if launch_id is not None and launch_id in current.pending_launch_ids:
+                        time.sleep(0.05)
+                        continue
+                    if current.status == "verified":
+                        viewer = next(
+                            (item for item in current.viewers if item.launch_id == launch_id), None
+                        )
+                        if viewer is not None:
+                            # Revalidate the remote reference and option guard
+                            # after registration before returning a reusable ID.
+                            final = self.viewers(
+                                host,
+                                policy,
+                                revision,
+                                generation,
+                                session_id,
+                                created_at,
+                                expected_name,
+                                required_options,
+                            )
+                            if (
+                                final.session is None
+                                or final.session.reference != result.session.reference
+                            ):
+                                raise ContractError(
+                                    "viewer_registration_ambiguous",
+                                    "launched Kitty viewer registration changed during validation",
+                                    host.host_id,
+                                )
+                            final_inspection = self._inspect_remote_viewer(final, policy)
+                            if final_inspection.status != "verified":
+                                raise ContractError(
+                                    "viewer_registration_ambiguous",
+                                    "launched Kitty viewer registration changed during validation",
+                                    host.host_id,
+                                )
+                            final_viewer = next(
+                                (
+                                    row
+                                    for row in final_inspection.viewers
+                                    if row.viewer_id == viewer.viewer_id
+                                ),
+                                None,
+                            )
+                            if final_viewer is None:
+                                raise ContractError(
+                                    "viewer_registration_ambiguous",
+                                    "launched Kitty viewer identity changed during validation",
+                                    host.host_id,
+                                )
+                            return self._open_response(
+                                final.session,
+                                revision,
+                                focused=False,
+                                launched=True,
+                                viewer_id=final_viewer.viewer_id,
+                            )
+                        raise ContractError(
+                            "viewer_registration_ambiguous",
+                            "a different verified Kitty viewer appeared during registration",
+                            host.host_id,
+                        )
+                    elif current.status != "none":
+                        raise ContractError(
+                            "viewer_registration_ambiguous",
+                            current.reason or "launched Kitty viewer registration is ambiguous",
+                            host.host_id,
+                        )
+                    time.sleep(0.05)
+                raise ContractError(
+                    "viewer_registration_ambiguous",
+                    "launched Kitty viewer was not verified before the registration deadline",
+                    host.host_id,
+                )
         values = [
             generation,
             session_id,
@@ -559,21 +748,105 @@ class RemoteLifecycle:
             values,
         )
         assert result.session is not None
-        focused = bool(self._focus and self._focus(result.session, result.native_hostname))
+        viewer_id: str | None = None
+        focused = False
+        if kitty_configured(self._config):
+            inspection = inspect_viewers(
+                result.session,
+                self._config,
+                remote_route=result.route,
+                remote_executable=policy.executable,
+                remote_native_hostname=result.native_hostname,
+                destroy_unattached="off",
+                niri_command=self._niri_command,
+            )
+            if inspection.status == "verified":
+                viewer = inspection.viewers[0]
+                focused = focus_window(viewer.window_id, niri_command=self._niri_command)
+                if focused:
+                    viewer_id = viewer.viewer_id
+        if not focused:
+            focused = bool(self._focus and self._focus(result.session, result.native_hostname))
         launched = False
         if not focused:
-            self._launch(result.route, policy, result.session.reference.session_id)
+            self._launch(
+                result.route,
+                policy,
+                result.session.reference.session_id,
+                reference=result.session.reference.as_dict(),
+            )
             launched = True
-        return {
+        return self._open_response(
+            result.session, revision, focused=focused, launched=launched, viewer_id=viewer_id
+        )
+
+    def viewers(
+        self,
+        host: MeshHost,
+        policy: MeshPolicy,
+        revision: str,
+        generation: str,
+        session_id: str,
+        created_at: int,
+        expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
+    ) -> RemoteAction:
+        _validate_reference_inputs(generation, session_id, created_at, expected_name)
+        required_options = validate_required_options(required_options)
+        values = [
+            generation,
+            session_id,
+            str(created_at),
+            "1" if expected_name is not None else "0",
+            expected_name or "",
+        ]
+        if required_options:
+            values.append(str(len(required_options)))
+            for name, value in required_options:
+                values.extend((name, value))
+        return self._action(host, policy, revision, "viewers", values)
+
+    def _inspect_remote_viewer(self, result: RemoteAction, policy: MeshPolicy) -> ViewerInspection:
+        assert result.session is not None
+        return inspect_viewers(
+            result.session,
+            self._config,
+            remote_route=result.route,
+            remote_executable=policy.executable,
+            remote_native_hostname=result.native_hostname,
+            destroy_unattached=result.destroy_unattached,
+            niri_command=self._niri_command,
+        )
+
+    @staticmethod
+    def _open_response(
+        session: Session,
+        revision: str,
+        *,
+        focused: bool,
+        launched: bool,
+        viewer_id: str | None = None,
+    ) -> dict[str, object]:
+        result: dict[str, object] = {
             "schemaVersion": 1,
             "ok": True,
             "meshRevision": revision,
-            "session": result.session.as_dict(),
+            "session": session.as_dict(),
             "focused": focused,
             "terminalLaunched": launched,
         }
+        if viewer_id is not None:
+            result["viewerId"] = viewer_id
+        return result
 
-    def _launch(self, route: str, policy: MeshPolicy, session_id: str) -> None:
+    def _launch(
+        self,
+        route: str,
+        policy: MeshPolicy,
+        session_id: str,
+        *,
+        reference: dict[str, object] | None = None,
+    ) -> str | None:
         # OpenSSH concatenates remote command argv into a shell command. Keep
         # the validated session ID quoted inside one command string so ``$0``
         # remains tmux's literal target rather than remote-shell expansion.
@@ -582,12 +855,17 @@ class RemoteLifecycle:
             shlex.quote(value) for value in ("tmux", "-u", "attach-session", "-t", session_id)
         )
         attach = [policy.executable, "-t", route, remote_command]
+        launch_id: str | None = None
+        env = None
+        if reference is not None and kitty_configured(self._config):
+            launch_id, env = launch_metadata(reference)
         if self._terminal_spawner is not None:
             self._terminal_spawner(attach)
-            return
+            return launch_id
         from .lifecycle import spawn_terminal_command
 
-        spawn_terminal_command(self._config, attach)
+        spawn_terminal_command(self._config, attach, env=env)
+        return launch_id
 
     def create(
         self,
@@ -627,10 +905,23 @@ class RemoteLifecycle:
             "session": result.session.as_dict(),
         }
         if open_after:
-            focused = bool(self._focus and self._focus(result.session, result.native_hostname))
-            if not focused:
-                self._launch(result.route, policy, result.session.reference.session_id)
-            response.update({"focused": focused, "terminalLaunched": not focused})
+            opened = self.open(
+                host,
+                policy,
+                revision,
+                result.session.reference.server_generation,
+                result.session.reference.session_id,
+                result.session.reference.created_at,
+                expected_name=name,
+            )
+            response.update(
+                {
+                    "focused": opened["focused"],
+                    "terminalLaunched": opened["terminalLaunched"],
+                }
+            )
+            if "viewerId" in opened:
+                response["viewerId"] = opened["viewerId"]
         return response
 
     def rename(

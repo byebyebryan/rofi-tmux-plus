@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "close-viewer.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "ok", "meshRevision", "sessionRef", "viewerId", "closed", "alreadyClosed"],
+  "properties": {
+    "schemaVersion": {"$ref": "common.schema.json#/$defs/schemaVersion"},
+    "ok": {"type": "boolean", "const": true},
+    "meshRevision": {"$ref": "common.schema.json#/$defs/nullableRevision"},
+    "sessionRef": {"$ref": "common.schema.json#/$defs/reference"},
+    "viewerId": {"type": "string", "minLength": 1, "maxLength": 4096, "pattern": "^tv1_[A-Za-z0-9_-]{43}$"},
+    "closed": {"type": "boolean"},
+    "alreadyClosed": {"type": "boolean"}
+  }
+}

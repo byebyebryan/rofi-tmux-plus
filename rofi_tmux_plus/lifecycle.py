@@ -9,7 +9,7 @@ import secrets
 import shutil
 import subprocess
 import time
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -18,6 +18,13 @@ from .errors import ContractError, NoServer, clean_message
 from .host import LocalHost, resolve_local_host
 from .model import Session, SessionReference
 from .tmux import TmuxClient, validate_required_options, validate_session_id, validate_user_option
+from .viewer_service import (
+    ViewerInspection,
+    focus_window,
+    inspect_viewers,
+    kitty_configured,
+    launch_metadata,
+)
 
 _OPERATION_OPTION = "@rofi_tmux_plus_operation"
 _PENDING_OPTION = "@rofi_tmux_plus_pending"
@@ -224,9 +231,14 @@ def _terminal_argv(config: Config, command: Sequence[str], *, systemd_run: str |
     ]
 
 
-def spawn_terminal_command(config: Config, command: Sequence[str]) -> None:
+def spawn_terminal_command(
+    config: Config, command: Sequence[str], *, env: Mapping[str, str] | None = None
+) -> None:
     """Detach a terminal command in a collectable user scope when available."""
     argv = _terminal_argv(config, command, systemd_run=shutil.which("systemd-run"))
+    child_env = os.environ.copy()
+    if env is not None:
+        child_env.update(env)
     subprocess.Popen(
         argv,
         stdin=subprocess.DEVNULL,
@@ -234,6 +246,7 @@ def spawn_terminal_command(config: Config, command: Sequence[str]) -> None:
         stderr=subprocess.DEVNULL,
         start_new_session=True,
         close_fds=True,
+        env=child_env,
     )
 
 
@@ -251,7 +264,7 @@ class LocalLifecycle:
         self.config = config
         self.host = host
         self._niri_command = tuple(niri_command)
-        self._terminal_spawner = terminal_spawner or self._spawn_terminal
+        self._terminal_spawner = terminal_spawner
 
     def resolve(self, host_id: str | None, mesh_revision: str | None) -> LocalHost:
         if mesh_revision is not None:
@@ -328,6 +341,7 @@ class LocalLifecycle:
         created_at: int,
         expected_name: str | None = None,
         required_options: Sequence[tuple[str, str]] = (),
+        verified_viewer: bool = False,
     ) -> dict[str, object]:
         session = self.validate_reference(
             host_id,
@@ -338,10 +352,48 @@ class LocalLifecycle:
             expected_name,
             required_options,
         )
+        if verified_viewer:
+            with local_mutation_lock(session.reference.host_id):
+                session = self.validate_reference(
+                    host_id,
+                    mesh_revision,
+                    generation,
+                    session_id,
+                    created_at,
+                    expected_name,
+                    required_options,
+                )
+                inspection = (
+                    inspect_viewers(
+                        session,
+                        self.config,
+                        local_tmux=self.tmux,
+                        destroy_unattached=self._destroy_unattached(session.reference.session_id),
+                        niri_command=self._niri_command,
+                    )
+                    if kitty_configured(self.config)
+                    else None
+                )
+                return self._open_verified(session, inspection, expected_name, required_options)
+        inspection: ViewerInspection | None = None
+        if kitty_configured(self.config):
+            inspection = inspect_viewers(
+                session,
+                self.config,
+                local_tmux=self.tmux,
+                destroy_unattached=self._destroy_unattached(session.reference.session_id),
+                niri_command=self._niri_command,
+            )
+        if inspection is not None and inspection.status == "verified":
+            viewer = inspection.viewers[0]
+            if focus_window(viewer.window_id, niri_command=self._niri_command):
+                return self._open_response(
+                    session, focused=True, terminal_launched=False, viewer_id=viewer.viewer_id
+                )
         if self._focus_matching_window(session):
             return self._open_response(session, focused=True, terminal_launched=False)
         try:
-            self._terminal_spawner(session.reference.session_id)
+            self._spawn_terminal(session)
         except (OSError, subprocess.SubprocessError) as error:
             raise ContractError(
                 "launch_failed", f"could not launch terminal: {clean_message(error)}", host_id
@@ -350,9 +402,13 @@ class LocalLifecycle:
 
     @staticmethod
     def _open_response(
-        session: Session, *, focused: bool, terminal_launched: bool
+        session: Session,
+        *,
+        focused: bool,
+        terminal_launched: bool,
+        viewer_id: str | None = None,
     ) -> dict[str, object]:
-        return {
+        result: dict[str, object] = {
             "schemaVersion": 1,
             "ok": True,
             "meshRevision": None,
@@ -360,6 +416,9 @@ class LocalLifecycle:
             "focused": focused,
             "terminalLaunched": terminal_launched,
         }
+        if viewer_id is not None:
+            result["viewerId"] = viewer_id
+        return result
 
     def _focus_matching_window(self, session: Session) -> bool:
         host = resolve_local_host(session.reference.host_id, self.host)
@@ -367,8 +426,111 @@ class LocalLifecycle:
             session.name, host.native_hostname, niri_command=self._niri_command
         )
 
-    def _spawn_terminal(self, session_id: str) -> None:
-        spawn_terminal_command(self.config, ["tmux", "-u", "attach-session", "-t", session_id])
+    def _destroy_unattached(self, session_id: str) -> str | None:
+        from .viewer_service import effective_destroy_unattached
+
+        try:
+            return effective_destroy_unattached(self.tmux, session_id)
+        except ContractError:
+            return None
+
+    def _open_verified(
+        self,
+        session: Session,
+        inspection: ViewerInspection | None,
+        expected_name: str | None,
+        required_options: Sequence[tuple[str, str]],
+    ) -> dict[str, object]:
+        if inspection is None or inspection.status == "unsupported":
+            reason = (
+                inspection.reason
+                if inspection is not None
+                else "Kitty viewer support is unavailable"
+            )
+            raise ContractError("viewer_unsupported", reason, session.reference.host_id)
+        if inspection.status == "verified":
+            viewer = inspection.viewers[0]
+            if not focus_window(viewer.window_id, niri_command=self._niri_command):
+                raise ContractError(
+                    "viewer_focus_failed", "verified Kitty viewer could not be focused"
+                )
+            return self._open_response(
+                session, focused=True, terminal_launched=False, viewer_id=viewer.viewer_id
+            )
+        if inspection.status != "none":
+            code = "viewer_ambiguous" if inspection.status == "ambiguous" else "viewer_unverified"
+            raise ContractError(code, inspection.reason or "matching Kitty viewer is not verified")
+        try:
+            launch_id = self._spawn_terminal(session)
+        except (OSError, subprocess.SubprocessError) as error:
+            raise ContractError(
+                "launch_failed",
+                f"could not launch terminal: {clean_message(error)}",
+                session.reference.host_id,
+            ) from error
+        deadline = time.monotonic() + 1.5
+        while time.monotonic() < deadline:
+            current_session = self.tmux.find(session.reference)
+            if current_session.reference != session.reference:
+                raise ContractError(
+                    "stale_session", "the selected tmux session changed during open"
+                )
+            if expected_name is not None and current_session.name != expected_name:
+                raise ContractError(
+                    "stale_session", "the selected tmux session changed during open"
+                )
+            _validate_required_options(current_session, required_options, self.tmux)
+            current = inspect_viewers(
+                current_session,
+                self.config,
+                local_tmux=self.tmux,
+                destroy_unattached=self._destroy_unattached(session.reference.session_id),
+                niri_command=self._niri_command,
+            )
+            if launch_id is not None and launch_id in current.pending_launch_ids:
+                time.sleep(0.05)
+                continue
+            if current.status == "verified":
+                viewer = next(
+                    (item for item in current.viewers if item.launch_id == launch_id), None
+                )
+                if viewer is not None:
+                    return self._open_response(
+                        session,
+                        focused=False,
+                        terminal_launched=True,
+                        viewer_id=viewer.viewer_id,
+                    )
+                raise ContractError(
+                    "viewer_registration_ambiguous",
+                    "a different verified Kitty viewer appeared during registration",
+                )
+            elif current.status not in {"none"}:
+                raise ContractError(
+                    "viewer_registration_ambiguous",
+                    current.reason or "launched Kitty viewer registration is ambiguous",
+                )
+            time.sleep(0.05)
+        raise ContractError(
+            "viewer_registration_ambiguous",
+            "launched Kitty viewer was not verified before the registration deadline",
+        )
+
+    def _spawn_terminal(self, session: Session | str) -> str | None:
+        session_id = session if isinstance(session, str) else session.reference.session_id
+        launch_id: str | None = None
+        env = None
+        if isinstance(session, Session) and kitty_configured(self.config):
+            launch_id, env = launch_metadata(session.reference.as_dict())
+        if self._terminal_spawner is not None:
+            self._terminal_spawner(session_id)
+            return launch_id
+        spawn_terminal_command(
+            self.config,
+            ["tmux", "-u", "attach-session", "-t", session_id],
+            env=env,
+        )
+        return launch_id
 
     def create(
         self,
@@ -482,6 +644,8 @@ class LocalLifecycle:
             )
             response["focused"] = opened["focused"]
             response["terminalLaunched"] = opened["terminalLaunched"]
+            if "viewerId" in opened:
+                response["viewerId"] = opened["viewerId"]
         return response
 
     def _wait_for_operation_token(self, reference: SessionReference, token: str) -> None:

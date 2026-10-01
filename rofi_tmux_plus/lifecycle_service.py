@@ -11,6 +11,7 @@ from .lifecycle import LocalLifecycle, focus_session_window
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshSnapshot
 from .remote_lifecycle import RemoteLifecycle
 from .tmux import TmuxClient
+from .viewer_service import close_viewer, effective_destroy_unattached, inspect_viewers
 
 
 class LifecycleService:
@@ -76,6 +77,7 @@ class LifecycleService:
         created_at: int,
         expected_name: str | None = None,
         required_options: Sequence[tuple[str, str]] = (),
+        verified_viewer: bool = False,
     ) -> dict[str, object]:
         snapshot, host, local = self._selected(host_id, revision)
         if snapshot is None or host is None or host.local:
@@ -88,6 +90,7 @@ class LifecycleService:
                     created_at,
                     expected_name,
                     required_options,
+                    verified_viewer,
                 ),
                 snapshot.revision if snapshot else None,
             )
@@ -100,6 +103,7 @@ class LifecycleService:
             created_at,
             expected_name,
             required_options,
+            verified_viewer,
         )
 
     def create(
@@ -196,3 +200,168 @@ class LifecycleService:
             created_at,
             expected_name,
         )
+
+    def _viewer_context(
+        self,
+        host_id: str,
+        revision: str | None,
+        generation: str,
+        session_id: str,
+        created_at: int,
+        expected_name: str | None,
+        required_options: Sequence[tuple[str, str]],
+    ) -> tuple[object, object, str | None, object]:
+        snapshot, host, local = self._selected(host_id, revision)
+        if snapshot is None or host is None or host.local:
+            session = local.validate_reference(
+                host_id,
+                None,
+                generation,
+                session_id,
+                created_at,
+                expected_name,
+                required_options,
+            )
+            try:
+                destroy_value = effective_destroy_unattached(local.tmux, session_id)
+            except ContractError:
+                destroy_value = None
+            inspection = inspect_viewers(
+                session,
+                self._config,
+                local_tmux=local.tmux,
+                destroy_unattached=destroy_value,
+            )
+            return session, inspection, snapshot.revision if snapshot else None, (local, None, None)
+
+        result = self._remote.viewers(
+            host,
+            snapshot.policy,
+            snapshot.revision,
+            generation,
+            session_id,
+            created_at,
+            expected_name,
+            required_options,
+        )
+        assert result.session is not None
+        inspection = inspect_viewers(
+            result.session,
+            self._config,
+            remote_route=result.route,
+            remote_executable=snapshot.policy.executable,
+            remote_native_hostname=result.native_hostname,
+            destroy_unattached=result.destroy_unattached,
+        )
+        return result.session, inspection, snapshot.revision, (host, snapshot.policy, result)
+
+    def viewers(
+        self,
+        host_id: str,
+        revision: str | None,
+        generation: str,
+        session_id: str,
+        created_at: int,
+        expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
+    ) -> dict[str, object]:
+        session, inspection, mesh_revision, _context = self._viewer_context(
+            host_id,
+            revision,
+            generation,
+            session_id,
+            created_at,
+            expected_name,
+            required_options,
+        )
+        return {
+            "schemaVersion": 1,
+            "ok": True,
+            "meshRevision": mesh_revision,
+            "sessionRef": session.reference.as_dict(),
+            **inspection.as_fields(),
+        }
+
+    def close_viewer(
+        self,
+        host_id: str,
+        revision: str | None,
+        generation: str,
+        session_id: str,
+        created_at: int,
+        viewer_id: str,
+        expected_name: str | None = None,
+        required_options: Sequence[tuple[str, str]] = (),
+    ) -> dict[str, object]:
+        args = (
+            host_id,
+            revision,
+            generation,
+            session_id,
+            created_at,
+            expected_name,
+            required_options,
+        )
+        session, inspection, mesh_revision, _context = self._viewer_context(*args)
+        if not inspection.close_safe:
+            raise ContractError(
+                "viewer_destroy_guard", "destroy-unattached is not provably off", host_id
+            )
+        if inspection.status == "unsupported":
+            raise ContractError(
+                "viewer_unsupported", inspection.reason or "viewer close is unsupported", host_id
+            )
+        if inspection.status == "ambiguous":
+            raise ContractError(
+                "viewer_ambiguous", inspection.reason or "viewer identity is ambiguous", host_id
+            )
+        if inspection.status == "unverified":
+            raise ContractError(
+                "viewer_unverified", inspection.reason or "viewer identity is unverified", host_id
+            )
+        viewer = next((row for row in inspection.viewers if row.viewer_id == viewer_id), None)
+        if viewer is None:
+            return self._close_response(
+                session, mesh_revision, viewer_id, closed=False, already_closed=True
+            )
+
+        def revalidate():
+            current_session, current_inspection, _current_revision, _ = self._viewer_context(*args)
+            if current_session.reference != session.reference:
+                raise ContractError(
+                    "stale_session", "the selected tmux session changed before close", host_id
+                )
+            return current_inspection
+
+        def validate_session() -> bool:
+            try:
+                current_session, current_inspection, _current_revision, _ = self._viewer_context(
+                    *args
+                )
+            except ContractError:
+                return False
+            return current_session.reference == session.reference and current_inspection.close_safe
+
+        closed = close_viewer(viewer, revalidate=revalidate, validate_session=validate_session)
+        return self._close_response(
+            session, mesh_revision, viewer_id, closed=closed, already_closed=not closed
+        )
+
+    @staticmethod
+    def _close_response(
+        session: object,
+        mesh_revision: str | None,
+        viewer_id: str,
+        *,
+        closed: bool,
+        already_closed: bool,
+    ) -> dict[str, object]:
+        return {
+            "schemaVersion": 1,
+            "ok": True,
+            "meshRevision": mesh_revision,
+            "sessionRef": session.reference.as_dict(),
+            "viewerId": viewer_id,
+            "closed": closed,
+            "alreadyClosed": already_closed,
+        }

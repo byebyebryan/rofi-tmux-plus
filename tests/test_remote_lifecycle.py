@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
@@ -25,6 +26,7 @@ from rofi_tmux_plus.remote_lifecycle import (
     _parse_action,
     build_remote_lifecycle_argv,
 )
+from rofi_tmux_plus.viewer_service import ViewerInspection
 
 
 def _done(stdout: str, stderr: str = "", code: int = 0) -> subprocess.CompletedProcess[str]:
@@ -60,6 +62,8 @@ def _action_output(kind: str, *, name: str = "before", clients: int = 0) -> str:
     suffix = f"R\t{kind}"
     if kind == "KILL":
         suffix += f"\t{clients}"
+    elif kind == "VIEWERS":
+        suffix += "\toff"
     lines.append(suffix)
     return "\n".join(lines) + "\n"
 
@@ -158,6 +162,48 @@ class RemoteLifecycleTests(unittest.TestCase):
             [["ssh", "-t", "beta-vpn.test", "tmux -u attach-session -t '$0'"]],
         )
         self.assertEqual(self.adapter.reports[0]["status"], "reachable")
+
+    def test_remote_kitty_open_launches_with_full_reference_metadata(self) -> None:
+        marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
+        lifecycle = RemoteLifecycle(
+            self.adapter,
+            Config(terminal=("kitty",)),
+            runner=lambda *_args, **_kwargs: _done(_action_output("OPEN"), marker),
+            nonce_factory=lambda: self.nonce,
+            focus=lambda *_args: False,
+        )
+        with (
+            patch(
+                "rofi_tmux_plus.remote_lifecycle.inspect_viewers",
+                return_value=ViewerInspection("none", (), True),
+            ),
+            patch("rofi_tmux_plus.lifecycle.spawn_terminal_command") as spawn,
+        ):
+            result = lifecycle.open(
+                self.host,
+                self.policy,
+                "sha256:fixture",
+                "tmux-v1:10:20:/tmp/tmux",
+                "$0",
+                11,
+                None,
+            )
+        self.assertTrue(result["terminalLaunched"])
+        environment = spawn.call_args.kwargs["env"]
+        metadata = json.loads(environment["ROFI_TMUX_PLUS_VIEWER_V1"])
+        self.assertEqual(metadata["schemaVersion"], 1)
+        self.assertEqual(
+            metadata["sessionRef"],
+            {
+                key: result["session"][key]
+                for key in ("hostId", "serverGeneration", "sessionId", "createdAt")
+            },
+        )
+        self.assertTrue(metadata["launchId"])
+        self.assertEqual(
+            spawn.call_args.args[1],
+            ["ssh", "-t", "beta-vpn.test", "tmux -u attach-session -t '$0'"],
+        )
 
     def test_open_required_options_run_through_fixed_remote_program_before_actions(self) -> None:
         with tempfile.TemporaryDirectory() as raw_directory:
@@ -437,6 +483,41 @@ class RemoteLifecycleTests(unittest.TestCase):
             )
         self.assertEqual(calls, [])
 
+    def test_viewers_remote_action_returns_destroy_guard_without_expanding_arguments(self) -> None:
+        marker = "\x1eROFI_PLUS_REACHED_V1:" + self.nonce + "\x1f\n"
+        lifecycle = self._lifecycle([_done(_action_output("VIEWERS"), marker)])
+        result = lifecycle.viewers(
+            self.host,
+            self.policy,
+            "sha256:fixture",
+            "tmux-v1:10:20:/tmp/tmux",
+            "$0",
+            11,
+            "before",
+            (("@provider", "value;$(touch never-run)"),),
+        )
+        self.assertEqual(result.kind, "VIEWERS")
+        self.assertEqual(result.destroy_unattached, "off")
+        self.assertEqual(result.route, "beta-vpn.test")
+        argv = build_remote_lifecycle_argv(
+            "beta-vpn.test",
+            self.policy,
+            nonce=self.nonce,
+            action="viewers",
+            values=[
+                "tmux-v1:10:20:/tmp/tmux",
+                "$0",
+                "11",
+                "1",
+                "before",
+                "1",
+                "@provider",
+                "value;$(touch never-run)",
+            ],
+        )
+        self.assertIn("'value;$(touch never-run)'", argv[-1])
+        self.assertNotIn("value;$(touch never-run)", _REMOTE_PROGRAM)
+
     def test_fixed_remote_program_captures_create_before_release(self) -> None:
         """Run only a fake tmux, never a user/default tmux server."""
         with tempfile.TemporaryDirectory() as raw_directory:
@@ -465,7 +546,12 @@ class RemoteLifecycleTests(unittest.TestCase):
                 "      '#{session_path}'|'#{pane_current_path}') printf '/tmp/work\\n' ;;\n"
                 "      '#{window_name}') printf 'shell\\n' ;;\n"
                 "    esac ;;\n"
-                '  show-options) case " $* " in *\' @rofi_tmux_plus_operation\'*) cat "$state/token" ;; esac ;;\n'
+                "  show-options)\n"
+                '    case " $* " in\n'
+                '      *" @rofi_tmux_plus_operation"*) cat "$state/token" ;;\n'
+                '      *" -gqv destroy-unattached"*) [ -f "$state/global-destroy" ] && cat "$state/global-destroy" ;;\n'
+                '      *) [ -f "$state/session-destroy" ] && cat "$state/session-destroy" ;;\n'
+                "    esac ;;\n"
                 '  set-option) : > "$state/gone" ;;\n'
                 "  has-session) exit 1 ;;\n"
                 '  rename-session) for value in "$@"; do name=$value; done; printf \'%s\' "$name" > "$state/name" ;;\n'
@@ -481,12 +567,14 @@ class RemoteLifecycleTests(unittest.TestCase):
                 encoding="utf-8",
             )
             tmux.chmod(0o700)
+            (state / "global-destroy").write_text("off\n", encoding="utf-8")
             old_path = os.environ.get("PATH", "")
             try:
                 os.environ["PATH"] = f"{directory}:{old_path}"
                 results = []
                 for action, values in (
                     ("open", ["tmux-v1:10:20:/tmp/tmux", "$0", "11", "0", ""]),
+                    ("viewers", ["tmux-v1:10:20:/tmp/tmux", "$0", "11", "0", ""]),
                     ("kill", ["tmux-v1:10:20:/tmp/tmux", "$0", "11", "before"]),
                     (
                         "rename",
@@ -509,10 +597,34 @@ class RemoteLifecycleTests(unittest.TestCase):
                             text=True,
                         )
                     )
+                    if action == "viewers":
+                        (state / "session-destroy").write_text(
+                            "destroy-unattached on\n", encoding="utf-8"
+                        )
+                        override = subprocess.run(
+                            [
+                                "sh",
+                                "-c",
+                                _REMOTE_PROGRAM,
+                                "rofi-tmux-plus-remote",
+                                "viewers",
+                                "tmux-v1:10:20:/tmp/tmux",
+                                "$0",
+                                "11",
+                                "0",
+                                "",
+                            ],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                        )
+                        (state / "session-destroy").unlink()
             finally:
                 os.environ["PATH"] = old_path
             self.assertTrue((state / "gone").exists(), results[-1].stdout + results[-1].stderr)
-        for result, kind in zip(results, ("OPEN", "KILL", "RENAME", "CREATE"), strict=True):
+        for result, kind in zip(
+            results, ("OPEN", "VIEWERS", "KILL", "RENAME", "CREATE"), strict=True
+        ):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
                 sum(line.startswith("G\t") for line in result.stdout.splitlines()),
@@ -521,6 +633,10 @@ class RemoteLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(sum(line.startswith("D\t") for line in result.stdout.splitlines()), 1)
             self.assertIn(f"R\t{kind}", result.stdout)
+            if kind == "VIEWERS":
+                self.assertIn("R\tVIEWERS\toff", result.stdout)
+        self.assertEqual(override.returncode, 0, override.stderr)
+        self.assertIn("R\tVIEWERS\ton", override.stdout)
 
 
 class LifecycleServiceTests(unittest.TestCase):

@@ -1,9 +1,9 @@
 # Tmux Session v1 producer contract
 
 This directory is the canonical machine-readable contract owned by Tmux Plus.
-It describes the existing public `inventory`, `open`, `create`, `rename`, and
-`kill` commands. It adds no runtime schema loading, package import, network
-dependency, or private picker protocol.
+It describes the public `inventory`, `open`, `viewers`, `close-viewer`,
+`create`, `rename`, and `kill` commands. It adds no runtime schema loading,
+package import, network dependency, or private picker protocol.
 
 ## Commands and wire envelope
 
@@ -14,6 +14,8 @@ use distinct argv elements:
 rofi-tmux-plus inventory --json [options]
 rofi-tmux-plus open --json --host HOST --server-generation GENERATION \
   --session-id '$6' --created-at SECONDS [options]
+rofi-tmux-plus viewers --json --host HOST --server-generation GENERATION --session-id '$6' --created-at SECONDS [options]
+rofi-tmux-plus close-viewer --json --host HOST --server-generation GENERATION --session-id '$6' --created-at SECONDS --viewer-id HANDLE [options]
 rofi-tmux-plus create --json --host HOST --name NAME [options] [-- COMMAND ARG...]
 rofi-tmux-plus rename --json --host HOST --server-generation GENERATION \
   --session-id '$6' --created-at SECONDS --expected-name OLD --name NEW
@@ -67,7 +69,21 @@ and are part of this contract:
   `sha256:` followed by 64 lowercase hexadecimal digits. A supplied stale
   revision fails before route resolution.
 - `open` always returns a complete descriptor and exactly one of `focused` or
-  `terminalLaunched` is true. `create` returns its complete descriptor and
+  `terminalLaunched` is true. `open --verified-viewer` reuses a verified
+  Kitty/Niri viewer or launches one marked attachment; it returns the opaque
+  `viewerId` after bounded registration. Ordinary open keeps its title-focus
+  compatibility and returns a viewer ID when metadata-first focus is verified.
+  `viewers` returns the full `sessionRef`, one of `none`, `verified`,
+  `unverified`, `ambiguous`, or `unsupported`, verified opaque handles, and
+  `closeSafe`. A verified result has one or more independently verified
+  handles. `closeSafe` is true
+  only when the effective `destroy-unattached` option is proved `off`.
+  `close-viewer` revalidates the full reference, viewer identity, and close
+  guard, sends SIGTERM through a pidfd only to the exact tmux/SSH attachment,
+  then verifies that the Kitty window exited and the session survived.
+  Repeating a close with a stale handle is an idempotent `alreadyClosed`
+  success and never closes a newly opened viewer. No ambiguous close is retried.
+  `create` returns its complete descriptor and
   includes those booleans only when `--open` was requested. `rename` returns the
   changed descriptor. `kill` returns the stable reference and the nonnegative
   live client count observed immediately before the operation.

@@ -218,6 +218,22 @@ class TmuxClient:
             raise ContractError("operation_failed", "tmux returned an invalid session inventory")
         return ids
 
+    def client_pids(self, session_id: str) -> list[int]:
+        """Return the exact local client PIDs attached to one stable session ID."""
+        validate_session_id(session_id)
+        output = self.run(["list-clients", "-t", session_id, "-F", "#{client_pid}"], no_server=True)
+        if not output:
+            return []
+        values = output.splitlines()
+        if len(values) > 512 or len(values) != len(set(values)):
+            raise ContractError("operation_failed", "tmux returned an invalid client inventory")
+        result: list[int] = []
+        for value in values:
+            if not value.isdecimal() or int(value) <= 0:
+                raise ContractError("operation_failed", "tmux returned an invalid client PID")
+            result.append(int(value))
+        return result
+
     def option(self, session_id: str, name: str) -> str | None:
         validate_user_option(name)
         present = self.run(["show-options", "-q", "-t", session_id], no_server=True)

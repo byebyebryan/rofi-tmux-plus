@@ -18,7 +18,15 @@ from .remote_cache import RemoteCache
 from .tmux import validate_required_options, validate_user_option
 from .wire import WireError, validate_string_bounds, write_document
 
-_PUBLIC_JSON_COMMANDS = {"inventory", "open", "create", "rename", "kill"}
+_PUBLIC_JSON_COMMANDS = {
+    "inventory",
+    "open",
+    "viewers",
+    "close-viewer",
+    "create",
+    "rename",
+    "kill",
+}
 _JSON_COMMANDS = _PUBLIC_JSON_COMMANDS | {
     "_picker-model",
     "_refresh",
@@ -28,6 +36,7 @@ _ROFI_CALLBACK_ENV = {"ROFI_DATA", "ROFI_INFO", "ROFI_INPUT"}
 _ERROR_CODE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]*$", re.ASCII)
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", re.ASCII)
 _REVISION = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
+_VIEWER_ID = re.compile(r"^tv1_[A-Za-z0-9_-]{43}$", re.ASCII)
 
 
 def _is_rofi_invocation(argv: Sequence[str]) -> bool:
@@ -98,6 +107,18 @@ def build_parser(*, machine: bool = False) -> JsonArgumentParser:
     _common(open_parser, reference=True)
     open_parser.add_argument("--expected-name")
     open_parser.add_argument("--require-option", action="append", default=[])
+    open_parser.add_argument("--verified-viewer", action="store_true")
+
+    viewers = commands.add_parser("viewers", add_help=True)
+    _common(viewers, reference=True)
+    viewers.add_argument("--expected-name")
+    viewers.add_argument("--require-option", action="append", default=[])
+
+    close_viewer = commands.add_parser("close-viewer", add_help=True)
+    _common(close_viewer, reference=True)
+    close_viewer.add_argument("--viewer-id", required=True)
+    close_viewer.add_argument("--expected-name")
+    close_viewer.add_argument("--require-option", action="append", default=[])
 
     create = commands.add_parser("create", add_help=True)
     _common(create)
@@ -206,6 +227,30 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
             args.server_generation,
             args.session_id,
             args.created_at,
+            args.expected_name,
+            _required_options(args.require_option),
+            verified_viewer=args.verified_viewer,
+        )
+    if args.command == "viewers":
+        return lifecycle.viewers(
+            args.host,
+            args.mesh_revision,
+            args.server_generation,
+            args.session_id,
+            args.created_at,
+            args.expected_name,
+            _required_options(args.require_option),
+        )
+    if args.command == "close-viewer":
+        if _VIEWER_ID.fullmatch(args.viewer_id) is None:
+            raise ContractError("invalid_input", "--viewer-id is not a valid opaque viewer handle")
+        return lifecycle.close_viewer(
+            args.host,
+            args.mesh_revision,
+            args.server_generation,
+            args.session_id,
+            args.created_at,
+            args.viewer_id,
             args.expected_name,
             _required_options(args.require_option),
         )
@@ -339,6 +384,77 @@ def _validate_public_result(command: str, result: object) -> None:
                 raise WireError("inventory pane count exceeded its host limit")
         validate_string_bounds(result, limit=16_384)
         return
+    if command == "viewers":
+        _require_fields(
+            result, "ok", "meshRevision", "sessionRef", "status", "viewers", "closeSafe"
+        )
+        if result.get("ok") is not True:
+            raise WireError("viewer inspection success response must have ok=true")
+        _revision_field(result.get("meshRevision"))
+        reference = result.get("sessionRef")
+        if not isinstance(reference, dict):
+            raise WireError("viewer session reference is invalid")
+        _validate_reference(reference, limit=4_096)
+        status = result.get("status")
+        if not isinstance(status, str) or status not in {
+            "none",
+            "verified",
+            "unverified",
+            "ambiguous",
+            "unsupported",
+        }:
+            raise WireError("viewer status is invalid")
+        if type(result.get("closeSafe")) is not bool:
+            raise WireError("viewer closeSafe field is invalid")
+        viewers = result.get("viewers")
+        if not isinstance(viewers, list) or len(viewers) > 512:
+            raise WireError("viewer inventory exceeded its limit")
+        viewer_ids: set[str] = set()
+        window_ids: set[int] = set()
+        for viewer in viewers:
+            if not isinstance(viewer, dict):
+                raise WireError("viewer row is invalid")
+            _require_fields(viewer, "viewerId", "windowId")
+            viewer_id = viewer.get("viewerId")
+            if (
+                not isinstance(viewer_id, str)
+                or len(viewer_id) > 4_096
+                or _VIEWER_ID.fullmatch(viewer_id) is None
+            ):
+                raise WireError("viewer ID is invalid")
+            window_id = viewer.get("windowId")
+            if not _integer_field(window_id, 0, 2**63 - 1):
+                raise WireError("viewer window ID is invalid")
+            if viewer_id in viewer_ids or window_id in window_ids:
+                raise WireError("viewer identities are ambiguous")
+            viewer_ids.add(viewer_id)
+            window_ids.add(window_id)
+        if (status == "verified") != bool(viewers):
+            raise WireError("viewer status and verified handles disagree")
+        if "reason" in result:
+            _string_field(result.get("reason"), nullable=False, limit=512)
+        validate_string_bounds(result, limit=4_096)
+        return
+    if command == "close-viewer":
+        _require_fields(
+            result, "ok", "meshRevision", "sessionRef", "viewerId", "closed", "alreadyClosed"
+        )
+        if result.get("ok") is not True:
+            raise WireError("viewer close success response must have ok=true")
+        _revision_field(result.get("meshRevision"))
+        reference = result.get("sessionRef")
+        if not isinstance(reference, dict):
+            raise WireError("viewer session reference is invalid")
+        _validate_reference(reference, limit=4_096)
+        viewer_id = result.get("viewerId")
+        if not isinstance(viewer_id, str) or _VIEWER_ID.fullmatch(viewer_id) is None:
+            raise WireError("viewer ID is invalid")
+        if type(result.get("closed")) is not bool or type(result.get("alreadyClosed")) is not bool:
+            raise WireError("viewer close result fields are invalid")
+        if result["closed"] == result["alreadyClosed"]:
+            raise WireError("viewer close result fields must be exclusive")
+        validate_string_bounds(result, limit=4_096)
+        return
     _require_fields(result, "ok", "meshRevision")
     if result.get("ok") is not True:
         raise WireError("lifecycle success response must have ok=true")
@@ -370,6 +486,10 @@ def _validate_public_result(command: str, result: object) -> None:
                 raise WireError("lifecycle focus fields are invalid")
             if result["focused"] == result["terminalLaunched"]:
                 raise WireError("lifecycle focus fields must be exclusive")
+        if "viewerId" in result:
+            viewer_id = result.get("viewerId")
+            if not isinstance(viewer_id, str) or _VIEWER_ID.fullmatch(viewer_id) is None:
+                raise WireError("viewer ID is invalid")
     validate_string_bounds(result, limit=4_096)
 
 

@@ -1,10 +1,11 @@
 # Tmux Session Contract v1
 
 Status: local and Host Mesh-backed remote live inventory and lifecycle
-operations, the private retained remote cache and refresh lifecycle, and the
-complete Rofi browse/open/create/rename/kill UI are implemented. P9 producer
-contracts and their canonical bundle are published in this repository; managed
-suite deployment is coordinated through chezmoi.
+operations, verified Kitty viewer inspection/reuse/close, the private retained
+remote cache and refresh lifecycle, and the complete Rofi browse/open/create/
+rename/kill UI are implemented. P9 producer contracts and their canonical
+bundle are published in this repository; managed suite deployment is
+coordinated through chezmoi.
 
 This is the process boundary between generic tmux lifecycle and consumers such
 as `rofi-agent-plus`. All commands exchange versioned JSON. Consumers do not
@@ -242,6 +243,43 @@ terminal. Names follow the same `@[A-Za-z0-9_.-]+` rule as inventory and
 create; values reject NUL and control characters. Repeating a requirement with
 the same value is harmless, while conflicting values for one name are
 `invalid_input`. Required option values are never added to the open response.
+
+## Dedicated Kitty viewers
+
+`viewers --json` accepts the same stable session reference, Host Mesh revision,
+expected name, and required-option preconditions as `open`. It returns the full
+`sessionRef`, a status (`none`, `verified`, `unverified`, `ambiguous`, or
+`unsupported`), an array of verified `{viewerId, windowId}` handles, and
+`closeSafe`. A verified status can contain more than one independent dedicated
+window. Unknown or ambiguous candidates have no verified handles. `closeSafe`
+is false unless Tmux Plus can prove the effective `destroy-unattached` option
+is `off`.
+
+New Kitty attachments launched by local or remote `open` and `create --open`
+inherit a versioned process-environment marker with the complete session
+reference and a random launch ID. The Niri window ID and Kitty/attachment PID
+start times are read from the current compositor and `/proc`; they are folded
+into the opaque viewer handle. Local legacy Kitty windows can be adopted only
+when the direct tmux attachment PID exactly matches the current client's PID
+for that session. Unmarked remote windows are unverified. A Kitty process
+backing several Niri windows or a candidate with multiple PTY groups is
+ambiguous. Matching non-Kitty terminals and unsupported compositor state are
+reported without claiming a verified Kitty handle.
+
+`open --verified-viewer` is the strict reuse path. It focuses a verified
+window, launches one marked attachment when the status is `none`, and returns
+the new handle after a bounded registration check. Unverified, ambiguous, and
+unsupported results fail without a title-based duplicate launch. Ordinary
+`open` retains its existing focus behavior and includes a `viewerId` when its
+metadata-first focus is verified.
+
+`close-viewer --viewer-id HANDLE` repeats the session and required-option
+guards, requires `closeSafe`, and rechecks the exact frozen Niri window and
+process generations. It signals only that window's direct tmux or SSH
+attachment through a Linux pidfd, then verifies that the Kitty window exited
+and the original session reference survived. A handle that is already absent
+returns `alreadyClosed`; it cannot select a viewer opened later. Ambiguous
+close outcomes are typed failures and are not retried.
 
 ## Create
 

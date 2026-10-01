@@ -318,6 +318,8 @@ class ContractBundleTests(unittest.TestCase):
                 "error.schema.json",
                 "inventory.schema.json",
                 "open.schema.json",
+                "viewers.schema.json",
+                "close-viewer.schema.json",
                 "create.schema.json",
                 "rename.schema.json",
                 "kill.schema.json",
@@ -343,7 +345,8 @@ class ContractBundleTests(unittest.TestCase):
             else:
                 self.assertEqual(case["kind"], "raw")
                 self.assertEqual(
-                    set(case["appliesTo"]), {"inventory", "open", "create", "rename", "kill"}
+                    set(case["appliesTo"]),
+                    {"inventory", "open", "viewers", "close-viewer", "create", "rename", "kill"},
                 )
                 with self.assertRaises(WireError):
                     decode_document(path.read_bytes(), limit=1 << 20)
@@ -696,6 +699,58 @@ class WireAndProducerTests(unittest.TestCase):
         self.assertFalse(value["ok"])
         self.assertEqual(value["error"]["code"], "stale_session")
         LocalSchemaValidator(SCHEMAS).validate(value, "error.schema.json")
+
+    def test_viewer_public_commands_emit_flat_typed_responses(self) -> None:
+        viewers = json.loads((FIXTURES / "valid/viewers-verified.json").read_text())
+        closed = json.loads((FIXTURES / "valid/close-viewer-success.json").read_text())
+        opened = json.loads((FIXTURES / "valid/open-success.json").read_text())
+        opened["viewerId"] = viewers["viewers"][0]["viewerId"]
+        lifecycle = type(
+            "Lifecycle",
+            (),
+            {
+                "viewers": lambda _self, *args, **_kwargs: viewers,
+                "close_viewer": lambda _self, *args, **_kwargs: closed,
+                "open": lambda _self, *args, **_kwargs: opened,
+            },
+        )()
+        identity = [
+            "--host",
+            viewers["sessionRef"]["hostId"],
+            "--server-generation",
+            viewers["sessionRef"]["serverGeneration"],
+            "--session-id",
+            viewers["sessionRef"]["sessionId"],
+            "--created-at",
+            str(viewers["sessionRef"]["createdAt"]),
+        ]
+        for command, extra, schema in (
+            ("viewers", [], "viewers.schema.json"),
+            (
+                "close-viewer",
+                ["--viewer-id", closed["viewerId"]],
+                "close-viewer.schema.json",
+            ),
+            ("open", ["--verified-viewer"], "open.schema.json"),
+        ):
+            status, raw = self._bytes_main(
+                [command, "--json", *identity, *extra], lifecycle, lifecycle=True
+            )
+            self.assertEqual(status, 0, command)
+            result = decode_document(raw, limit=256 * 1024)
+            LocalSchemaValidator(SCHEMAS).validate(result, schema)
+            self.assertTrue(result["ok"])
+            if command in {"viewers", "close-viewer"}:
+                self.assertIn("sessionRef", result)
+                self.assertNotIn("data", result)
+            if command == "open":
+                self.assertEqual(result["viewerId"], closed["viewerId"])
+
+    def test_viewer_public_response_validation_rejects_malformed_status(self) -> None:
+        value = json.loads((FIXTURES / "valid/viewers-none.json").read_text())
+        value["status"] = []
+        with self.assertRaises(WireError):
+            cli._validate_public_result("viewers", value)
 
     def test_parser_help_is_typed_and_does_not_leak_stderr(self) -> None:
         output = BytesIO()
