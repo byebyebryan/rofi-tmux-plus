@@ -234,6 +234,32 @@ class TmuxClient:
             result.append(int(value))
         return result
 
+    def client_pids_by_session(self) -> dict[str, set[int]]:
+        """Return one bounded snapshot of local tmux clients grouped by session."""
+        output = self.run(["list-clients", "-F", "#{client_pid}\t#{session_id}"], no_server=True)
+        if not output:
+            return {}
+        rows = output.splitlines()
+        if len(rows) > 512:
+            raise ContractError("operation_failed", "tmux returned an oversized client inventory")
+        result: dict[str, set[int]] = {}
+        seen_pids: set[int] = set()
+        for row in rows:
+            pid_text, separator, session_id = row.partition("\t")
+            if (
+                not separator
+                or not pid_text.isdecimal()
+                or int(pid_text) <= 0
+                or not _SESSION_ID.fullmatch(session_id)
+            ):
+                raise ContractError("operation_failed", "tmux returned an invalid client inventory")
+            pid = int(pid_text)
+            if pid in seen_pids:
+                raise ContractError("operation_failed", "tmux returned a duplicate client PID")
+            seen_pids.add(pid)
+            result.setdefault(session_id, set()).add(pid)
+        return result
+
     def option(self, session_id: str, name: str) -> str | None:
         validate_user_option(name)
         present = self.run(["show-options", "-q", "-t", session_id], no_server=True)

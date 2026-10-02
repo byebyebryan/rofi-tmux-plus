@@ -14,8 +14,13 @@ isolated sockets are not a public CLI feature. It also publishes deterministic
 producer fixtures for consumers.
 
 The private retained-remote cache and bounded detached refresh owner support a
-Rofi browse surface with Open and guarded Kill actions. The public lifecycle
-contract continues to expose `create` and `rename` for CLI consumers.
+Rofi browse surface with Open and guarded Kill actions. The picker now shows
+caller-local viewer presence for local and remote session owners, using a
+ten-second bounded observation refresh. Public `inventory --json --with-viewers`
+adds the caller endpoint and per-session `open`, `none`, or `unknown` state;
+plain inventory stays unchanged. These observations do not provide viewer
+handles or change guarded actions. The public lifecycle contract continues to
+expose `create` and `rename` for CLI consumers.
 
 For development without installing the console script:
 

@@ -81,6 +81,53 @@
       "propertyNames": {"$ref": "#/$defs/userOption"},
       "additionalProperties": {"anyOf": [{"$ref": "#/$defs/lifecycleText"}, {"type": "null"}]}
     },
+    "viewerEndpoint": {
+      "type": "object",
+      "required": ["hostId", "observedAt"],
+      "properties": {
+        "hostId": {"$ref": "#/$defs/identifier"},
+        "observedAt": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "localViewer": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {"type": "string", "enum": ["open", "none", "unknown"]},
+        "confidence": {"type": "string", "enum": ["confirmed", "matched"]},
+        "reason": {
+          "type": "string",
+          "enum": [
+            "unsupported_desktop",
+            "compositor_unavailable",
+            "process_unavailable",
+            "ambiguous_match",
+            "conflicting_metadata",
+            "pending_registration",
+            "attachment_unverified",
+            "inventory_incomplete"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["confidence"],
+          "properties": {"state": {"const": "open"}},
+          "not": {"required": ["reason"]}
+        },
+        {
+          "properties": {"state": {"const": "none"}},
+          "allOf": [
+            {"not": {"required": ["confidence"]}},
+            {"not": {"required": ["reason"]}}
+          ]
+        },
+        {
+          "properties": {"state": {"const": "unknown"}},
+          "not": {"required": ["confidence"]}
+        }
+      ]
+    },
     "sessionInventory": {
       "type": "object",
       "required": [
@@ -103,7 +150,8 @@
         "currentWindow": {"$ref": "#/$defs/nullableText"},
         "currentPath": {"$ref": "#/$defs/nullableText"},
         "panes": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/paneInventory"}},
-        "options": {"$ref": "#/$defs/options"}
+        "options": {"$ref": "#/$defs/options"},
+        "localViewer": {"$ref": "#/$defs/localViewer"}
       }
     },
     "sessionLifecycle": {

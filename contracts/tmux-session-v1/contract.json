@@ -12,7 +12,14 @@
       "errorSchema": "schemas/error.schema.json",
       "successExit": 0,
       "errorExit": "nonzero",
-      "stdoutBytes": 1048576
+      "stdoutBytes": 1048576,
+      "enrichmentOptions": {
+        "--with-viewers": {
+          "endpointField": "viewerEndpoint",
+          "sessionField": "localViewer",
+          "scanOwner": "caller"
+        }
+      }
     },
     "open": {
       "argv": ["open", "--json"],
@@ -86,7 +93,21 @@
     "maxErrorMessageCodePoints": 4096,
     "maxTimestampValue": 9223372036854775807,
     "inventoryTimestampUnit": "unix-milliseconds",
-    "sessionTimestampUnit": "unix-seconds"
+    "sessionTimestampUnit": "unix-seconds",
+    "maxViewerProcessesPerScan": 4096,
+    "viewerNiriScanTimeoutMilliseconds": 1000,
+    "viewerProcessScanTimeoutMilliseconds": 2000,
+    "viewerConfidenceValues": ["confirmed", "matched"],
+    "viewerUnknownReasons": [
+      "unsupported_desktop",
+      "compositor_unavailable",
+      "process_unavailable",
+      "ambiguous_match",
+      "conflicting_metadata",
+      "pending_registration",
+      "attachment_unverified",
+      "inventory_incomplete"
+    ]
   },
   "wire": {
     "encoding": "UTF-8",

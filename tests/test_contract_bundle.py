@@ -182,6 +182,10 @@ def _assert_inventory_semantics(value: object) -> None:
     if not hosts or len(hosts) > 128:
         raise AssertionError("too many hosts")
     identities: set[str] = set()
+    has_viewer_endpoint = "viewerEndpoint" in value
+    viewer_endpoint = value.get("viewerEndpoint")
+    if has_viewer_endpoint and not isinstance(viewer_endpoint, dict):
+        raise TypeError("viewer endpoint is not an object")
     for host in hosts:
         if not isinstance(host, dict):
             raise TypeError("host row is not an object")
@@ -196,6 +200,8 @@ def _assert_inventory_semantics(value: object) -> None:
         for session in sessions:
             if not isinstance(session, dict) or session.get("hostId") != host_id:
                 raise AssertionError("session identity does not match host")
+            if has_viewer_endpoint != ("localViewer" in session):
+                raise AssertionError("viewer endpoint and per-session observations must be paired")
             panes = session.get("panes", [])
             if not isinstance(panes, list):
                 raise TypeError("invalid panes")
@@ -209,6 +215,14 @@ def _assert_inventory_semantics(value: object) -> None:
             raise AssertionError("successful host row carries an error")
         if status != "ok" and (sessions or not isinstance(host.get("error"), dict)):
             raise AssertionError("failed host row is not partial data")
+    if has_viewer_endpoint:
+        assert isinstance(viewer_endpoint, dict)
+        if (
+            not isinstance(viewer_endpoint.get("hostId"), str)
+            or not isinstance(viewer_endpoint.get("observedAt"), int)
+            or isinstance(viewer_endpoint.get("observedAt"), bool)
+        ):
+            raise AssertionError("viewer endpoint does not identify its observation time")
 
 
 _SESSION_FIELDS = {
@@ -634,6 +648,48 @@ class WireAndProducerTests(unittest.TestCase):
         LocalSchemaValidator(SCHEMAS).validate(
             decode_document(raw, limit=1 << 20), "inventory.schema.json"
         )
+
+    def test_inventory_viewer_option_is_additive_and_preserves_owner_facts(self) -> None:
+        enriched_fixture = json.loads(
+            (FIXTURES / "valid/inventory-with-viewers.json").read_text(encoding="utf-8")
+        )
+        calls: list[bool] = []
+
+        class Inventory:
+            def inventory(self, **kwargs: object) -> dict[str, object]:
+                include_viewers = kwargs["with_viewers"] is True
+                calls.append(include_viewers)
+                result = json.loads(json.dumps(enriched_fixture))
+                if not include_viewers:
+                    result.pop("viewerEndpoint")
+                    for host in result["hosts"]:
+                        for session in host["sessions"]:
+                            session.pop("localViewer")
+                return result
+
+        service = Inventory()
+        status, plain_raw = self._bytes_main(["inventory", "--json"], service)
+        self.assertEqual(status, 0)
+        plain = decode_document(plain_raw, limit=1 << 20)
+        self.assertNotIn("viewerEndpoint", plain)
+        self.assertTrue(
+            all(
+                "localViewer" not in session
+                for host in plain["hosts"]
+                for session in host["sessions"]
+            )
+        )
+        status, enriched_raw = self._bytes_main(["inventory", "--json", "--with-viewers"], service)
+        self.assertEqual(status, 0)
+        enriched = decode_document(enriched_raw, limit=1 << 20)
+        self.assertEqual(enriched["viewerEndpoint"], enriched_fixture["viewerEndpoint"])
+        owner_facts = json.loads(json.dumps(enriched))
+        owner_facts.pop("viewerEndpoint")
+        for host in owner_facts["hosts"]:
+            for session in host["sessions"]:
+                session.pop("localViewer")
+        self.assertEqual(owner_facts, plain)
+        self.assertEqual(calls, [False, True])
 
     def test_every_lifecycle_success_schema_is_emitted_and_errors_match_exit(self) -> None:
         values = {

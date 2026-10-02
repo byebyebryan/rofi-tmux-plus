@@ -157,6 +157,10 @@ class RemoteCache:
         self.directory = cache_directory() if directory is None else directory
         self._now_millis = now_millis
 
+    def now_millis(self) -> int:
+        """Return this cache's clock for timestamps and related cooldowns."""
+        return self._now_millis()
+
     @property
     def _state_path(self) -> Path:
         return self.directory / "remote-inventory-v1.json"

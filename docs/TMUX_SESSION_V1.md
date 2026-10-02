@@ -1,11 +1,12 @@
 # Tmux Session Contract v1
 
 Status: local and Host Mesh-backed remote live inventory and lifecycle
-operations, verified Kitty viewer inspection/reuse/close, the private retained
-remote cache and refresh lifecycle, and the complete Rofi browse/open/create/
-rename/kill UI are implemented. P9 producer contracts and their canonical
-bundle are published in this repository; managed suite deployment is
-coordinated through chezmoi.
+operations, verified Kitty viewer inspection/reuse/close, endpoint-local
+viewer observation, the private retained remote cache and refresh lifecycle,
+and the complete Rofi browse/open/create/rename/kill UI are implemented. P9
+producer contracts and their canonical bundle are published in this repository;
+the additive viewer-observation release and managed suite deployment are
+coordinated separately through chezmoi.
 
 This is the process boundary between generic tmux lifecycle and consumers such
 as `rofi-agent-plus`. All commands exchange versioned JSON. Consumers do not
@@ -101,6 +102,7 @@ rofi-tmux-plus inventory --json \
   [--host HOST_ID]... \
   [--mesh-revision REVISION] \
   [--panes] \
+  [--with-viewers] \
   [--session-option @NAME]...
 ```
 
@@ -138,6 +140,40 @@ It is `null` in synthesized local-only mode. When a caller supplies
 than mixing host sets from two configurations. Agent Plus supplies both that
 revision and one repeated `--host` for every host in its provider-discovery
 set.
+
+`--with-viewers` is an additive enrichment for consumers that need to display
+whether a session has a viewer on the machine running Tmux Plus. Plain
+inventory keeps its existing shape. Enriched inventory adds:
+
+```json
+{
+  "viewerEndpoint": {"hostId": "desktop-a", "observedAt": 1722743000123},
+  "hosts": [{
+    "sessions": [{
+      "hostId": "desktop-b",
+      "serverGeneration": "tmux-v1:...",
+      "sessionId": "$7",
+      "createdAt": 1722742000,
+      "localViewer": {"state": "open", "confidence": "matched"}
+    }]
+  }]
+}
+```
+
+The endpoint is the caller's logical local host even when the selected rows
+contain only remote owners. Remote helpers report tmux inventory only. After
+all selected owner rows return, the caller makes one bounded Niri window scan
+and reuses one bounded process/metadata index across the sessions. A viewer
+failure leaves owner inventory authoritative and produces `unknown` for the
+affected observations. The scan does no per-session SSH or owner validation.
+An observation has `state` `open`, `none`, or `unknown`; `confidence` is
+`confirmed` or `matched` only for `open`. Unknown observations may include a
+typed reason from the canonical contract schema. `confirmed` requires an exact
+current local tmux client association or a valid complete launch reference
+with live attachment evidence. A unique plausible legacy title/owner match
+with process evidence is `matched`. Title alone and global attached-client
+counts never establish a local viewer. These observations contain no handles
+and do not change the guarded viewer actions.
 
 Every lifecycle operation also accepts `--mesh-revision`. Tmux Plus and Agent
 Plus supply the revision associated with the selected live or cached row. A

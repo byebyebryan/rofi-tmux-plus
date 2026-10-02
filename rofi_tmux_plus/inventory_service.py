@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor, wait
 
 from .config import Config
@@ -11,8 +11,10 @@ from .errors import ContractError, clean_message
 from .host import LocalHost, local_host
 from .lifecycle import LocalLifecycle, now_millis
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshSnapshot, MeshStaleError
+from .model import Session, SessionReference
 from .remote_inventory import RemoteInventory
 from .tmux import TmuxClient, validate_user_option
+from .viewer_service import LocalViewerObservation, ViewerTarget, observe_local_viewers
 
 _REMOTE_WORKERS = 4
 _WHOLE_DEADLINE_SECONDS = 15.0
@@ -42,6 +44,7 @@ class InventoryService:
         mesh_revision: str | None,
         panes: bool,
         option_names: Sequence[str],
+        with_viewers: bool = False,
     ) -> dict[str, object]:
         option_names = tuple(dict.fromkeys(validate_user_option(name) for name in option_names))
         operation_deadline = time.monotonic() + self._whole_deadline_seconds
@@ -58,12 +61,17 @@ class InventoryService:
                 local.inventory(host.host_id, panes=panes, option_names=option_names)
                 for host in selected
             ]
-            return {
+            response: dict[str, object] = {
                 "schemaVersion": 1,
                 "generatedAt": now_millis(),
                 "meshRevision": None,
                 "hosts": rows,
             }
+            if with_viewers:
+                self._enrich_local_viewers(
+                    response, fallback.host_id, None, deadline=operation_deadline
+                )
+            return response
         if mesh_revision is not None and mesh_revision != snapshot.revision:
             raise ContractError("stale_mesh", "the Host Mesh changed; refresh and try again")
         selected = self._select_snapshot(snapshot, requested_hosts)
@@ -73,6 +81,7 @@ class InventoryService:
             panes=panes,
             option_names=option_names,
             deadline=operation_deadline,
+            with_viewers=with_viewers,
         )
 
     @staticmethod
@@ -104,6 +113,7 @@ class InventoryService:
         panes: bool,
         option_names: Sequence[str],
         deadline: float,
+        with_viewers: bool,
     ) -> dict[str, object]:
         mesh_local = snapshot.local_host
         fallback = local_host()
@@ -132,80 +142,183 @@ class InventoryService:
                     rows[host.host_id] = self._remote_error(
                         host, "operation_failed", "remote inventory deadline exceeded"
                     )
-                return self._response(snapshot, selected, rows)
-            executor = ThreadPoolExecutor(max_workers=min(_REMOTE_WORKERS, len(remotes)))
-            futures: dict[Future[dict[str, object]], MeshHost] = {}
-            pending: set[Future[dict[str, object]]] = set()
-            deadline_expired: set[Future[dict[str, object]]] = set()
-            stale_error: MeshStaleError | None = None
+            else:
+                executor = ThreadPoolExecutor(max_workers=min(_REMOTE_WORKERS, len(remotes)))
+                futures: dict[Future[dict[str, object]], MeshHost] = {}
+                pending: set[Future[dict[str, object]]] = set()
+                deadline_expired: set[Future[dict[str, object]]] = set()
+                stale_error: MeshStaleError | None = None
 
-            def capture(future: Future[dict[str, object]]) -> None:
-                nonlocal stale_error
-                host = futures[future]
-                try:
-                    rows[host.host_id] = future.result()
-                except MeshStaleError as error:
-                    stale_error = error
-                except ContractError as error:
-                    rows[host.host_id] = self._remote_error(host, error.code, error.message)
-                except CancelledError:
-                    rows[host.host_id] = self._remote_error(
-                        host, "operation_failed", "remote inventory deadline exceeded"
-                    )
-                except Exception as error:  # noqa: BLE001 - per-host fault isolation
-                    rows[host.host_id] = self._remote_error(
-                        host, "operation_failed", clean_message(error)
-                    )
-
-            try:
-                for host in remotes:
-                    host_deadline = min(deadline, time.monotonic() + _REMOTE_HOST_DEADLINE_SECONDS)
-                    futures[
-                        executor.submit(
-                            self._remote_inventory.inventory,
-                            host,
-                            snapshot.policy,
-                            snapshot.revision,
-                            panes=panes,
-                            option_names=option_names,
-                            deadline=host_deadline,
-                        )
-                    ] = host
-                pending = set(futures)
-                while pending and stale_error is None:
-                    done, pending = wait(
-                        pending,
-                        timeout=max(0.0, deadline - time.monotonic()),
-                        return_when=FIRST_COMPLETED,
-                    )
-                    if not done:
-                        deadline_expired.update(pending)
-                        break
-                    for future in done:
-                        capture(future)
-            finally:
-                for future in pending:
-                    future.cancel()
-                # Remote workers receive the shared deadline and must finish
-                # before this command can expose any result or stale revision.
-                executor.shutdown(wait=True, cancel_futures=True)
-            for future, host in futures.items():
-                if future in deadline_expired:
-                    rows[host.host_id] = self._remote_error(
-                        host, "operation_failed", "remote inventory deadline exceeded"
-                    )
-                if future.done():
+                def capture(future: Future[dict[str, object]]) -> None:
+                    nonlocal stale_error
+                    host = futures[future]
                     try:
-                        future.result()
+                        rows[host.host_id] = future.result()
                     except MeshStaleError as error:
                         stale_error = error
-                    except (CancelledError, ContractError):
+                    except ContractError as error:
+                        rows[host.host_id] = self._remote_error(host, error.code, error.message)
+                    except CancelledError:
+                        rows[host.host_id] = self._remote_error(
+                            host, "operation_failed", "remote inventory deadline exceeded"
+                        )
+                    except Exception as error:  # noqa: BLE001 - per-host fault isolation
+                        rows[host.host_id] = self._remote_error(
+                            host, "operation_failed", clean_message(error)
+                        )
+
+                try:
+                    for host in remotes:
+                        host_deadline = min(
+                            deadline, time.monotonic() + _REMOTE_HOST_DEADLINE_SECONDS
+                        )
+                        futures[
+                            executor.submit(
+                                self._remote_inventory.inventory,
+                                host,
+                                snapshot.policy,
+                                snapshot.revision,
+                                panes=panes,
+                                option_names=option_names,
+                                deadline=host_deadline,
+                            )
+                        ] = host
+                    pending = set(futures)
+                    while pending and stale_error is None:
+                        done, pending = wait(
+                            pending,
+                            timeout=max(0.0, deadline - time.monotonic()),
+                            return_when=FIRST_COMPLETED,
+                        )
+                        if not done:
+                            deadline_expired.update(pending)
+                            break
+                        for future in done:
+                            capture(future)
+                finally:
+                    for future in pending:
+                        future.cancel()
+                    # Remote workers receive the shared deadline and must finish
+                    # before this command can expose any result or stale revision.
+                    executor.shutdown(wait=True, cancel_futures=True)
+                for future, host in futures.items():
+                    if future in deadline_expired:
+                        rows[host.host_id] = self._remote_error(
+                            host, "operation_failed", "remote inventory deadline exceeded"
+                        )
+                    if future.done():
+                        try:
+                            future.result()
+                        except MeshStaleError as error:
+                            stale_error = error
+                        except (CancelledError, ContractError):
+                            continue
+                        except Exception:  # noqa: BLE001, S112 - only stale changes the response
+                            continue
+                if stale_error is not None:
+                    raise stale_error
+        response = self._response(snapshot, selected, rows)
+        if with_viewers:
+            self._enrich_local_viewers(
+                response,
+                snapshot.local_host.host_id,
+                snapshot.policy.executable,
+                deadline=deadline,
+            )
+        return response
+
+    def _enrich_local_viewers(
+        self,
+        response: dict[str, object],
+        endpoint_host_id: str,
+        remote_executable: str | None,
+        *,
+        deadline: float,
+    ) -> None:
+        rows = response.get("hosts")
+        targets: list[ViewerTarget] = []
+        if isinstance(rows, list):
+            for host in rows:
+                if not isinstance(host, dict) or not isinstance(host.get("sessions"), list):
+                    continue
+                for raw in host["sessions"]:
+                    if not isinstance(raw, dict):
                         continue
-                    except Exception:  # noqa: BLE001, S112 - only stale changes the response
+                    try:
+                        reference = SessionReference(
+                            str(raw["hostId"]),
+                            str(raw["serverGeneration"]),
+                            str(raw["sessionId"]),
+                            int(raw["createdAt"]),
+                        )
+                    except (KeyError, TypeError, ValueError, OverflowError):
+                        raw["localViewer"] = {"state": "unknown", "reason": "inventory_incomplete"}
                         continue
-            if stale_error is not None:
-                raise stale_error
-        return self._response(snapshot, selected, rows)
+                    session = Session(
+                        reference,
+                        raw.get("name") if isinstance(raw.get("name"), str) else None,
+                        None,
+                        None,
+                        None,
+                        bool(raw.get("pending")),
+                        None,
+                        None,
+                        None,
+                        None,
+                    )
+                    native_hostname = host.get("nativeHostname")
+                    targets.append(
+                        ViewerTarget(
+                            session,
+                            host.get("local") is True,
+                            native_hostname if isinstance(native_hostname, str) else None,
+                            host.get("route") if isinstance(host.get("route"), str) else None,
+                            remote_executable or "ssh",
+                        )
+                    )
+        try:
+            batch = observe_local_viewers(
+                targets,
+                self._config,
+                local_tmux=self._local_tmux,
+                deadline=deadline,
+            )
+        except Exception:  # noqa: BLE001 - viewer failure must not replace owner inventory
+            batch = None
+        if batch is None:
+            observations: Mapping[SessionReference, LocalViewerObservation] = {
+                target.session.reference: LocalViewerObservation(
+                    "unknown", reason="inventory_incomplete"
+                )
+                for target in targets
+            }
+            observed_at = now_millis()
+        else:
+            observations = batch.observations
+            observed_at = batch.observed_at
+        for host in rows if isinstance(rows, list) else ():
+            if not isinstance(host, dict) or not isinstance(host.get("sessions"), list):
+                continue
+            for session in host["sessions"]:
+                if not isinstance(session, dict):
+                    continue
+                try:
+                    reference = SessionReference(
+                        str(session["hostId"]),
+                        str(session["serverGeneration"]),
+                        str(session["sessionId"]),
+                        int(session["createdAt"]),
+                    )
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    session["localViewer"] = {"state": "unknown", "reason": "inventory_incomplete"}
+                    continue
+                observation = observations.get(reference)
+                session["localViewer"] = (
+                    observation.as_dict()
+                    if observation is not None
+                    else {"state": "unknown", "reason": "inventory_incomplete"}
+                )
+        response["viewerEndpoint"] = {"hostId": endpoint_host_id, "observedAt": observed_at}
 
     @staticmethod
     def _response(

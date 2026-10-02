@@ -10,6 +10,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from rofi_tmux_plus.bounded_process import run_bounded
 from rofi_tmux_plus.config import Config
@@ -33,6 +34,7 @@ from rofi_tmux_plus.remote_inventory import (
     parse_remote_inventory,
 )
 from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument
+from rofi_tmux_plus.viewer_service import LocalViewerObservation, ViewerObservationBatch
 
 
 def _completed(stdout: str, stderr: str = "", code: int = 0) -> subprocess.CompletedProcess[str]:
@@ -1160,6 +1162,154 @@ class InventoryServiceTests(unittest.TestCase):
         self.assertEqual([row["hostId"] for row in result["hosts"]], ["alpha", "beta"])
         self.assertEqual(remote.calls, ["beta"])
         self.assertEqual(remote.option_names, [("@state",)])
+
+    def test_viewer_enrichment_runs_once_after_all_remote_owner_rows_return(self) -> None:
+        class TwoRemoteRows:
+            def __init__(self) -> None:
+                self.calls: list[str] = []
+
+            def inventory(
+                self, host: MeshHost, *_args: object, **_kwargs: object
+            ) -> dict[str, object]:
+                self.calls.append(host.host_id)
+                return {
+                    "hostId": host.host_id,
+                    "display": host.display,
+                    "local": False,
+                    "status": "ok",
+                    "observedAt": 1,
+                    "nativeHostname": host.host_id + ".native",
+                    "serverGeneration": "generation-" + host.host_id,
+                    "route": host.routes[0].destination,
+                    "sessions": [
+                        {
+                            "hostId": host.host_id,
+                            "serverGeneration": "generation-" + host.host_id,
+                            "sessionId": "$7",
+                            "createdAt": 10,
+                            "name": host.host_id,
+                            "activityAt": 11,
+                            "lastAttachedAt": 11,
+                            "attachedClients": 2,
+                            "pending": False,
+                            "windowCount": 1,
+                            "sessionPath": "/tmp",
+                            "currentWindow": "shell",
+                            "currentPath": "/tmp",
+                        }
+                    ],
+                }
+
+        remote = TwoRemoteRows()
+        service = InventoryService(
+            Config(),
+            mesh_adapter=_MeshProvider(self.snapshot),
+            local_tmux=_LocalTmux(),
+            remote_inventory=remote,
+        )
+
+        def one_scan(targets: object, *_args: object, **_kwargs: object) -> ViewerObservationBatch:
+            self.assertEqual(remote.calls, ["beta", "gamma"])
+            rows = list(targets)  # type: ignore[arg-type]
+            self.assertEqual(len(rows), 2)
+            observations = {
+                target.session.reference: LocalViewerObservation("open", "matched")
+                for target in rows
+            }
+            return ViewerObservationBatch(12, observations)
+
+        with patch(
+            "rofi_tmux_plus.inventory_service.observe_local_viewers", side_effect=one_scan
+        ) as scan:
+            enriched = service.inventory(
+                requested_hosts=["gamma", "beta"],
+                mesh_revision=self.snapshot.revision,
+                panes=False,
+                option_names=[],
+                with_viewers=True,
+            )
+        scan.assert_called_once()
+        self.assertEqual(enriched["viewerEndpoint"], {"hostId": "alpha", "observedAt": 12})
+        self.assertEqual([row["hostId"] for row in enriched["hosts"]], ["beta", "gamma"])
+        self.assertTrue(
+            all(
+                row["localViewer"] == {"state": "open", "confidence": "matched"}
+                for host in enriched["hosts"]
+                for row in host["sessions"]
+            )
+        )
+        self.assertEqual(remote.calls, ["beta", "gamma"])
+
+    def test_viewer_failure_keeps_owner_inventory_and_plain_inventory_unchanged(self) -> None:
+        class RemoteSessionRow:
+            def inventory(
+                self, host: MeshHost, *_args: object, **_kwargs: object
+            ) -> dict[str, object]:
+                return {
+                    "hostId": host.host_id,
+                    "display": host.display,
+                    "local": False,
+                    "status": "ok",
+                    "observedAt": 1,
+                    "nativeHostname": "beta.native",
+                    "serverGeneration": "generation-beta",
+                    "route": host.routes[0].destination,
+                    "sessions": [
+                        {
+                            "hostId": host.host_id,
+                            "serverGeneration": "generation-beta",
+                            "sessionId": "$7",
+                            "createdAt": 10,
+                            "name": "fixture",
+                            "activityAt": 11,
+                            "lastAttachedAt": 11,
+                            "attachedClients": 2,
+                            "pending": False,
+                            "windowCount": 1,
+                            "sessionPath": "/tmp",
+                            "currentWindow": "shell",
+                            "currentPath": "/tmp",
+                        }
+                    ],
+                }
+
+        service = InventoryService(
+            Config(),
+            mesh_adapter=_MeshProvider(self.snapshot),
+            local_tmux=_LocalTmux(),
+            remote_inventory=RemoteSessionRow(),
+        )
+        plain = service.inventory(
+            requested_hosts=["beta"],
+            mesh_revision=self.revision,
+            panes=False,
+            option_names=[],
+        )
+        self.assertNotIn("viewerEndpoint", plain)
+        with patch(
+            "rofi_tmux_plus.inventory_service.observe_local_viewers",
+            side_effect=OSError("fixture Niri read failure"),
+        ):
+            enriched = service.inventory(
+                requested_hosts=["beta"],
+                mesh_revision=self.revision,
+                panes=False,
+                option_names=[],
+                with_viewers=True,
+            )
+        plain_owner_facts = json.loads(json.dumps(plain["hosts"]))
+        enriched_owner_facts = json.loads(json.dumps(enriched["hosts"]))
+        for hosts in (plain_owner_facts, enriched_owner_facts):
+            for host in hosts:
+                for session in host["sessions"]:
+                    session.pop("localViewer", None)
+        self.assertEqual(enriched_owner_facts, plain_owner_facts)
+        self.assertEqual(enriched["viewerEndpoint"]["hostId"], self.snapshot.local_host.host_id)
+        self.assertNotEqual(enriched["hosts"][0]["status"], "error")
+        self.assertEqual(
+            enriched["hosts"][0]["sessions"][0]["localViewer"],
+            {"state": "unknown", "reason": "inventory_incomplete"},
+        )
 
     def test_missing_provider_uses_only_local_inventory(self) -> None:
         remote = _RemoteRows()

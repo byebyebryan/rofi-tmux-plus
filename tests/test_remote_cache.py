@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 from rofi_tmux_plus import cli
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.host import LocalHost
 from rofi_tmux_plus.mesh_adapter import (
     MeshHost,
     MeshPolicy,
@@ -22,6 +23,7 @@ from rofi_tmux_plus.mesh_adapter import (
     MeshSnapshot,
     MeshStaleError,
 )
+from rofi_tmux_plus.model import Session, SessionReference
 from rofi_tmux_plus.picker_model import (
     _REFRESH_HARD_DEADLINE_SECONDS,
     _REFRESH_STALL_SECONDS,
@@ -30,6 +32,7 @@ from rofi_tmux_plus.picker_model import (
     detached_refresh_command,
 )
 from rofi_tmux_plus.remote_cache import RemoteCache
+from rofi_tmux_plus.viewer_cache import ViewerObservationCache
 
 
 def _snapshot(
@@ -111,12 +114,14 @@ class _Refresher:
     def __init__(self) -> None:
         self.requests: list[str] = []
 
-    def request(self, snapshot: MeshSnapshot) -> bool:
-        self.requests.append(snapshot.revision)
+    def request(self, snapshot: MeshSnapshot | None) -> bool:
+        self.requests.append(snapshot.revision if snapshot is not None else "local-only")
         return True
 
     @staticmethod
-    def status(mesh_revision: str) -> dict[str, object]:
+    def status(mesh_revision: str) -> dict[str, object] | None:
+        if mesh_revision == "local-only":
+            return None
         return {"state": "complete", "meshRevision": mesh_revision, "updatedAt": 1}
 
 
@@ -299,7 +304,9 @@ class PickerModelTests(unittest.TestCase):
             refresher=self.refresher,  # type: ignore[arg-type]
             now=lambda: self.now,
         ).load(start_refresh=False)
-        self.assertFalse(model.refresh_needed)
+        self.assertFalse(model.payload["remoteRefreshNeeded"])
+        self.assertTrue(model.payload["viewerRefreshNeeded"])
+        self.assertTrue(model.refresh_needed)
         self.assertEqual([row["hostId"] for row in model.payload["hosts"]], ["alpha", "beta"])
         self.now += 30_000
         expired = PickerModelService(
@@ -311,6 +318,68 @@ class PickerModelTests(unittest.TestCase):
             now=lambda: self.now,
         ).load(start_refresh=False)
         self.assertTrue(expired.refresh_needed)
+
+    def test_fresh_remote_owner_cache_still_requests_a_stale_viewer_observation(self) -> None:
+        self.cache.merge(self.snapshot, [_row("beta")])
+        model = PickerModelService(
+            Config(refresh_seconds=30),
+            cache=self.cache,
+            mesh_adapter=_Adapter(self.snapshot),
+            local_tmux=self.local,  # type: ignore[arg-type]
+            refresher=self.refresher,  # type: ignore[arg-type]
+            now=lambda: self.now,
+        ).load()
+        self.assertFalse(model.payload["remoteRefreshNeeded"])
+        self.assertTrue(model.payload["viewerRefreshNeeded"])
+        self.assertTrue(model.payload["remoteRefreshRequested"])
+        self.assertEqual(self.refresher.requests, [self.snapshot.revision])
+
+    def test_local_only_model_requests_viewer_refresh_for_local_sessions(self) -> None:
+        host_id = "local-fixture"
+
+        class LocalSessionTmux:
+            def inventory(
+                self, requested_host: str, *, panes: bool, option_names: tuple[str, ...]
+            ) -> tuple[str, list[Session]]:
+                return "tmux-v1:local", [
+                    Session(
+                        SessionReference(requested_host, "tmux-v1:local", "$4", 20),
+                        "fixture",
+                        21,
+                        21,
+                        0,
+                        False,
+                        1,
+                        "/tmp",
+                        "shell",
+                        "/tmp",
+                    )
+                ]
+
+        viewer_cache = ViewerObservationCache(
+            self.cache.directory,
+            now_millis=lambda: self.now,
+            context_id=lambda: "local-desktop",
+        )
+        with patch(
+            "rofi_tmux_plus.picker_model.local_host",
+            return_value=LocalHost(
+                host_id, "Local Fixture", "local-fixture.example", frozenset({host_id})
+            ),
+        ):
+            model = PickerModelService(
+                Config(),
+                cache=self.cache,
+                viewer_cache=viewer_cache,
+                mesh_adapter=_Adapter(None),
+                local_tmux=LocalSessionTmux(),  # type: ignore[arg-type]
+                refresher=self.refresher,  # type: ignore[arg-type]
+                now=lambda: self.now,
+            ).load()
+        self.assertTrue(model.payload["viewerRefreshNeeded"])
+        self.assertTrue(model.payload["remoteRefreshRequested"])
+        self.assertEqual(self.refresher.requests, ["local-only"])
+        self.assertEqual(model.payload["hosts"][0]["hostId"], host_id)
 
     def test_local_only_model_never_surfaces_a_stale_remote_marker(self) -> None:
         self.cache.write_marker("failed", self.snapshot.revision, message="old mesh failure")
@@ -374,7 +443,7 @@ class PickerModelTests(unittest.TestCase):
         self.assertTrue(refresh.request(self.snapshot))
         self.assertEqual(len(commands), 1)
         self.assertIn(self.snapshot.revision, commands[0])
-        self.assertIsNone(refresh.status(self.snapshot.revision))
+        self.assertEqual(refresh.status(self.snapshot.revision)["state"], "running")
 
     def test_detached_command_resolves_external_tree_and_installed_console_script(self) -> None:
         root = Path(self.temporary.name) / "external-tree"
@@ -479,31 +548,52 @@ class RemoteRefreshTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.now = 1_000_000
         self.cache = RemoteCache(Path(self.temporary.name) / "cache", now_millis=lambda: self.now)
-        self.snapshot = _snapshot()
+        self.snapshot = _snapshot(revision="sha256:" + "a" * 64)
         self.adapter = _Adapter(self.snapshot)
+        self.viewer_cache = ViewerObservationCache(
+            self.cache.directory,
+            now_millis=lambda: self.now,
+            context_id=lambda: "viewer-desktop-test",
+        )
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def test_revision_pinned_success_merges_remote_only_and_leaves_no_post_return_work(
-        self,
-    ) -> None:
-        response = {
+    def _response(self, *, beta_status: str = "ok") -> dict[str, object]:
+        alpha = _row("alpha")
+        alpha["local"] = True
+        beta = _row("beta", status=beta_status)
+        for owner_row in (alpha, beta):
+            for session in owner_row["sessions"]:
+                session["localViewer"] = {"state": "none"}
+        return {
             "schemaVersion": 1,
             "generatedAt": self.now,
             "meshRevision": self.snapshot.revision,
-            "hosts": [_row("beta")],
+            "viewerEndpoint": {"hostId": "alpha", "observedAt": self.now},
+            "hosts": [alpha, beta],
         }
+
+    def test_revision_pinned_success_merges_remote_only_and_leaves_no_post_return_work(
+        self,
+    ) -> None:
+        response = self._response()
         inventory = _Inventory(response)
         refresh = RemoteRefresh(
             Config(),
             self.cache,
+            viewer_cache=self.viewer_cache,
             mesh_adapter=self.adapter,
             inventory_factory=lambda *_args, **_kwargs: inventory,  # type: ignore[arg-type]
         )
         self.assertTrue(refresh.run(self.snapshot.revision))
-        self.assertEqual(inventory.calls[0]["requested_hosts"], ["beta"])
+        self.assertEqual(inventory.calls[0]["requested_hosts"], ["alpha", "beta"])
+        self.assertTrue(inventory.calls[0]["with_viewers"])
         self.assertEqual(refresh.status(self.snapshot.revision)["state"], "complete")
+        cached = self.viewer_cache._read(self.snapshot.revision, "viewer-desktop-test")
+        self.assertIsNotNone(cached)
+        assert cached is not None
+        self.assertEqual(cached["viewerEndpoint"], {"hostId": "alpha", "observedAt": self.now})
         state = self.cache.load(self.snapshot)
         assert state is not None
         before = json.dumps([*state.hosts], sort_keys=True)
@@ -597,12 +687,7 @@ class RemoteRefreshTests(unittest.TestCase):
         self.assertEqual(self.cache._state_path.read_bytes(), before)
 
     def test_remote_inventory_receives_only_the_remaining_owner_deadline(self) -> None:
-        response = {
-            "schemaVersion": 1,
-            "generatedAt": self.now,
-            "meshRevision": self.snapshot.revision,
-            "hosts": [_row("beta")],
-        }
+        response = self._response()
         inventory = _Inventory(response)
         received: list[float] = []
 
@@ -613,6 +698,7 @@ class RemoteRefreshTests(unittest.TestCase):
         refresh = RemoteRefresh(
             Config(),
             self.cache,
+            viewer_cache=self.viewer_cache,
             mesh_adapter=self.adapter,
             inventory_factory=factory,  # type: ignore[arg-type]
         )
@@ -620,6 +706,73 @@ class RemoteRefreshTests(unittest.TestCase):
             self.assertTrue(refresh.run(self.snapshot.revision))
         self.assertEqual(received, [11.0])
         self.assertLess(_REFRESH_HARD_DEADLINE_SECONDS, _REFRESH_STALL_SECONDS)
+
+    def test_local_only_refresh_observes_the_caller_and_is_requested_without_mesh(self) -> None:
+        local = LocalHost("alpha", "Alpha", "alpha-native", frozenset({"alpha"}))
+        revision = None
+        response = {
+            "schemaVersion": 1,
+            "generatedAt": self.now,
+            "meshRevision": revision,
+            "viewerEndpoint": {"hostId": "alpha", "observedAt": self.now},
+            "hosts": [
+                {
+                    **_row("alpha"),
+                    "local": True,
+                    "sessions": [
+                        {
+                            **_session("alpha"),
+                            "localViewer": {"state": "open", "confidence": "confirmed"},
+                        }
+                    ],
+                }
+            ],
+        }
+        inventory = _Inventory(response)
+        adapter = _Adapter(None)
+        commands: list[list[str]] = []
+        refresh = RemoteRefresh(
+            Config(),
+            self.cache,
+            viewer_cache=self.viewer_cache,
+            mesh_adapter=adapter,
+            inventory_factory=lambda *_args, **_kwargs: inventory,  # type: ignore[arg-type]
+            process_starter=lambda argv: commands.append(list(argv)),
+        )
+        with patch("rofi_tmux_plus.picker_model.local_host", return_value=local):
+            self.assertTrue(refresh.request(None))
+            self.assertIn("local-only", commands[0])
+            self.assertTrue(refresh.run("local-only"))
+        self.assertEqual(inventory.calls[0]["requested_hosts"], [])
+        self.assertIsNone(inventory.calls[0]["mesh_revision"])
+        self.assertTrue(inventory.calls[0]["with_viewers"])
+        cached = self.viewer_cache._read(None, "viewer-desktop-test")
+        self.assertIsNotNone(cached)
+        assert cached is not None
+        self.assertEqual(
+            cached["sessions"][0]["localViewer"], {"state": "open", "confidence": "confirmed"}
+        )
+
+    def test_refresh_spawn_cooldown_prevents_repeated_helper_storm_after_failure(self) -> None:
+        commands: list[list[str]] = []
+        failed = _Inventory(ContractError("operation_failed", "fixture unavailable"))
+        refresh = RemoteRefresh(
+            Config(),
+            self.cache,
+            viewer_cache=self.viewer_cache,
+            mesh_adapter=self.adapter,
+            inventory_factory=lambda *_args, **_kwargs: failed,  # type: ignore[arg-type]
+            process_starter=lambda argv: commands.append(list(argv)),
+        )
+        self.assertTrue(refresh.request(self.snapshot))
+        self.assertTrue(refresh.run(self.snapshot.revision))
+        self.assertEqual(refresh.status(self.snapshot.revision)["state"], "failed")
+        for _ in range(5):
+            self.assertFalse(refresh.request(self.snapshot))
+        self.assertEqual(len(commands), 1)
+        self.now += 10_000
+        self.assertTrue(refresh.request(self.snapshot))
+        self.assertEqual(len(commands), 2)
 
 
 class PrivateCliTests(unittest.TestCase):

@@ -11,7 +11,7 @@ The executable is resolved as `rofi-tmux-plus` through `PATH`. Public commands
 use distinct argv elements:
 
 ```text
-rofi-tmux-plus inventory --json [options]
+rofi-tmux-plus inventory --json [--with-viewers] [options]
 rofi-tmux-plus open --json --host HOST --server-generation GENERATION \
   --session-id '$6' --created-at SECONDS [options]
 rofi-tmux-plus viewers --json --host HOST --server-generation GENERATION --session-id '$6' --created-at SECONDS [options]
@@ -60,6 +60,28 @@ and are part of this contract:
   panes in aggregate per host. Inventory strings are at most 16,384 Unicode
   code points. Lifecycle response strings are at most 4,096 code points unless
   a schema gives a smaller bound. Aggregate byte limits remain authoritative.
+- Plain inventory omits `viewerEndpoint` and `localViewer`. With
+  `--with-viewers`, the caller adds `viewerEndpoint: {hostId, observedAt}` and
+  one `localViewer` observation to each returned session. `hostId` names the
+  logical local endpoint and `observedAt` is Unix milliseconds. Remote helpers
+  return owner tmux facts only; the caller scans its own desktop after all
+  selected host rows return. A viewer scan failure keeps the authoritative
+  inventory and marks each affected observation `unknown`.
+- `localViewer.state` is `open`, `none`, or `unknown`. An `open` state has
+  `confidence` `confirmed` or `matched`; other states omit confidence. Unknown
+  observations may include one of `unsupported_desktop`,
+  `compositor_unavailable`, `process_unavailable`, `ambiguous_match`,
+  `conflicting_metadata`, `pending_registration`, `attachment_unverified`, or
+  `inventory_incomplete`. Presence observations contain no viewer handle and
+  do not authorize focus or close operations. Confirmed presence requires a
+  current local attachment join or a complete launch reference plus live
+  attachment evidence. Matched presence is a unique plausible legacy
+  title/owner match supported by live process evidence. Title alone never
+  proves presence, and remote tmux attached-client counts do not imply a local
+  viewer. A missing observation in older snapshots means unknown.
+- The supported observation scan reads Niri once, indexes at most 4,096
+  processes within a 2-second process budget, and uses one batched local tmux
+  client inventory. It makes no per-session SSH or owner validation request.
 - Session identity is the tuple `hostId`, `serverGeneration`, `sessionId`, and
   `createdAt`; names and paths are descriptive values. Session IDs use tmux's
   `$digits` form and pane IDs use `%digits`. `serverGeneration` is opaque and

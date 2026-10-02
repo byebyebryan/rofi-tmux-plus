@@ -101,6 +101,7 @@ def build_parser(*, machine: bool = False) -> JsonArgumentParser:
     inventory.add_argument("--host", action="append", default=[])
     inventory.add_argument("--mesh-revision")
     inventory.add_argument("--panes", action="store_true")
+    inventory.add_argument("--with-viewers", action="store_true")
     inventory.add_argument("--session-option", action="append", default=[])
 
     open_parser = commands.add_parser("open", add_help=True)
@@ -216,6 +217,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
             mesh_revision=args.mesh_revision,
             panes=args.panes,
             option_names=options,
+            with_viewers=args.with_viewers,
         )
     lifecycle = _lifecycle()
     if args.host is None:

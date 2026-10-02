@@ -244,17 +244,25 @@ class RofiRenderTests(unittest.TestCase):
         self.assertEqual(["new", "old", "stale"], names)
         self.assertIn("unavailable", row_options(rows[-1])["display"])
 
-    def test_statuses_are_open_here_attached_detached_and_unavailable(self) -> None:
+    def test_viewer_status_keeps_global_attachment_and_expires_positive_observations(self) -> None:
         local_open = session("alpha", "$0", "open")
+        local_open["localViewer"] = {"state": "open", "confidence": "confirmed"}
         local_attached = session("alpha", "$1", "attached", attached=1)
+        local_attached["localViewer"] = {
+            "state": "unknown",
+            "reason": "process_unavailable",
+        }
         remote_detached = session("beta", "$2", "detached", attached=0)
+        remote_detached["localViewer"] = {"state": "none"}
         remote_stale = session("beta", "$3", "stale", attached=None)
+        remote_stale["localViewer"] = {"state": "none"}
         value = payload(
             hosts=[
                 host("alpha", "Alpha", local=True, sessions=[local_open, local_attached]),
                 host("beta", "Beta", local=False, sessions=[remote_detached, remote_stale]),
             ]
         )
+        value["viewerEndpoint"] = {"hostId": "alpha", "observedAt": 199_000}
         result = rofi.render_snapshot(
             value,
             now=200,
@@ -269,10 +277,10 @@ class RofiRenderTests(unittest.TestCase):
         }
         self.assertEqual(
             {
-                "open": "open here",
-                "attached": "attached",
-                "detached": "detached",
-                "stale": "detached",
+                "open": "open here · detached",
+                "attached": "local viewer unknown · attached",
+                "detached": "no viewer here · detached",
+                "stale": "no viewer here · attachment unknown",
             },
             statuses,
         )
@@ -282,13 +290,23 @@ class RofiRenderTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertNotIn("active", options_by_name[name])
                 self.assertNotIn("urgent", options_by_name[name])
-        self.assertFalse(
-            rofi._is_open_here(
-                local_open,
-                host("alpha", "Alpha", local=True),
-                ("open:0 @ another-host",),
+        matched = session("beta", "$4", "matched", attached=2)
+        matched["localViewer"] = {"state": "open", "confidence": "matched"}
+        unknown = session("beta", "$5", "unknown", attached=0)
+        unknown["localViewer"] = {"state": "unknown", "reason": "ambiguous_match"}
+        _, qualified_rows = rendered_records(
+            rofi.render_snapshot(
+                {
+                    **payload(
+                        hosts=[host("beta", "Beta", local=False, sessions=[matched, unknown])]
+                    ),
+                    "viewerEndpoint": {"hostId": "alpha", "observedAt": 199_000},
+                },
+                now=200,
             )
         )
+        self.assertIn("open here? · attached", row_options(qualified_rows[0])["display"])
+        self.assertIn("local viewer unknown · detached", row_options(qualified_rows[1])["display"])
 
         stale_host = host(
             "beta",
@@ -326,9 +344,25 @@ class RofiRenderTests(unittest.TestCase):
             )
         )
         recovered_options = row_options(recovered_rows[0])
-        self.assertEqual("detached", json.loads(recovered_options["info"])["status"])
+        self.assertEqual(
+            "local viewer unknown · attachment unknown",
+            json.loads(recovered_options["info"])["status"],
+        )
         self.assertNotIn("active", recovered_options)
         self.assertNotIn("urgent", recovered_options)
+
+    def test_expired_positive_observation_is_unknown_and_rendering_never_scans(self) -> None:
+        item = session("alpha", "$1", "expired", attached=1)
+        item["localViewer"] = {"state": "open", "confidence": "confirmed"}
+        value = {
+            **payload(hosts=[host("alpha", "Alpha", local=True, sessions=[item])]),
+            "viewerEndpoint": {"hostId": "alpha", "observedAt": 189_000},
+        }
+        with patch("rofi_tmux_plus.viewer_service._niri_windows") as scan:
+            rendered = rofi.render_snapshot(value, now=200)
+        options = row_options(rendered_records(rendered)[1][0])
+        self.assertEqual("local viewer unknown · attached", json.loads(options["info"])["status"])
+        scan.assert_not_called()
 
     def test_flat_scopes_use_complete_catalog_order_and_leaf_rows(self) -> None:
         alpha = host("alpha", "Alpha", local=True, sessions=[session("alpha", "$0", "one")])
@@ -459,7 +493,7 @@ class RofiProtocolTests(unittest.TestCase):
         lifecycle: FakeLifecycle | None = None,
     ) -> str:
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             result = rofi.run_rofi(
                 environ,
                 model_service=model or self.model,
@@ -735,7 +769,7 @@ class RofiMutationTests(unittest.TestCase):
         lifecycle: FakeLifecycle | None = None,
     ) -> str:
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             self.assertEqual(
                 0,
                 rofi.run_rofi(
@@ -1129,10 +1163,7 @@ class RofiRefreshTests(unittest.TestCase):
     def test_initial_render_carries_cached_snapshot_for_arrow_callbacks(self) -> None:
         model = FakeModel(self.fresh)
         output = io.StringIO()
-        with (
-            patch("rofi_tmux_plus.rofi._niri_titles", return_value=()),
-            redirect_stdout(output),
-        ):
+        with redirect_stdout(output):
             rofi.run_rofi(
                 {"ROFI_RETV": "0"},
                 model_service=model,
@@ -1153,7 +1184,6 @@ class RofiRefreshTests(unittest.TestCase):
         model = FakeModel(self.old)
         output = io.StringIO()
         with (
-            patch("rofi_tmux_plus.rofi._niri_titles", return_value=()),
             patch("rofi_tmux_plus.rofi.time.time", return_value=100),
             redirect_stdout(output),
         ):
@@ -1178,7 +1208,6 @@ class RofiRefreshTests(unittest.TestCase):
         model.values = [self.fresh]
         output = io.StringIO()
         with (
-            patch("rofi_tmux_plus.rofi._niri_titles", return_value=()),
             patch("rofi_tmux_plus.rofi.time.time", return_value=101),
             redirect_stdout(output),
         ):
@@ -1194,7 +1223,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertIn("keep-filter", completed)
         self.assertNotIn("Refreshing in background", completed)
         self.assertIn("delay: 0", completed)
-        self.assertEqual([True, False], model.calls)
+        self.assertEqual([True, True], model.calls)
 
     def test_refresh_preserves_kill_mode_and_highlighted_identity_through_reorder(self) -> None:
         before = payload(
@@ -1228,7 +1257,7 @@ class RofiRefreshTests(unittest.TestCase):
             )
         )
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             rofi.run_rofi(
                 {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_19), "ROFI_DATA": state},
                 model_service=FakeModel(after),
@@ -1265,7 +1294,7 @@ class RofiRefreshTests(unittest.TestCase):
             )
         )
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             rofi.run_rofi(
                 {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_2), "ROFI_DATA": state},
                 presentation_cache=self.presentation_cache,
@@ -1277,7 +1306,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertNotIn("highlighted", scoped_state)
 
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             rofi.run_rofi(
                 {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_19), "ROFI_DATA": scoped_data},
                 model_service=FakeModel(snapshot),
@@ -1289,7 +1318,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertIn("keep-selection", refreshed)
         self.assertNotIn("\0new-selection\x1f", refreshed)
 
-    def test_failure_stall_and_stale_stop_polling_and_show_self_clearing_notice_without_retry(
+    def test_failure_stall_and_stale_show_notice_and_allow_cooldown_limited_retry(
         self,
     ) -> None:
         for marker_state in ("failed", "stalled", "stale"):
@@ -1311,7 +1340,6 @@ class RofiRefreshTests(unittest.TestCase):
                 model = FakeModel(failed)
                 output = io.StringIO()
                 with (
-                    patch("rofi_tmux_plus.rofi._niri_titles", return_value=()),
                     patch("rofi_tmux_plus.rofi.time.time", return_value=100),
                     redirect_stdout(output),
                 ):
@@ -1329,7 +1357,7 @@ class RofiRefreshTests(unittest.TestCase):
                 self.assertIn("worker stopped", rendered)
                 self.assertNotIn('"refreshDeadline":', rendered)
                 self.assertIn('"errorDeadline":', rendered)
-                self.assertEqual([False], model.calls)
+                self.assertEqual([True], model.calls)
 
     def test_alt_r_is_bounded_foreground_refresh_without_background_restart(self) -> None:
         model = FakeModel(self.fresh)
@@ -1342,7 +1370,7 @@ class RofiRefreshTests(unittest.TestCase):
             )
         )
         output = io.StringIO()
-        with patch("rofi_tmux_plus.rofi._niri_titles", return_value=()), redirect_stdout(output):
+        with redirect_stdout(output):
             rofi.run_rofi(
                 {"ROFI_RETV": str(rofi.ROFI_RETV_CUSTOM_1), "ROFI_DATA": state},
                 model_service=model,

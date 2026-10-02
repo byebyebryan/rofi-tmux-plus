@@ -18,6 +18,7 @@ from .lifecycle import LocalLifecycle, now_millis
 from .mesh_adapter import HostMeshAdapter, MeshSnapshot, MeshStaleError
 from .remote_cache import CacheState, RemoteCache
 from .tmux import TmuxClient
+from .viewer_cache import LOCAL_ONLY_REVISION, ViewerObservationCache
 
 # InventoryService gives the detached owner a 15-second whole-operation
 # deadline.  A marker only becomes stalled after that deadline plus a small
@@ -62,12 +63,14 @@ class RemoteRefresh:
         config: Config,
         cache: RemoteCache,
         *,
+        viewer_cache: ViewerObservationCache | None = None,
         mesh_adapter: HostMeshAdapter | None = None,
         inventory_factory: Callable[..., InventoryService] = InventoryService,
         process_starter: Callable[[Sequence[str]], None] | None = None,
     ) -> None:
         self._config = config
         self._cache = cache
+        self._viewer_cache = viewer_cache or ViewerObservationCache(cache.directory)
         self._adapter = mesh_adapter or HostMeshAdapter()
         self._inventory_factory = inventory_factory
         self._process_starter = process_starter or self._spawn
@@ -83,28 +86,45 @@ class RemoteRefresh:
             close_fds=True,
         )
 
-    def request(self, snapshot: MeshSnapshot) -> bool:
+    def request(self, snapshot: MeshSnapshot | None, *, force: bool = False) -> bool:
         """Ask a short-lived child to refresh; the child lock elects the owner."""
+        revision = snapshot.revision if snapshot is not None else LOCAL_ONLY_REVISION
         try:
             marker = self._cache.marker(
-                mesh_revision=snapshot.revision,
+                mesh_revision=revision,
                 stall_after_seconds=_REFRESH_STALL_SECONDS,
             )
             if marker is not None and marker["state"] == "running":
                 return False
-            self._process_starter(detached_refresh_command(snapshot.revision))
+            if (
+                not force
+                and marker is not None
+                and marker.get("state") in {"complete", "failed", "stale", "stalled"}
+            ):
+                updated_at = marker.get("updatedAt")
+                if (
+                    isinstance(updated_at, int)
+                    and not isinstance(updated_at, bool)
+                    and 0 <= self._cache.now_millis() - updated_at < 10_000
+                ):
+                    return False
+            # Mark the finite owner before spawning so repeated timeout or
+            # cursor callbacks cannot launch duplicate helpers in the gap
+            # before the child acquires its lock.
+            self._cache.write_marker("running", revision)
+            self._process_starter(detached_refresh_command(revision))
         except Exception as error:  # noqa: BLE001 - private detached-process boundary
             # A failed spawn must not make the synchronous local picker model
             # fail.  Persist the bounded state when possible for the future UI.
             try:
-                self._cache.write_marker("failed", snapshot.revision, message=clean_message(error))
+                self._cache.write_marker("failed", revision, message=clean_message(error))
             except OSError:
                 pass
             return False
         return True
 
     def run(self, revision: str) -> bool:
-        """Run one revision-pinned refresh, returning false if another owns it."""
+        """Run one revision-pinned owner and viewer refresh without a resident worker."""
         with self._cache.lock(refresh=True, blocking=False) as acquired:
             if not acquired:
                 return False
@@ -112,17 +132,21 @@ class RemoteRefresh:
             deadline = time.monotonic() + _REFRESH_HARD_DEADLINE_SECONDS
             try:
                 snapshot = self._adapter.load()
-                if snapshot is None or snapshot.revision != revision:
+                local_only = revision == LOCAL_ONLY_REVISION
+                if (local_only and snapshot is not None) or (
+                    not local_only and (snapshot is None or snapshot.revision != revision)
+                ):
                     self._cache.write_marker("stale", revision, message="the Host Mesh changed")
                     return True
-                remote_ids = [host.host_id for host in snapshot.hosts if not host.local]
-                if not remote_ids:
-                    self._cache.merge(snapshot, [])
-                    self._cache.write_marker("complete", revision)
-                    return True
+                current_revision = None if local_only else revision
+                host_ids = [] if snapshot is None else [host.host_id for host in snapshot.hosts]
+                endpoint_host_id = (
+                    local_host().host_id if snapshot is None else snapshot.local_host.host_id
+                )
+                expected_context = self._viewer_cache.context_id()
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise ContractError("operation_failed", "remote refresh deadline exceeded")
+                    raise ContractError("operation_failed", "picker refresh deadline exceeded")
                 service = self._inventory_factory(
                     self._config,
                     mesh_adapter=self._adapter,
@@ -132,30 +156,73 @@ class RemoteRefresh:
                     whole_deadline_seconds=remaining,
                 )
                 response = service.inventory(
-                    requested_hosts=remote_ids,
-                    mesh_revision=revision,
+                    requested_hosts=host_ids,
+                    mesh_revision=current_revision,
                     panes=False,
                     option_names=(),
+                    with_viewers=True,
                 )
+                expected_host_ids = (
+                    [local_host().host_id]
+                    if snapshot is None
+                    else [host.host_id for host in snapshot.hosts]
+                )
+                response_hosts = response.get("hosts") if isinstance(response, dict) else None
                 if (
                     not isinstance(response, dict)
                     or response.get("schemaVersion") != 1
+                    or response.get("meshRevision") != current_revision
                     or not isinstance(response.get("generatedAt"), int)
                     or isinstance(response.get("generatedAt"), bool)
                     or response["generatedAt"] < 0
+                    or not isinstance(response.get("hosts"), list)
+                    or not isinstance(response.get("viewerEndpoint"), dict)
+                    or not isinstance(response_hosts, list)
+                    or len(response_hosts) != len(expected_host_ids)
+                    or any(not isinstance(row, dict) for row in response_hosts)
+                    or {row.get("hostId") for row in response_hosts if isinstance(row, dict)}
+                    != set(expected_host_ids)
                 ):
                     raise ContractError(
-                        "operation_failed", "remote refresh returned an invalid inventory"
+                        "operation_failed", "picker refresh returned an invalid inventory"
                     )
-                if response.get("meshRevision") != revision:
+                current_snapshot = self._adapter.load()
+                if (local_only and current_snapshot is not None) or (
+                    not local_only
+                    and (current_snapshot is None or current_snapshot.revision != revision)
+                ):
                     self._cache.write_marker("stale", revision, message="the Host Mesh changed")
                     return True
-                rows = response.get("hosts")
-                if not isinstance(rows, list):
-                    raise ContractError(
-                        "operation_failed", "remote refresh returned an invalid inventory"
-                    )
-                self._cache.merge(snapshot, rows)
+                rows = response_hosts
+                if snapshot is not None:
+                    remote_ids = {host.host_id for host in snapshot.hosts if not host.local}
+                    remote_rows = [
+                        {
+                            **row,
+                            "sessions": [
+                                {
+                                    key: value
+                                    for key, value in session.items()
+                                    if key != "localViewer"
+                                }
+                                if isinstance(session, dict)
+                                else session
+                                for session in row.get("sessions", [])
+                            ],
+                        }
+                        for row in rows
+                        if isinstance(row, dict) and row.get("hostId") in remote_ids
+                    ]
+                    self._cache.merge(snapshot, remote_rows)
+                # A desktop-context change discards only viewer observations;
+                # current owner facts remain useful in the retained-remote cache.
+                self._viewer_cache.merge_response(
+                    response,
+                    mesh_revision=current_revision,
+                    expected_context=expected_context,
+                    endpoint_host_id=endpoint_host_id,
+                    expected_host_ids=expected_host_ids,
+                )
             except MeshStaleError:
                 self._cache.write_marker("stale", revision, message="the Host Mesh changed")
             except ContractError as error:
@@ -180,6 +247,7 @@ class PickerModelService:
         config: Config,
         *,
         cache: RemoteCache | None = None,
+        viewer_cache: ViewerObservationCache | None = None,
         mesh_adapter: HostMeshAdapter | None = None,
         local_tmux: TmuxClient | None = None,
         refresher: RemoteRefresh | None = None,
@@ -188,10 +256,14 @@ class PickerModelService:
     ) -> None:
         self._config = config
         self._cache = cache or RemoteCache()
+        self._viewer_cache = viewer_cache or ViewerObservationCache(self._cache.directory)
         self._adapter = mesh_adapter or HostMeshAdapter()
         self._local_tmux = local_tmux or TmuxClient()
         self._refresher = refresher or RemoteRefresh(
-            config, self._cache, mesh_adapter=self._adapter
+            config,
+            self._cache,
+            viewer_cache=self._viewer_cache,
+            mesh_adapter=self._adapter,
         )
         self._inventory_factory = inventory_factory
         self._now = now
@@ -265,49 +337,53 @@ class PickerModelService:
             refresh_needed,
         )
 
+    def _decorate_viewers(
+        self, payload: dict[str, object], mesh_revision: str | None, endpoint_host_id: str
+    ) -> bool:
+        needed = self._viewer_cache.decorate(
+            payload,
+            mesh_revision=mesh_revision,
+            endpoint_host_id=endpoint_host_id,
+        )
+        payload["viewerRefreshNeeded"] = needed
+        return needed
+
     def load(self, *, start_refresh: bool = True) -> PickerModel:
         snapshot = self._adapter.load()
         local = self._local(snapshot, self._local_tmux, self._config)
         if snapshot is None:
             row = local.inventory(local.host.host_id, panes=False, option_names=())
-            return PickerModel(
-                {
-                    "schemaVersion": 1,
-                    "generatedAt": self._now(),
-                    "meshRevision": None,
-                    "hosts": [row],
-                    "hostCatalog": self._catalog(None, local),
-                    "remoteRefreshNeeded": False,
-                    # An old Mesh marker must never surface in local-only
-                    # mode, where it has no current revision to describe.
-                    "remoteRefresh": None,
-                },
-                False,
-            )
+            payload: dict[str, object] = {
+                "schemaVersion": 1,
+                "generatedAt": self._now(),
+                "meshRevision": None,
+                "hosts": [row],
+                "hostCatalog": self._catalog(None, local),
+                "remoteRefreshNeeded": False,
+                "remoteRefreshRequested": False,
+                "remoteRefresh": self._refresher.status(LOCAL_ONLY_REVISION),
+            }
+            viewer_needed = self._decorate_viewers(payload, None, local.host.host_id)
+            requested = self._refresher.request(None) if start_refresh and viewer_needed else False
+            payload["remoteRefreshRequested"] = requested
+            payload["remoteRefresh"] = self._refresher.status(LOCAL_ONLY_REVISION)
+            return PickerModel(payload, viewer_needed)
         local_row = local.inventory(snapshot.local_host.host_id, panes=False, option_names=())
         state = self._cache.load(snapshot)
-        refresh_needed = self._remote_refresh_needed(snapshot, state)
+        payload, remote_needed = self._snapshot_payload(snapshot, local, local_row, state)
+        viewer_needed = self._decorate_viewers(
+            payload, snapshot.revision, snapshot.local_host.host_id
+        )
+        refresh_needed = remote_needed or viewer_needed
         requested = self._refresher.request(snapshot) if start_refresh and refresh_needed else False
-        payload, refresh_needed = self._snapshot_payload(
-            snapshot, local, local_row, state, requested=requested
-        )
-        return PickerModel(
-            payload,
-            refresh_needed,
-        )
+        payload["remoteRefreshRequested"] = requested
+        payload["remoteRefresh"] = self._refresher.status(snapshot.revision)
+        return PickerModel(payload, refresh_needed)
 
     def refresh_now(self) -> PickerModel:
-        """Run one revision-pinned foreground remote refresh, then reload.
-
-        The Host Mesh adapter and RemoteRefresh owner retain their bounded
-        process/deadline guarantees. This method does not spawn or retry a
-        detached worker, so a failure remains observable to the callback and
-        cannot turn into a refresh loop.
-        """
-
+        """Request one finite detached owner/viewer refresh, then reload cache."""
         snapshot = self._adapter.load()
-        if snapshot is not None:
-            self._refresher.run(snapshot.revision)
+        self._refresher.request(snapshot, force=True)
         return self.load(start_refresh=False)
 
     def refresh_host(self, host_id: str, mesh_revision: str | None) -> PickerModel:
@@ -325,18 +401,18 @@ class PickerModelService:
                     "stale_mesh", "the selected host mesh changed; refresh and try again"
                 )
             row = local.inventory(local.host.host_id, panes=False, option_names=())
-            return PickerModel(
-                {
-                    "schemaVersion": 1,
-                    "generatedAt": self._now(),
-                    "meshRevision": None,
-                    "hosts": [row],
-                    "hostCatalog": self._catalog(None, local),
-                    "remoteRefreshNeeded": False,
-                    "remoteRefresh": None,
-                },
-                False,
-            )
+            payload: dict[str, object] = {
+                "schemaVersion": 1,
+                "generatedAt": self._now(),
+                "meshRevision": None,
+                "hosts": [row],
+                "hostCatalog": self._catalog(None, local),
+                "remoteRefreshNeeded": False,
+                "remoteRefreshRequested": False,
+                "remoteRefresh": self._refresher.status(LOCAL_ONLY_REVISION),
+            }
+            viewer_needed = self._decorate_viewers(payload, None, local.host.host_id)
+            return PickerModel(payload, viewer_needed)
         if mesh_revision != snapshot.revision:
             raise ContractError(
                 "stale_mesh", "the selected host mesh changed; refresh and try again"
@@ -347,7 +423,10 @@ class PickerModelService:
             payload, refresh_needed = self._snapshot_payload(
                 snapshot, local, local_row, self._cache.load(snapshot)
             )
-            return PickerModel(payload, refresh_needed)
+            viewer_needed = self._decorate_viewers(
+                payload, snapshot.revision, snapshot.local_host.host_id
+            )
+            return PickerModel(payload, refresh_needed or viewer_needed)
         service = self._inventory_factory(
             self._config,
             mesh_adapter=self._adapter,
@@ -372,7 +451,10 @@ class PickerModelService:
             )
         state = self._cache.merge_host(snapshot, selected.host_id, response["hosts"][0])
         payload, refresh_needed = self._snapshot_payload(snapshot, local, local_row, state)
-        return PickerModel(payload, refresh_needed)
+        viewer_needed = self._decorate_viewers(
+            payload, snapshot.revision, snapshot.local_host.host_id
+        )
+        return PickerModel(payload, refresh_needed or viewer_needed)
 
     def refresh_host_current(self, host_id: str) -> PickerModel:
         """Refresh one host against the currently loaded Mesh revision.

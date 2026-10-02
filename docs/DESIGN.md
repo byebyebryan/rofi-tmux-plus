@@ -6,9 +6,10 @@ recovery, and automated fleet acceptance are complete. P7 removed the
 redundant picker-model read before a successful typed open; lifecycle still
 revalidates the current Mesh and exact stable reference. The coordinated P8
 flat-scope navigation cutover and P9 producer/consumer implementation and
-canonical bundles are published in this repository. Chezmoi's current
-`docs/rofi-plus-status.md` ledger is the authority for managed deployment and
-acceptance.
+canonical bundles are published in this repository. P11 adds caller-local
+viewer observations to bulk inventory and the Tmux picker; release and managed
+acceptance remain separate. Chezmoi's current `docs/rofi-plus-status.md` ledger
+is the authority for managed deployment and acceptance.
 
 ## P9 locked CLI contracts
 
@@ -35,6 +36,23 @@ data in a successful top-level inventory.
 The P9 artifacts describe and test the current v1 semantics; they do not add a
 runtime handshake or reopen P8 navigation. The coordinated suite design and
 rollout boundary live in the managed `rofi-plus-p9-cli-contracts.md` document.
+
+## P11 endpoint-local viewer observations
+
+`inventory --json --with-viewers` enriches owner session facts after the
+selected local and remote rows return. `viewerEndpoint` identifies the caller's
+logical local host and observation time; each returned session has a
+`localViewer` state. The caller performs one bounded Niri scan and reuses its
+bounded process/metadata index across rows. Remote owner helpers report only
+their tmux facts. A scan failure keeps those facts and returns unknown viewer
+states. Plain inventory omits the extension.
+
+The picker consumes that same bulk observer for local and remote session
+owners. Its private cache is scoped to the desktop context, Mesh revision, and
+complete session reference, with a ten-second freshness window. Cache frames,
+scope changes, Tab, and action callbacks do not scan the desktop. Open and
+matched Open? are display observations only; existing open, close, and Kill
+guards remain authoritative.
 
 P9 itself did not change picker presentation. A subsequent post-P9 SSH-only
 refinement makes SSH recent-only and restores its native filter arrows; it

@@ -12,8 +12,6 @@ import json
 import math
 import os
 import re
-import shutil
-import subprocess
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -25,6 +23,7 @@ from .lifecycle_service import LifecycleService
 from .picker_model import PickerModelService
 from .presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache, valid_snapshot_key
 from .tmux import validate_session_id
+from .viewer_cache import VIEWER_FRESHNESS_SECONDS
 
 ROFI_RETV_SELECTED = 1
 ROFI_RETV_CUSTOM_INPUT = 2  # Ctrl+Enter / accept-custom
@@ -282,6 +281,7 @@ class ContinuationState:
     navigation: NavigationState = NavigationState()
     snapshot_key: str | None = None
     refresh_deadline: float | None = None
+    viewer_deadline: float | None = None
     error_deadline: float | None = None
     error_message: str = ""
     notice_key: str = ""
@@ -292,7 +292,11 @@ class ContinuationState:
 
     @property
     def has_lifecycle(self) -> bool:
-        return self.refresh_deadline is not None or self.error_deadline is not None
+        return (
+            self.refresh_deadline is not None
+            or self.viewer_deadline is not None
+            or self.error_deadline is not None
+        )
 
     def active(self, now: float | None = None) -> ContinuationState:
         current = time.time() if now is None else now
@@ -311,6 +315,17 @@ class ContinuationState:
         return replace(
             self,
             refresh_deadline=live(self.refresh_deadline),
+            # Keep an expired viewer deadline until the next timed callback
+            # reloads the private cache and starts a bounded refresh. Cached
+            # cursor callbacks can then stay scanner-free without dropping it.
+            viewer_deadline=(
+                self.viewer_deadline
+                if isinstance(self.viewer_deadline, (int, float))
+                and not isinstance(self.viewer_deadline, bool)
+                and math.isfinite(self.viewer_deadline)
+                and self.viewer_deadline > 0
+                else None
+            ),
             error_deadline=error_deadline,
             error_message=self.error_message if error_deadline is not None else "",
         )
@@ -333,6 +348,8 @@ def _state_payload(state: ContinuationState) -> dict[str, object]:
         payload["snapshotKey"] = state.snapshot_key
     if state.refresh_deadline is not None:
         payload["refreshDeadline"] = max(0, int(state.refresh_deadline))
+    if state.viewer_deadline is not None:
+        payload["viewerDeadline"] = max(0, int(state.viewer_deadline))
     if state.error_deadline is not None:
         payload["errorDeadline"] = max(0, int(state.error_deadline))
         if state.error_message:
@@ -473,6 +490,7 @@ def _parse_continuation_state(value: object) -> ContinuationState:
         if valid_snapshot_key(payload.get("snapshotKey"))
         else None,
         refresh_deadline=_parse_deadline(payload.get("refreshDeadline")),
+        viewer_deadline=_parse_deadline(payload.get("viewerDeadline")),
         error_deadline=_parse_deadline(payload.get("errorDeadline")),
         error_message=_notice(payload.get("errorMessage"))
         if isinstance(payload.get("errorMessage"), str)
@@ -712,62 +730,46 @@ def _session_sort_key(
     )
 
 
-def _niri_titles() -> tuple[str, ...]:
-    """Read current Niri titles once per render, best effort only."""
-
-    if not os.environ.get("NIRI_SOCKET") or shutil.which("niri") is None:
-        return ()
-    try:
-        result = subprocess.run(
-            ["niri", "msg", "-j", "windows"],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=1,
-            check=False,
-        )
-        if result.returncode:
-            return ()
-        value = json.loads(result.stdout)
-    except (OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError):
-        return ()
-    if not isinstance(value, list):
-        return ()
-    return tuple(
-        item["title"]
-        for item in value
-        if isinstance(item, Mapping) and isinstance(item.get("title"), str)
-    )
-
-
-def _is_open_here(
-    session: Mapping[str, object], host: Mapping[str, object], titles: Sequence[str]
-) -> bool:
-    if not host.get("local") or not _host_live(host):
-        return False
-    name = session.get("name")
-    native = host.get("nativeHostname")
-    if not isinstance(name, str) or not name or not isinstance(native, str) or not native:
-        return False
-    prefix = name.casefold() + ":"
-    suffix = "@ " + native.split(".", 1)[0].casefold()
-    return any(
-        title.casefold().startswith(prefix) and title.rstrip().endswith(suffix) for title in titles
-    )
-
-
 def _session_status(
-    session: Mapping[str, object], host: Mapping[str, object], titles: Sequence[str]
+    session: Mapping[str, object], host: Mapping[str, object], *, viewer_fresh: bool
 ) -> str:
     if not _host_live(host):
         return "unavailable"
-    if _is_open_here(session, host, titles):
-        return "open here"
+    viewer = session.get("localViewer")
+    state = viewer.get("state") if isinstance(viewer, Mapping) else "unknown"
+    confidence = viewer.get("confidence") if isinstance(viewer, Mapping) else None
+    reason = viewer.get("reason") if isinstance(viewer, Mapping) else None
+    if not viewer_fresh:
+        viewer_status = "local viewer unknown"
+    elif state == "open" and confidence == "confirmed" and reason is None:
+        viewer_status = "open here"
+    elif state == "open" and confidence == "matched" and reason is None:
+        viewer_status = "open here?"
+    elif state == "none" and confidence is None and reason is None:
+        viewer_status = "no viewer here"
+    else:
+        viewer_status = "local viewer unknown"
     attached = session.get("attachedClients")
     if isinstance(attached, int) and not isinstance(attached, bool) and attached > 0:
-        return "attached"
-    return "detached"
+        client_status = "attached"
+    elif isinstance(attached, int) and not isinstance(attached, bool) and attached >= 0:
+        client_status = "detached"
+    else:
+        client_status = "attachment unknown"
+    return f"{viewer_status} · {client_status}"
+
+
+def _viewer_observation_fresh(payload: Mapping[str, object] | None, now: float) -> bool:
+    if not isinstance(payload, Mapping):
+        return False
+    observed_at = payload.get("viewerObservedAt")
+    endpoint = payload.get("viewerEndpoint")
+    if observed_at is None and isinstance(endpoint, Mapping):
+        observed_at = endpoint.get("observedAt")
+    if not isinstance(observed_at, int) or isinstance(observed_at, bool) or observed_at < 0:
+        return False
+    age = now * 1000 - observed_at
+    return 0 <= age < VIEWER_FRESHNESS_SECONDS * 1000
 
 
 def _session_payload(
@@ -961,13 +963,13 @@ def _session_rows_render(
     navigation: NavigationState,
     *,
     now: float,
-    titles: Sequence[str],
     action: str = ACTION_OPEN,
 ) -> list[str]:
     navigation = _normalize_navigation(payload, navigation)
     catalog = _host_catalog(payload)
     candidate_revision = payload.get("meshRevision") if isinstance(payload, Mapping) else None
     mesh_revision = candidate_revision if isinstance(candidate_revision, str) else None
+    viewer_fresh = _viewer_observation_fresh(payload, now)
     order = {str(host["hostId"]).casefold(): index for index, host in enumerate(catalog)}
     sessions = _session_rows(payload, host_id=_scope_host_id(payload, navigation))
     sessions.sort(key=lambda item: _session_sort_key(item, order))
@@ -977,7 +979,7 @@ def _session_rows_render(
         if not isinstance(host, Mapping):
             continue
         scoped_host = {**dict(host), "_scope": navigation.concrete}
-        status = _session_status(session, scoped_host, titles)
+        status = _session_status(session, scoped_host, viewer_fresh=viewer_fresh)
         info = selection_payload(session, status=status, mesh_revision=mesh_revision)
         metadata = " ".join(
             sanitize(value)
@@ -1003,7 +1005,7 @@ def _session_rows_render(
             # The managed selected.active.urgent style supplies the danger
             # treatment for whichever row is currently highlighted.
             options.extend((("active", "true"), ("urgent", "true")))
-        elif status == "open here":
+        elif status.startswith("open here"):
             options.append(("active", "true"))
         elif status == "unavailable":
             options.append(("urgent", "true"))
@@ -1159,6 +1161,8 @@ def render_snapshot(
         if timeout:
             if active.error_deadline is not None and active.refresh_deadline is None:
                 delay = max(1, math.ceil(active.error_deadline - now_value))
+            elif active.viewer_deadline is not None and active.refresh_deadline is None:
+                delay = max(1, math.ceil(active.viewer_deadline - now_value))
             else:
                 delay = AUTO_REFRESH_POLL_SECONDS
             headers.append(_protocol("theme", _timeout_theme(delay)))
@@ -1213,7 +1217,6 @@ def render_snapshot(
             snapshot,
             active.navigation,
             now=now_value,
-            titles=titles if titles is not None else _niri_titles(),
             action=active.action,
         )
     if not rows:
@@ -1322,12 +1325,50 @@ def _refresh_observation(
     requested = (
         bool(payload.get("remoteRefreshRequested")) if isinstance(payload, Mapping) else False
     )
+    viewer_needed = (
+        payload.get("viewerRefreshNeeded") is True if isinstance(payload, Mapping) else False
+    )
+    refresh_needed = viewer_needed or (
+        payload.get("remoteRefreshNeeded") is True if isinstance(payload, Mapping) else False
+    )
+    observed_at = payload.get("viewerObservedAt") if isinstance(payload, Mapping) else None
+    endpoint = payload.get("viewerEndpoint") if isinstance(payload, Mapping) else None
+    if observed_at is None and isinstance(endpoint, Mapping):
+        observed_at = endpoint.get("observedAt")
+    viewer_deadline = None
+    if (
+        not viewer_needed
+        and isinstance(observed_at, int)
+        and not isinstance(observed_at, bool)
+        and observed_at >= 0
+    ):
+        expiry = observed_at / 1000 + VIEWER_FRESHNESS_SECONDS
+        if expiry > now:
+            viewer_deadline = expiry
+    marker_updated_at = marker_mapping.get("updatedAt") if marker_mapping is not None else None
+    retry_deadline = None
+    if (
+        isinstance(marker_updated_at, int)
+        and not isinstance(marker_updated_at, bool)
+        and marker_updated_at >= 0
+    ):
+        cooldown_expiry = marker_updated_at / 1000 + VIEWER_FRESHNESS_SECONDS
+        if cooldown_expiry > now:
+            retry_deadline = cooldown_expiry
     state = state.active(now)
     if marker_mapping is not None:
         marker_state = marker_mapping.get("state")
         if marker_state == "running":
             return replace(
-                state, refresh_deadline=state.refresh_deadline or now + AUTO_REFRESH_MAX_SECONDS
+                state,
+                refresh_deadline=state.refresh_deadline or now + AUTO_REFRESH_MAX_SECONDS,
+                viewer_deadline=None,
+            ), "Refreshing in background"
+        if requested and marker_state != "running":
+            return replace(
+                state,
+                refresh_deadline=state.refresh_deadline or now + AUTO_REFRESH_MAX_SECONDS,
+                viewer_deadline=None,
             ), "Refreshing in background"
         if marker_state in {"failed", "stale", "stalled"}:
             key = "refresh:" + _marker_key(marker_mapping)
@@ -1339,11 +1380,16 @@ def _refresh_observation(
                 fallback = "background refresh stopped after it stalled"
             text = _notice(marker_mapping.get("message")) or fallback
             if state.notice_key == key:
-                return replace(state, refresh_deadline=None), ""
+                return replace(
+                    state,
+                    refresh_deadline=None,
+                    viewer_deadline=retry_deadline if refresh_needed else None,
+                ), ""
             return (
                 replace(
                     state,
                     refresh_deadline=None,
+                    viewer_deadline=retry_deadline if refresh_needed else None,
                     error_deadline=now + ERROR_NOTICE_SECONDS,
                     error_message=text,
                     notice_key=key,
@@ -1351,10 +1397,18 @@ def _refresh_observation(
                 text,
             )
         if marker_state == "complete":
-            return replace(state, refresh_deadline=None), ""
+            if refresh_needed:
+                return replace(
+                    state,
+                    refresh_deadline=None,
+                    viewer_deadline=retry_deadline or state.viewer_deadline or now + 1,
+                ), ""
+            return replace(state, refresh_deadline=None, viewer_deadline=viewer_deadline), ""
     if requested:
         return replace(
-            state, refresh_deadline=state.refresh_deadline or now + AUTO_REFRESH_MAX_SECONDS
+            state,
+            refresh_deadline=state.refresh_deadline or now + AUTO_REFRESH_MAX_SECONDS,
+            viewer_deadline=None,
         ), "Refreshing in background"
     if state.refresh_deadline is not None:
         if now < state.refresh_deadline:
@@ -1366,14 +1420,20 @@ def _refresh_observation(
                 replace(
                     state,
                     refresh_deadline=None,
+                    viewer_deadline=None,
                     error_deadline=now + ERROR_NOTICE_SECONDS,
                     error_message=text,
                     notice_key=key,
                 ),
                 text,
             )
-        return replace(state, refresh_deadline=None), ""
-    return state, ""
+        return replace(state, refresh_deadline=None, viewer_deadline=viewer_deadline), ""
+    if refresh_needed:
+        return replace(
+            state,
+            viewer_deadline=retry_deadline or state.viewer_deadline or now + 1,
+        ), ""
+    return replace(state, viewer_deadline=viewer_deadline), ""
 
 
 def _load_payload(model_service: PickerModelService, *, start_refresh: bool) -> dict[str, object]:
@@ -1426,7 +1486,7 @@ def _auto_refresh_callback(
 ) -> str:
     try:
         payload, next_state, message = _load_observed(
-            model_service, state, start_refresh=False, now=now
+            model_service, state, start_refresh=True, now=now
         )
     except Exception as error:  # noqa: BLE001 - visible script callback boundary
         next_state = _error_state(
