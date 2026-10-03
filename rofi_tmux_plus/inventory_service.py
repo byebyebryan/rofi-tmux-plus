@@ -259,7 +259,9 @@ class InventoryService:
                         raw.get("name") if isinstance(raw.get("name"), str) else None,
                         None,
                         None,
-                        None,
+                        raw.get("attachedClients")
+                        if type(raw.get("attachedClients")) is int
+                        else None,
                         bool(raw.get("pending")),
                         None,
                         None,

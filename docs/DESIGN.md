@@ -39,6 +39,15 @@ rollout boundary live in the managed `rofi-plus-p9-cli-contracts.md` document.
 
 ## P11 endpoint-local viewer observations
 
+The `0.5.1` follow-up includes manually opened remote SSH shells in qualified
+Open? display evidence. It combines a unique current session/owner title with
+a live terminal SSH process on that owner's selected route and a positive
+owner attached-client count. It accepts `ssh HOST`, optionally `-t` or `-tt`,
+without a remote command. Title alone, a connection alone, and global attachment
+counts alone remain insufficient. Existing metadata, completeness, pending,
+and ambiguity guards still apply. It adds no operation handle or extra remote
+query; strict viewer inspection and batch close eligibility remain unchanged.
+
 `inventory --json --with-viewers` enriches owner session facts after the
 selected local and remote rows return. `viewerEndpoint` identifies the caller's
 logical local host and observation time; each returned session has a

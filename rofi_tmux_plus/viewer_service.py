@@ -1033,6 +1033,7 @@ def observe_local_viewers(
             for pid in pids:
                 client_owner_by_pid[pid] = target
     remote_by_argv: dict[tuple[str, ...], ViewerTarget] = {}
+    remote_shell_by_argv: dict[tuple[str, ...], set[SessionReference]] = {}
     unsupported_remote: set[SessionReference] = set()
     for target in unique.values():
         if target.local_owner:
@@ -1046,6 +1047,17 @@ def observe_local_viewers(
             target.session.reference.session_id,
         )
         remote_by_argv[argv] = target
+        # A manually opened SSH shell does not name a tmux target. With a
+        # current owner attachment and a unique matching title it can supply
+        # only qualified display presence, never a verified operation handle.
+        if target.session.attached_clients is not None and target.session.attached_clients > 0:
+            for tty_options in ((), ("-t",), ("-tt",)):
+                shell_argv = (
+                    Path(target.remote_executable).name,
+                    *tty_options,
+                    target.remote_route,
+                )
+                remote_shell_by_argv.setdefault(shell_argv, set()).add(target.session.reference)
 
     index = _ObservationProcessIndex(deadline=scan_deadline)
     confirmed: set[SessionReference] = set()
@@ -1097,6 +1109,7 @@ def observe_local_viewers(
         local_exact_refs: set[SessionReference] = set()
         local_argv_refs: set[SessionReference] = set()
         local_conflict_refs: set[SessionReference] = set()
+        remote_shell_refs: set[SessionReference] = set()
         for proc in tree:
             current_local_target = client_owner_by_pid.get(proc.pid)
             if current_local_target is not None:
@@ -1105,6 +1118,11 @@ def observe_local_viewers(
                 process_refs.add(current_ref)
             if proc.tty_nr == 0:
                 continue
+            if proc.argv:
+                shell_argv = (Path(proc.argv[0]).name, *proc.argv[1:])
+                remote_shell_refs.update(
+                    title_refs.intersection(remote_shell_by_argv.get(shell_argv, ()))
+                )
             target: ViewerTarget | None = None
             if proc.argv and Path(proc.argv[0]).name == "tmux":
                 for session_id, local_target in local_by_session_id.items():
@@ -1194,7 +1212,7 @@ def observe_local_viewers(
                     if local_client_pids is None
                     else "pending_registration",
                 )
-            elif attached and title_match:
+            elif (attached or reference in remote_shell_refs) and title_match:
                 matched_windows.setdefault(reference, set()).add((window_id, window_pid))
             elif attached or title_match:
                 add_unknown(reference, "attachment_unverified")

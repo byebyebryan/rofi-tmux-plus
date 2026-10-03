@@ -298,6 +298,22 @@ class ViewerInspectionTests(unittest.TestCase):
         self.assertEqual(legacy.status, "unverified")
         self.assertEqual(legacy.viewers, ())
 
+    def test_manual_remote_shell_title_does_not_supply_close_handles(self) -> None:
+        session = _session("starship")
+        root = _proc(10, 1, 100, 0, ("kitty",))
+        ssh = _proc(20, 10, 200, 41, ("ssh", "starship"))
+        result = self._inspect(
+            [_kitty_window(101, 10, "fixture: task @ starship")],
+            roots={10: root},
+            direct={10: [ssh]},
+            trees={10: [ssh]},
+            session=session,
+            remote_route="starship",
+            remote_native_hostname="starship",
+        )
+        self.assertEqual(result.status, "unverified")
+        self.assertEqual(result.viewers, ())
+
     def test_remote_marked_window_reports_registration_pending_until_attach(self) -> None:
         session = _session("starship")
         root = _proc(10, 1, 100, 0, ("kitty",))
@@ -601,6 +617,99 @@ class LocalViewerObservationTests(unittest.TestCase):
             },
         )
         tmux.client_pids_by_session.assert_not_called()
+
+    def test_manual_remote_shell_with_unique_owner_title_is_only_matched(self) -> None:
+        session = _observation_session("beta", attached_clients=1)
+        other = _observation_session("beta", session_id="$8", name="other", attached_clients=1)
+        targets = tuple(self._target(row, local=False, route="beta") for row in (session, other))
+        for argv in (("ssh", "beta"), ("/usr/bin/ssh", "-t", "beta"), ("ssh", "-tt", "beta")):
+            with self.subTest(argv=argv):
+                batch, tmux, _niri, _process_reads, _child_reads = self._observe(
+                    [_kitty_window(101, 10, "fixture: task @ beta-native")],
+                    {
+                        10: _proc(10, 1, 100, 0, ("kitty",)),
+                        20: _proc(20, 10, 200, 41, ("zsh",)),
+                        30: _proc(30, 20, 300, 41, argv),
+                    },
+                    targets,
+                    children={10: b"20", 20: b"30"},
+                )
+                self.assertEqual(
+                    batch.observations[session.reference].as_dict(),
+                    {"state": "open", "confidence": "matched"},
+                )
+                self.assertEqual(batch.observations[other.reference].as_dict(), {"state": "none"})
+                tmux.client_pids_by_session.assert_not_called()
+                tmux.run.assert_not_called()
+
+    def test_manual_shell_requires_peer_process_title_and_owner_attachment(self) -> None:
+        cases = (
+            (("ssh", "other"), 41, 1, "fixture: task @ beta-native"),
+            (("ssh", "beta", "sleep 60"), 41, 1, "fixture: task @ beta-native"),
+            (("zsh",), 41, 1, "fixture: task @ beta-native"),
+            (("ssh", "beta"), 0, 1, "fixture: task @ beta-native"),
+            (("ssh", "beta"), 41, 0, "fixture: task @ beta-native"),
+            (("ssh", "beta"), 41, None, "fixture: task @ beta-native"),
+            (("ssh", "beta"), 41, 1, "other: task @ beta-native"),
+            (("ssh", "beta"), 41, 1, "fixture: task @ other-native"),
+        )
+        for argv, tty, clients, title in cases:
+            with self.subTest(argv=argv, tty=tty, clients=clients, title=title):
+                session = _observation_session("beta", attached_clients=clients)
+                batch, _tmux, _niri, _process_reads, _child_reads = self._observe(
+                    [_kitty_window(101, 10, title)],
+                    {
+                        10: _proc(10, 1, 100, 0, ("kitty",)),
+                        20: _proc(20, 10, 200, tty, argv),
+                    },
+                    (self._target(session, local=False, route="beta"),),
+                    children={10: b"20"},
+                )
+                self.assertNotEqual(batch.observations[session.reference].state, "open")
+
+    def test_manual_shell_cannot_override_conflicts_partial_scan_or_pending(self) -> None:
+        session = _observation_session("beta", attached_clients=1)
+        other = _observation_session("beta", session_id="$8", attached_clients=1)
+        pending = _observation_session("beta", attached_clients=1, pending=True)
+        window = _kitty_window(101, 10, "fixture: task @ beta-native")
+        cases = (
+            (session, {"metadata": {10: self._marked(other)}}, "conflicting_metadata"),
+            (session, {"metadata": {10: (None, True, True)}}, "conflicting_metadata"),
+            (session, {"metadata": {10: (None, False, False)}}, "process_unavailable"),
+            (session, {"unreadable_children": {20}}, "process_unavailable"),
+            (pending, {}, "pending_registration"),
+        )
+        for selected, extra, reason in cases:
+            with self.subTest(reason=reason):
+                batch, _tmux, _niri, _process_reads, _child_reads = self._observe(
+                    [window],
+                    {
+                        10: _proc(10, 1, 100, 0, ("kitty",)),
+                        20: _proc(20, 10, 200, 41, ("ssh", "beta")),
+                    },
+                    (self._target(selected, local=False, route="beta"),),
+                    children={10: b"20"},
+                    **extra,
+                )
+                self.assertEqual(
+                    batch.observations[selected.reference].as_dict(),
+                    {"state": "unknown", "reason": reason},
+                )
+        duplicate, _tmux, _niri, _process_reads, _child_reads = self._observe(
+            [window, _kitty_window(102, 11, "fixture: task @ beta-native")],
+            {
+                10: _proc(10, 1, 100, 0, ("kitty",)),
+                11: _proc(11, 1, 101, 0, ("kitty",)),
+                20: _proc(20, 10, 200, 41, ("ssh", "beta")),
+                21: _proc(21, 11, 201, 42, ("ssh", "beta")),
+            },
+            (self._target(session, local=False, route="beta"),),
+            children={10: b"20", 11: b"21"},
+        )
+        self.assertEqual(
+            duplicate.observations[session.reference].as_dict(),
+            {"state": "unknown", "reason": "ambiguous_match"},
+        )
 
     def test_global_remote_client_count_does_not_imply_a_local_viewer(self) -> None:
         session = _observation_session("beta", attached_clients=4)

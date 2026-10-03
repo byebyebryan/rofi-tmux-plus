@@ -1212,6 +1212,7 @@ class InventoryServiceTests(unittest.TestCase):
             self.assertEqual(remote.calls, ["beta", "gamma"])
             rows = list(targets)  # type: ignore[arg-type]
             self.assertEqual(len(rows), 2)
+            self.assertTrue(all(target.session.attached_clients == 2 for target in rows))
             observations = {
                 target.session.reference: LocalViewerObservation("open", "matched")
                 for target in rows

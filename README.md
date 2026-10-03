@@ -22,6 +22,15 @@ plain inventory stays unchanged. These observations do not provide viewer
 handles or change guarded actions. The public lifecycle contract continues to
 expose `create` and `rename` for CLI consumers.
 
+Version `0.5.1` also recognizes a manually opened remote SSH shell, such as
+`kitty -e ssh snap`, as qualified `open?` when one window has the exact current
+session/owner title, a live terminal SSH process to the selected route, and a
+positive owner attached-client count. The supported shell argv is `ssh HOST`,
+optionally with `-t` or `-tt`, without a remote command. Duplicate matches,
+conflicting metadata, incomplete scans, and pending sessions remain unknown.
+This display hint supplies no verified close handle and does not alter batch
+eligibility. No additional SSH request or provider lifecycle hook is used.
+
 For development without installing the console script:
 
 ```sh

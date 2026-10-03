@@ -175,6 +175,14 @@ with process evidence is `matched`. Title alone and global attached-client
 counts never establish a local viewer. These observations contain no handles
 and do not change the guarded viewer actions.
 
+Tmux Plus `0.5.1` includes manually opened remote shells in qualified legacy
+presence: one matching session/owner title, a live terminal `ssh HOST` process
+on the selected route (optionally `-t` or `-tt`, without a remote command), and
+a positive current owner attached-client count. These combined observations
+produce `matched`, without adopting the window or creating a close handle.
+Ambiguity, conflicting launch metadata, incomplete scans, and pending sessions
+retain their existing Unknown behavior.
+
 Every lifecycle operation also accepts `--mesh-revision`. Tmux Plus and Agent
 Plus supply the revision associated with the selected live or cached row. A
 remote operation rejects a stale revision before route resolution; a local-only
