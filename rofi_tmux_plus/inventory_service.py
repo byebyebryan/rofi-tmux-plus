@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor, wait
 
 from .config import Config
+from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .host import LocalHost, local_host
 from .lifecycle import LocalLifecycle, now_millis
@@ -30,12 +31,16 @@ class InventoryService:
         local_tmux: TmuxClient | None = None,
         remote_inventory: RemoteInventory | None = None,
         whole_deadline_seconds: float = _WHOLE_DEADLINE_SECONDS,
+        on_host: Callable[[MeshSnapshot, MeshHost, dict[str, object]], None] | None = None,
+        snapshot: MeshSnapshot | None = None,
     ) -> None:
         self._config = config
         self._mesh_adapter = mesh_adapter or HostMeshAdapter()
         self._local_tmux = local_tmux or TmuxClient()
         self._remote_inventory = remote_inventory or RemoteInventory(self._mesh_adapter)
         self._whole_deadline_seconds = whole_deadline_seconds
+        self._on_host = on_host
+        self._snapshot = snapshot
 
     def inventory(
         self,
@@ -48,7 +53,9 @@ class InventoryService:
     ) -> dict[str, object]:
         option_names = tuple(dict.fromkeys(validate_user_option(name) for name in option_names))
         operation_deadline = time.monotonic() + self._whole_deadline_seconds
-        snapshot = self._mesh_adapter.load()
+        snapshot = self._snapshot or self._mesh_adapter.load(
+            timeout_seconds=min(5, max(0.001, operation_deadline - time.monotonic()))
+        )
         if snapshot is None:
             if mesh_revision is not None:
                 raise ContractError(
@@ -156,6 +163,7 @@ class InventoryService:
                         rows[host.host_id] = future.result()
                     except MeshStaleError as error:
                         stale_error = error
+                        return
                     except ContractError as error:
                         rows[host.host_id] = self._remote_error(host, error.code, error.message)
                     except CancelledError:
@@ -166,6 +174,15 @@ class InventoryService:
                         rows[host.host_id] = self._remote_error(
                             host, "operation_failed", clean_message(error)
                         )
+                    if self._on_host is not None:
+                        try:
+                            self._on_host(snapshot, host, rows[host.host_id])
+                        except MeshStaleError as error:
+                            stale_error = error
+                        except Exception as error:  # noqa: BLE001 - private publication boundary
+                            rows[host.host_id] = self._remote_error(
+                                host, "operation_failed", clean_message(error)
+                            )
 
                 try:
                     for host in remotes:
@@ -227,6 +244,7 @@ class InventoryService:
             )
         return response
 
+    @timed("viewer_scan")
     def _enrich_local_viewers(
         self,
         response: dict[str, object],

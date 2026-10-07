@@ -4,6 +4,12 @@ set -euo pipefail
 repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd -- "$repo_root"
 
+# UI preference and observation probes must not touch the operator's state.
+check_state=$(mktemp -d)
+trap 'rm -rf -- "$check_state"' EXIT
+export XDG_STATE_HOME="$check_state/state"
+export XDG_CACHE_HOME="$check_state/cache"
+
 PYTHONPATH=. python3 -m unittest discover -s tests -v
 PYTHONPATH=. python3 -m compileall -q rofi_tmux_plus
 PYTHONPATH=. python3 - <<'PY'
@@ -61,6 +67,8 @@ PY
 command -v ruff >/dev/null
 ruff check rofi_tmux_plus tests
 ruff format --check rofi_tmux_plus tests
+ruff check scripts/measure-refresh
+ruff format --check scripts/measure-refresh
 command -v shellcheck >/dev/null
 shellcheck scripts/check
 test -x scripts/check-contract-sync
@@ -113,6 +121,7 @@ if problems:
 PY
 
 test -x bin/rofi-tmux-plus
+test -x bin/rofi-tmux-plus-rofi
 test -x scripts/check
 test -f pyproject.toml
 test -f docs/TMUX_SESSION_V1.md

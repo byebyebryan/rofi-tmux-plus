@@ -375,6 +375,8 @@ class RofiRenderTests(unittest.TestCase):
         value = payload(hosts=[alpha, beta], catalog=catalog)
         self.assertEqual(
             [
+                (rofi.VIEW_OPEN, None),
+                (rofi.VIEW_ATTACHED, None),
                 (rofi.VIEW_ALL, None),
                 (rofi.VIEW_LOCAL, "alpha"),
                 (rofi.VIEW_HOST, "beta"),
@@ -457,7 +459,7 @@ class RofiRenderTests(unittest.TestCase):
             revision=None,
         )
         self.assertEqual(
-            [(rofi.VIEW_LOCAL, "alpha")],
+            [(rofi.VIEW_OPEN, None), (rofi.VIEW_ATTACHED, None), (rofi.VIEW_LOCAL, "alpha")],
             [(item.view, item.host_id) for item in rofi._scope_ring(local_only)],
         )
         local_only_rows = rendered_records(rofi.render_snapshot(local_only, now=200, titles=()))[1]
@@ -513,7 +515,8 @@ class RofiProtocolTests(unittest.TestCase):
         )
         self.assertIn("Tmux › Local", right)
         self.assertIn("keep-filter", right)
-        self.assertNotIn("keep-selection", right)
+        self.assertIn("keep-selection", right)
+        self.assertIn("\x00new-selection\x1f0", right)
         self.assertEqual(
             {"view": rofi.VIEW_LOCAL, "hostId": "alpha"},
             json.loads(right.split("\0data\x1f", 1)[1].split(rofi.ROFI_RECORD_SEPARATOR, 1)[0])[
@@ -579,7 +582,8 @@ class RofiProtocolTests(unittest.TestCase):
         self.assertIn("one", output)
         self.assertNotIn("model unavailable", output)
         self.assertIn("keep-filter", output)
-        self.assertNotIn("keep-selection", output)
+        self.assertIn("keep-selection", output)
+        self.assertIn("\x00new-selection\x1f0", output)
         self.assertEqual([], broken.calls)
         self.assertEqual([], self.lifecycle.opens)
         self.assertEqual([], self.lifecycle.creates)

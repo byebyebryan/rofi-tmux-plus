@@ -12,11 +12,12 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
+from .diagnostics import timed
 from .remote_cache import cache_directory
 
 VIEWER_FRESHNESS_SECONDS = 10
 LOCAL_ONLY_REVISION = "local-only"
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 _MAX_BYTES = 4 * 1024 * 1024
 _MAX_SESSIONS = 128 * 256
 _HOST = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,4095}$", re.ASCII)
@@ -91,6 +92,20 @@ def _reference(value: object) -> tuple[str, str, str, int] | None:
     return host_id, generation, session_id, created_at
 
 
+def _owner_signature(host: Mapping[str, object], session: Mapping[str, object]) -> str:
+    """Bind a scan to the owner facts that supported its match."""
+    facts = [
+        _reference(session),
+        session.get("name"),
+        session.get("attachedClients"),
+        session.get("pending"),
+        host.get("route"),
+        host.get("nativeHostname"),
+        host.get("status"),
+    ]
+    return hashlib.sha256(json.dumps(facts, separators=(",", ":")).encode()).hexdigest()
+
+
 def _observation(value: object) -> dict[str, str] | None:
     if not isinstance(value, Mapping):
         return None
@@ -138,7 +153,7 @@ class ViewerObservationCache:
 
     @property
     def _path(self) -> Path:
-        return self.directory / "viewer-observations-v1.json"
+        return self.directory / "viewer-observations-v2.json"
 
     def context_id(self) -> str:
         return self._context_id()
@@ -213,11 +228,17 @@ class ViewerObservationCache:
                 "sessionId",
                 "createdAt",
                 "localViewer",
+                "ownerSignature",
             }:
                 return None
             ref = _reference(row)
             observation = _observation(row.get("localViewer"))
-            if ref is None or observation is None:
+            if (
+                ref is None
+                or observation is None
+                or not isinstance(row.get("ownerSignature"), str)
+                or re.fullmatch(r"[0-9a-f]{64}", row["ownerSignature"]) is None
+            ):
                 return None
             key = _cache_key(ref)
             if key in seen:
@@ -258,6 +279,7 @@ class ViewerObservationCache:
                 except OSError:
                     pass
 
+    @timed("viewer_cache_publication")
     def merge_response(
         self,
         response: Mapping[str, object],
@@ -304,7 +326,7 @@ class ViewerObservationCache:
         if previous is not None:
             old_endpoint = previous["viewerEndpoint"]
             assert isinstance(old_endpoint, dict)
-            if observed_at < old_endpoint["observedAt"]:
+            if observed_at < old_endpoint["observedAt"] <= self._now_millis():
                 return False
 
         for host in hosts:
@@ -340,6 +362,7 @@ class ViewerObservationCache:
                     "sessionId": reference[2],
                     "createdAt": reference[3],
                     "localViewer": observation,
+                    "ownerSignature": _owner_signature(host, row),
                 }
                 sessions[_cache_key(reference)] = normalized
             if host.get("status") != "ok":
@@ -397,6 +420,7 @@ class ViewerObservationCache:
             and 0 <= now - observed_at < VIEWER_FRESHNESS_SECONDS * 1000
         )
         needed = False
+        inputs_changed = False
         hosts = payload.get("hosts")
         if isinstance(hosts, list):
             for host in hosts:
@@ -421,7 +445,7 @@ class ViewerObservationCache:
                             "reason": "inventory_incomplete",
                         }
                         needed = True
-                    elif host.get("status") != "ok":
+                    elif host.get("status") != "ok" or host.get("ownerFactsExpired") is True:
                         # The endpoint scan completed, but this owner host has
                         # no current inventory. Keep historical rows Unknown
                         # until the next normal ten-second viewer refresh.
@@ -429,14 +453,19 @@ class ViewerObservationCache:
                             "state": "unknown",
                             "reason": "inventory_incomplete",
                         }
-                    elif observation is None:
+                    elif observation is None or row.get("ownerSignature") != _owner_signature(
+                        host, session
+                    ):
                         session["localViewer"] = {
                             "state": "unknown",
                             "reason": "inventory_incomplete",
                         }
                         needed = True
+                        inputs_changed = True
                     else:
                         session["localViewer"] = observation
+                        if observation.get("state") == "open" and now - observed_at >= 7000:
+                            needed = True
         if isinstance(endpoint, dict):
             payload["viewerEndpoint"] = dict(endpoint)
             payload["viewerObservedAt"] = observed_at
@@ -445,4 +474,5 @@ class ViewerObservationCache:
             payload["viewerObservedAt"] = None
         payload["viewerEndpointHostId"] = endpoint_host_id
         payload["viewerRefreshNeeded"] = needed
+        payload["viewerInputsChanged"] = inputs_changed
         return needed

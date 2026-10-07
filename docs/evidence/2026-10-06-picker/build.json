@@ -1,0 +1,9 @@
+{
+  "version": "0.6.0a1",
+  "wheel": "/tmp/tmux-plus-dist/rofi_tmux_plus-0.6.0a1-py3-none-any.whl",
+  "sha256": "950bebb5d0f851ae9674540d951f70d07fd748660c6efa8bfab1e81f0bf72f19",
+  "runtimeDigest": "sha256:a125f3f87a45ec230130d7c9edadc1eff271ec21d947615087793b389c4d2604",
+  "sourceGateTests": 239,
+  "ordinaryRelease": "0.5.1",
+  "published": false
+}

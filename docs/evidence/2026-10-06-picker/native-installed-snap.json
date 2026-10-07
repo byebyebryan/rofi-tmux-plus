@@ -1,0 +1,13 @@
+{
+  "endpoint": "snap",
+  "installedVersion": "0.6.0a1",
+  "surfaceMs": 228.686,
+  "nativePages": [
+    "Open",
+    "Attached"
+  ],
+  "realInventory": true,
+  "lifecycleActions": 0,
+  "managedBindingArguments": true,
+  "artifactDirectory": "/tmp/tmux-plus-installed-gui-a2dz6rvz"
+}

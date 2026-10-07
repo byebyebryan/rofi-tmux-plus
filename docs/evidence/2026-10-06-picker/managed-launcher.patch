@@ -1,0 +1,11 @@
+--- a/dot_config/niri/dms/binds.kdl
++++ b/dot_config/niri/dms/binds.kdl
+@@ -6 +6 @@
+-    Mod+G repeat=false hotkey-overlay-title="Open Tmux Plus: Rofi" { spawn "rofi" "-show" "tmux-plus" "-modes" "tmux-plus:/home/bryan/.config/rofi/scripts/tmux-plus" "-theme-str" "entry { placeholder: \"Filter sessions\"; } element urgent { background-color: @dms-warning-container; border-color: @dms-warning; } element active.urgent { background-color: @dms-danger-container; border-color: @dms-danger; } element selected.urgent { background-color: @dms-warning-container; border-color: @dms-primary; text-color: @dms-surface-text; } element selected.active.urgent { background-color: @dms-danger-container; border-color: @dms-primary; text-color: @dms-surface-text; }" "-kb-custom-1" "Alt+r" "-kb-custom-2" "Right" "-kb-custom-3" "Left" "-kb-custom-7" "Tab" "-kb-custom-8" "ISO_Left_Tab" "-kb-element-next" "" "-kb-element-prev" "" "-kb-delete-entry" "" "-kb-accept-custom" "" "-kb-cancel" "Escape,Control+g" "-kb-move-char-forward" "Control+f" "-kb-move-char-back" "Control+b" "-eh" "2"; }
++    Mod+G repeat=false hotkey-overlay-title="Open Tmux Plus: Rofi" { spawn "rofi-tmux-plus-rofi" "-show" "tmux-plus" "-modes" "tmux-plus:/home/bryan/.config/rofi/scripts/tmux-plus" "-theme-str" "entry { placeholder: \"Filter sessions\"; } element urgent { background-color: @dms-warning-container; border-color: @dms-warning; } element active.urgent { background-color: @dms-danger-container; border-color: @dms-danger; } element selected.urgent { background-color: @dms-warning-container; border-color: @dms-primary; text-color: @dms-surface-text; } element selected.active.urgent { background-color: @dms-danger-container; border-color: @dms-primary; text-color: @dms-surface-text; }" "-kb-custom-1" "Alt+r" "-kb-custom-2" "Right" "-kb-custom-3" "Left" "-kb-custom-7" "Tab" "-kb-custom-8" "ISO_Left_Tab" "-kb-element-next" "" "-kb-element-prev" "" "-kb-delete-entry" "" "-kb-accept-custom" "" "-kb-cancel" "Escape,Control+g" "-kb-move-char-forward" "Control+f" "-kb-move-char-back" "Control+b" "-eh" "2"; }
+diff --git a/dot_local/bin/symlink_rofi-tmux-plus-rofi b/dot_local/bin/symlink_rofi-tmux-plus-rofi
+new file mode 100644
+--- /dev/null
++++ b/dot_local/bin/symlink_rofi-tmux-plus-rofi
+@@ -0,0 +1 @@
++../share/rofi/extensions/tmux-plus/bin/rofi-tmux-plus-rofi

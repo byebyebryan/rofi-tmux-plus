@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "version": "0.5.1",
+  "endpoint": "snap",
+  "hostCount": 2,
+  "displayEnvironment": false,
+  "measurements": {
+    "warmPreparedFrame": {
+      "samples": 20,
+      "medianMs": 102.327,
+      "p95Ms": 108.54,
+      "maximumMs": 113.296,
+      "durationsMs": [
+        96.412,
+        99.291,
+        102.696,
+        98.2,
+        113.296,
+        102.398,
+        102.078,
+        104.639,
+        102.078,
+        102.887,
+        102.434,
+        108.54,
+        97.802,
+        103.98,
+        107.131,
+        97.254,
+        102.256,
+        105.055,
+        100.247,
+        102.019
+      ]
+    },
+    "coldPreparedFrame": {
+      "samples": 5,
+      "medianMs": 96.303,
+      "p95Ms": null,
+      "maximumMs": 98.972,
+      "durationsMs": [
+        95.576,
+        95.902,
+        98.972,
+        97.104,
+        96.303
+      ]
+    },
+    "refresh": {
+      "samples": 5,
+      "medianMs": 691.027,
+      "p95Ms": null,
+      "maximumMs": 705.437,
+      "durationsMs": [
+        665.428,
+        691.027,
+        705.437,
+        691.991,
+        678.636
+      ]
+    },
+    "forcedPreparedFrame": {
+      "samples": 5,
+      "medianMs": 204.2,
+      "p95Ms": null,
+      "maximumMs": 228.376,
+      "durationsMs": [
+        228.376,
+        204.2,
+        208.797,
+        195.799,
+        197.769
+      ]
+    }
+  },
+  "phases": {},
+  "events": [],
+  "idle": {
+    "seconds": 32,
+    "callbacks": 29,
+    "requestedJobs": [
+      {
+        "kind": "combined",
+        "elapsedMs": 10146.693
+      },
+      {
+        "kind": "combined",
+        "elapsedMs": 21332.065
+      }
+    ],
+    "finiteHelpers": 2,
+    "cadence": "One script-mode callback per second; native input tested separately",
+    "callbackTiming": {
+      "samples": 29,
+      "medianMs": 108.554,
+      "p95Ms": 145.815,
+      "maximumMs": 146.465,
+      "durationsMs": [
+        96.193,
+        95.852,
+        140.082,
+        108.669,
+        145.815,
+        106.366,
+        101.922,
+        110.862,
+        142.326,
+        98.701,
+        106.94,
+        108.554,
+        105.729,
+        99.088,
+        102.635,
+        137.93,
+        144.472,
+        144.42,
+        129.007,
+        104.431,
+        101.555,
+        100.268,
+        110.62,
+        146.465,
+        137.573,
+        116.737,
+        107.924,
+        124.743,
+        101.174
+      ]
+    },
+    "sshAttempts": null,
+    "ownerPublications": null,
+    "viewerScans": null,
+    "meshLists": null,
+    "localCollections": null,
+    "stdoutBytes": null,
+    "events": []
+  },
+  "refreshScope": "Baseline combined owner and viewer job",
+  "sshEffectiveConfig": [
+    {
+      "hostId": "starship",
+      "controlmaster": "false",
+      "controlpersist": "no"
+    }
+  ],
+  "scope": "Prepared frames, real owner reads and passive viewer observations; no session lifecycle action.",
+  "instrumentationAvailable": false
+}

@@ -13,7 +13,7 @@ from .config import load_config
 from .errors import ContractError, clean_message
 from .inventory_service import InventoryService
 from .lifecycle_service import LifecycleService
-from .picker_model import PickerModelService, RemoteRefresh
+from .picker_model import PickerModelService, RemoteRefresh, ViewerRefresh
 from .remote_cache import RemoteCache
 from .tmux import validate_required_options, validate_user_option
 from .wire import WireError, validate_string_bounds, write_document
@@ -147,6 +147,7 @@ def build_parser(*, machine: bool = False) -> JsonArgumentParser:
     model.add_argument("--no-refresh", action="store_true")
     refresh = commands.add_parser("_refresh", add_help=True)
     refresh.add_argument("--mesh-revision", required=True)
+    refresh.add_argument("--kind", choices=("owner", "viewer"), default="owner")
     refresh_status = commands.add_parser("_refresh-status", add_help=True)
     refresh_status.add_argument("--json", action="store_true")
     refresh_status.add_argument("--mesh-revision", required=True)
@@ -193,13 +194,14 @@ def _picker_model() -> PickerModelService:
     return PickerModelService(load_config())
 
 
-def _refresh() -> RemoteRefresh:
-    return RemoteRefresh(load_config(), RemoteCache())
+def _refresh(kind: str = "owner") -> RemoteRefresh:
+    selected = ViewerRefresh if kind == "viewer" else RemoteRefresh
+    return selected(load_config(), RemoteCache())
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
     if args.command == "_refresh":
-        _refresh().run(args.mesh_revision)
+        _refresh(args.kind).run(args.mesh_revision)
         return None
     _require_json(args)
     if args.command == "_picker-model":
@@ -299,7 +301,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
     if _is_rofi_invocation(argv):
+        from .launcher import initial_frame
         from .rofi import run_rofi
+
+        frame = initial_frame(os.environ)
+        if frame is not None:
+            print(frame, end="")
+            return 0
 
         return run_rofi()
     machine = bool(argv and argv[0] in _PUBLIC_JSON_COMMANDS and "--json" in argv)

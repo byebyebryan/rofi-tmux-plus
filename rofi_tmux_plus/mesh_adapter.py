@@ -10,6 +10,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from .bounded_process import BoundedCompleted, run_bounded
+from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .wire import WireError, decode_document, validate_string_bounds
 
@@ -136,15 +137,19 @@ class HostMeshAdapter:
     def _executable(self) -> str | None:
         return self._which("rofi-ssh-plus")
 
-    def load(self) -> MeshSnapshot | None:
+    @timed("mesh_list")
+    def load(self, *, timeout_seconds: float = 5) -> MeshSnapshot | None:
         executable = self._executable()
         if executable is None:
             return None
-        payload = self._run_json(executable, ["mesh", "list", "--json"])
+        payload = self._run_json(
+            executable, ["mesh", "list", "--json"], timeout_seconds=timeout_seconds
+        )
         if _is_error_envelope(payload):
             _raise_error_envelope(payload)
         return _parse_snapshot(payload)
 
+    @timed("route_report")
     def report_route(
         self,
         *,

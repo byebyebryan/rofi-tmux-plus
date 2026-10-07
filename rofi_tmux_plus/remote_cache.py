@@ -5,6 +5,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import stat
 import tempfile
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
@@ -12,10 +13,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
+from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .mesh_adapter import MeshSnapshot
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 _MAX_BYTES = 2 * 1024 * 1024
 _MAX_HOSTS = 128
 _MAX_SESSIONS = 256
@@ -31,7 +33,7 @@ _HOST_REQUIRED = {
     "route",
     "sessions",
 }
-_HOST_OPTIONAL = {"error", "lastSeenAt", "stale", "unavailable"}
+_HOST_OPTIONAL = {"error", "lastSeenAt", "stale", "unavailable", "ownerObservedAt", "lastAttemptAt"}
 _SESSION_REQUIRED = {
     "hostId",
     "serverGeneration",
@@ -135,6 +137,10 @@ def _host(value: object) -> dict[str, object] | None:
         return None
     if "unavailable" in value and not isinstance(value["unavailable"], bool):
         return None
+    if "ownerObservedAt" in value and not _number(value["ownerObservedAt"], nullable=True):
+        return None
+    if "lastAttemptAt" in value and not _number(value["lastAttemptAt"]):
+        return None
     return dict(value)
 
 
@@ -163,26 +169,83 @@ class RemoteCache:
 
     @property
     def _state_path(self) -> Path:
-        return self.directory / "remote-inventory-v1.json"
+        return self.directory / "remote-inventory-v2.json"
 
     @property
     def _lock_path(self) -> Path:
-        return self.directory / "remote-inventory-v1.lock"
+        return self.directory / "remote-inventory-v2.lock"
 
     @property
     def _refresh_lock_path(self) -> Path:
         return self.directory / "remote-refresh-v1.lock"
 
     @property
+    def _request_lock_path(self) -> Path:
+        return self.directory / "remote-request-v2.lock"
+
+    @property
     def _marker_path(self) -> Path:
         return self.directory / "remote-refresh-v1.json"
 
+    @property
+    def _epochs_path(self) -> Path:
+        return self.directory / "remote-epochs-v1.json"
+
+    def _epochs(self, snapshot: MeshSnapshot) -> dict[str, object]:
+        raw = self._read_raw(self._epochs_path)
+        if not isinstance(raw, dict) or raw.get("meshRevision") != snapshot.revision:
+            return {"meshRevision": snapshot.revision, "sequence": 0, "hosts": {}}
+        hosts = raw.get("hosts")
+        if (
+            set(raw) != {"meshRevision", "sequence", "hosts"}
+            or not _number(raw.get("sequence"))
+            or not isinstance(hosts, dict)
+            or len(hosts) > _MAX_HOSTS
+            or any(not _text(key) or not _number(value) for key, value in hosts.items())
+        ):
+            raise ContractError("operation_failed", "remote operation epochs are invalid")
+        return raw
+
+    def reserve(self, snapshot: MeshSnapshot, host_ids: Sequence[str]) -> dict[str, int]:
+        """Fence older collectors before dispatching a newer owner observation."""
+        allowed = {host.host_id for host in snapshot.hosts if not host.local}
+        if not set(host_ids) <= allowed:
+            raise ContractError("operation_failed", "remote operation host is invalid")
+        with self.lock() as acquired:
+            if not acquired:
+                raise ContractError("operation_failed", "remote operation lock unavailable")
+            epochs = self._epochs(snapshot)
+            hosts = epochs["hosts"]
+            assert isinstance(hosts, dict)
+            sequence = int(epochs["sequence"])
+            tokens = {}
+            for host_id in host_ids:
+                sequence += 1
+                if sequence > 2**63 - 1:
+                    raise ContractError("operation_failed", "remote operation sequence exhausted")
+                hosts[host_id] = sequence
+                tokens[host_id] = sequence
+            epochs["sequence"] = sequence
+            self._atomic_json(self._epochs_path, epochs)
+            return tokens
+
     @contextmanager
-    def lock(self, *, refresh: bool = False, blocking: bool = True) -> Iterator[bool]:
+    def lock(
+        self, *, refresh: bool = False, request: bool = False, blocking: bool = True
+    ) -> Iterator[bool]:
         _clean_directory(self.directory)
-        path = self._refresh_lock_path if refresh else self._lock_path
-        descriptor = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+        path = (
+            self._request_lock_path
+            if request
+            else self._refresh_lock_path
+            if refresh
+            else self._lock_path
+        )
+        descriptor = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
         try:
+            info = os.fstat(descriptor)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+                raise OSError("remote cache lock must be an owned regular file")
             # ``O_CREAT`` observes the process umask only for a new file.  An
             # old lock can have weaker permissions, so repair it every time.
             os.fchmod(descriptor, 0o600)
@@ -196,10 +259,25 @@ class RemoteCache:
             os.close(descriptor)
 
     def _read_raw(self, path: Path) -> object | None:
+        descriptor = None
         try:
-            data = path.read_bytes()
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            info = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or info.st_size > _MAX_BYTES
+            ):
+                return None
+            with os.fdopen(descriptor, "rb") as handle:
+                descriptor = None
+                data = handle.read(_MAX_BYTES + 1)
         except OSError:
             return None
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
         if not data or len(data) > _MAX_BYTES:
             return None
         try:
@@ -282,12 +360,15 @@ class RemoteCache:
         if checked is None:
             return None
         status = checked["status"]
+        checked["lastAttemptAt"] = checked["observedAt"]
         if status == "ok":
+            checked["ownerObservedAt"] = checked["observedAt"]
             checked.pop("lastSeenAt", None)
             checked.pop("stale", None)
             checked.pop("unavailable", None)
             return checked
         if status == "tmux_missing":
+            checked["ownerObservedAt"] = checked["observedAt"]
             checked["sessions"] = []
             checked["serverGeneration"] = None
             checked["stale"] = False
@@ -295,6 +376,7 @@ class RemoteCache:
             checked["lastSeenAt"] = checked["observedAt"]
             return checked
         if previous is None:
+            checked["ownerObservedAt"] = None
             checked["stale"] = True
             checked["unavailable"] = True
             checked["sessions"] = [
@@ -311,6 +393,7 @@ class RemoteCache:
                 "lastSeenAt": previous.get("lastSeenAt", previous["observedAt"]),
                 "stale": True,
                 "unavailable": True,
+                "lastAttemptAt": checked["observedAt"],
             }
         )
         if checked["nativeHostname"] is not None:
@@ -325,7 +408,10 @@ class RemoteCache:
     @staticmethod
     def _live_row(candidate: Mapping[str, object]) -> dict[str, object]:
         """Validate a remote InventoryService row, never retained cache state."""
-        if any(key in candidate for key in ("lastSeenAt", "stale", "unavailable")):
+        if any(
+            key in candidate
+            for key in ("lastSeenAt", "stale", "unavailable", "ownerObservedAt", "lastAttemptAt")
+        ):
             raise ContractError("operation_failed", "remote refresh returned an invalid host row")
         checked = _host(dict(candidate))
         if (
@@ -388,8 +474,14 @@ class RemoteCache:
             self._atomic_json(self._state_path, state)
             return CacheState(snapshot.revision, state["writtenAt"], tuple(merged))
 
+    @timed("owner_cache_publication")
     def merge_host(
-        self, snapshot: MeshSnapshot, host_id: str, current_row: Mapping[str, object]
+        self,
+        snapshot: MeshSnapshot,
+        host_id: str,
+        current_row: Mapping[str, object],
+        *,
+        operation_token: int | None = None,
     ) -> CacheState:
         """Atomically merge exactly one live remote host without touching peers.
 
@@ -407,6 +499,10 @@ class RemoteCache:
             if not acquired:  # blocking lock currently always acquires
                 raise RuntimeError("remote cache lock unexpectedly unavailable")
             existing = self._load_unlocked(snapshot)
+            if operation_token is not None:
+                epochs = self._epochs(snapshot)
+                if epochs["hosts"].get(host_id) != operation_token:
+                    return existing or CacheState(snapshot.revision, 0, ())
             previous = (
                 {} if existing is None else {str(row["hostId"]): row for row in existing.hosts}
             )
@@ -468,6 +564,8 @@ class RemoteCache:
             or not _number(raw.get("updatedAt"))
             or ("message" in raw and not _text(raw["message"]))
         ):
+            return None
+        if raw["updatedAt"] > self._now_millis():
             return None
         result = dict(raw)
         if (

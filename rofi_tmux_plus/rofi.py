@@ -18,11 +18,13 @@ from dataclasses import dataclass, replace
 from html import escape
 
 from .config import Config, has_control, load_config
+from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .lifecycle_service import LifecycleService
 from .picker_model import PickerModelService
 from .presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache, valid_snapshot_key
 from .tmux import validate_session_id
+from .view_preferences import ViewPreferenceStore
 from .viewer_cache import VIEWER_FRESHNESS_SECONDS
 
 ROFI_RETV_SELECTED = 1
@@ -63,6 +65,9 @@ ROFI_INFO_KEY = "info"
 VIEW_ALL = "all"
 VIEW_LOCAL = "local"
 VIEW_HOST = "host"
+VIEW_OPEN = "open"
+VIEW_ATTACHED = "attached"
+_VIEWS = frozenset({VIEW_ALL, VIEW_LOCAL, VIEW_HOST, VIEW_OPEN, VIEW_ATTACHED})
 _CONCRETE_VIEWS = frozenset({VIEW_LOCAL, VIEW_HOST})
 _SESSION_ID = re.compile(r"^\$[0-9]+$")
 _HOST_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", re.ASCII)
@@ -150,7 +155,7 @@ class NavigationState:
 
     def __post_init__(self) -> None:
         view = self.view if isinstance(self.view, str) else VIEW_ALL
-        if view not in {VIEW_ALL, VIEW_LOCAL, VIEW_HOST}:
+        if view not in _VIEWS:
             view = VIEW_ALL
         host_id = self.host_id
         if view not in _CONCRETE_VIEWS or not isinstance(host_id, str) or not host_id:
@@ -236,10 +241,10 @@ def _strict_navigation_payload(value: object) -> NavigationState | None:
     if not isinstance(value, Mapping) or set(value) - {"view", "hostId"}:
         return None
     view = value.get("view")
-    if not isinstance(view, str) or view not in {VIEW_ALL, VIEW_LOCAL, VIEW_HOST}:
+    if not isinstance(view, str) or view not in _VIEWS:
         return None
     host_id = value.get("hostId")
-    if view == VIEW_ALL:
+    if view not in _CONCRETE_VIEWS:
         return NavigationState(view) if host_id is None else None
     if not isinstance(host_id, str):
         return None
@@ -595,8 +600,10 @@ def _scope_ring(payload: Mapping[str, object] | None) -> tuple[NavigationState, 
     local_scope = NavigationState(VIEW_LOCAL, str(local["hostId"]))
     remotes = [host for host in catalog if not host["local"]]
     if not remotes:
-        return (local_scope,)
+        return (NavigationState(VIEW_OPEN), NavigationState(VIEW_ATTACHED), local_scope)
     return (
+        NavigationState(VIEW_OPEN),
+        NavigationState(VIEW_ATTACHED),
         NavigationState(VIEW_ALL),
         local_scope,
         *(NavigationState(VIEW_HOST, str(host["hostId"])) for host in remotes),
@@ -609,7 +616,9 @@ def _normalize_navigation(
     """Keep continuation state within the current authoritative scope ring."""
 
     ring = _scope_ring(payload)
-    return navigation if navigation in ring else ring[0]
+    if navigation in ring:
+        return navigation
+    return next((scope for scope in ring if scope.view == VIEW_ALL), ring[-1])
 
 
 def _cycle_scope(
@@ -641,7 +650,114 @@ def _scope_label(payload: Mapping[str, object] | None, navigation: NavigationSta
         return "Local"
     if normalized.view == VIEW_HOST:
         return _host_display(payload, normalized.host_id)
+    if normalized.view == VIEW_OPEN:
+        return "Open"
+    if normalized.view == VIEW_ATTACHED:
+        return "Attached"
     return "All"
+
+
+def _preference_store(
+    payload: Mapping[str, object] | None, environ: Mapping[str, str]
+) -> ViewPreferenceStore | None:
+    local = next((host for host in _host_catalog(payload) if host["local"]), None)
+    return ViewPreferenceStore(str(local["hostId"]), environ=environ) if local else None
+
+
+def _save_preference(
+    payload: Mapping[str, object] | None,
+    navigation: NavigationState,
+    environ: Mapping[str, str],
+    *,
+    opened: object = None,
+) -> None:
+    try:
+        store = _preference_store(payload, environ)
+        if store is not None:
+            store.update(navigation.view, navigation.host_id, opened=opened)
+    except Exception:  # noqa: BLE001 - UI hints cannot change a completed operation
+        return
+
+
+def _restore_preference(
+    payload: Mapping[str, object], state: ContinuationState, environ: Mapping[str, str], now: float
+) -> ContinuationState:
+    store = _preference_store(payload, environ)
+    if store is None:
+        return state
+    preference = store.load()
+    navigation = NavigationState(
+        preference.view, store.endpoint if preference.view == VIEW_LOCAL else preference.host_id
+    )
+    restored = replace(state, navigation=_normalize_navigation(payload, navigation))
+    if preference.last_used is not None:
+        highlighted = dict(preference.last_used, meshRevision=payload.get("meshRevision"))
+        rows = _session_rows_render(payload, restored.navigation, now=now)
+        if _highlighted_row_index(rows, highlighted) is not None:
+            restored = replace(restored, highlighted=highlighted)
+    return restored
+
+
+def _owner_observation_fresh(
+    payload: Mapping[str, object] | None, host: Mapping[str, object], now: float
+) -> bool:
+    if not _host_live(host):
+        return False
+    observed = host.get("ownerObservedAt", host.get("observedAt"))
+    budget = payload.get("ownerFreshnessSeconds", 30) if isinstance(payload, Mapping) else 30
+    return (
+        type(observed) is int and type(budget) is int and 0 <= now * 1000 - observed < budget * 1000
+    )
+
+
+def _view_member(
+    payload: Mapping[str, object] | None, session: Mapping[str, object], view: str, now: float
+) -> bool:
+    if view not in {VIEW_OPEN, VIEW_ATTACHED}:
+        return True
+    host = session.get("_host")
+    if not isinstance(host, Mapping) or not _owner_observation_fresh(payload, host, now):
+        return False
+    if view == VIEW_ATTACHED:
+        count = session.get("attachedClients")
+        return type(count) is int and count > 0
+    viewer = session.get("localViewer")
+    return (
+        session.get("pending") is False
+        and _viewer_observation_fresh(payload, now)
+        and isinstance(viewer, Mapping)
+        and viewer.get("state") == "open"
+        and viewer.get("confidence") in {"confirmed", "matched"}
+        and viewer.get("reason") is None
+    )
+
+
+def _view_uncertain(payload: Mapping[str, object] | None, view: str, now: float) -> bool:
+    if view not in {VIEW_OPEN, VIEW_ATTACHED}:
+        return False
+    hosts = {row["hostId"]: row for row in _host_rows(payload)}
+    for entry in _host_catalog(payload):
+        host = hosts.get(entry["hostId"])
+        if host is None or not _owner_observation_fresh(payload, host, now):
+            return True
+        if view == VIEW_ATTACHED and any(
+            type(row.get("attachedClients")) is not int
+            for row in host.get("sessions", [])
+            if isinstance(row, Mapping)
+        ):
+            return True
+        if view == VIEW_OPEN and host.get("sessions"):
+            if not _viewer_observation_fresh(payload, now):
+                return True
+            if any(
+                not isinstance(row.get("localViewer"), Mapping)
+                or row["localViewer"].get("state") == "unknown"
+                or row.get("pending") is not False
+                for row in host["sessions"]
+                if isinstance(row, Mapping)
+            ):
+                return True
+    return False
 
 
 def _host_rows(payload: Mapping[str, object] | None) -> list[dict[str, object]]:
@@ -735,6 +851,8 @@ def _session_status(
 ) -> str:
     if not _host_live(host):
         return "unavailable"
+    if host.get("ownerFactsExpired") is True:
+        return "owner facts expired · attachment unknown"
     viewer = session.get("localViewer")
     state = viewer.get("state") if isinstance(viewer, Mapping) else "unknown"
     confidence = viewer.get("confidence") if isinstance(viewer, Mapping) else None
@@ -975,6 +1093,8 @@ def _session_rows_render(
     sessions.sort(key=lambda item: _session_sort_key(item, order))
     rows: list[str] = []
     for session in sessions:
+        if not _view_member(payload, session, navigation.view, now):
+            continue
         host = session.get("_host")
         if not isinstance(host, Mapping):
             continue
@@ -1087,6 +1207,7 @@ def _highlighted_row_index(
     return matches[0] if len(matches) == 1 else None
 
 
+@timed("render_frame")
 def render_snapshot(
     snapshot: Mapping[str, object] | None,
     *,
@@ -1139,15 +1260,26 @@ def render_snapshot(
     # Browse mode only acts on an existing typed session row through Enter.
     # Retired custom-input callbacks are inert migration guards.
     headers.append(_protocol("no-custom", "true"))
-    if preserve:
-        headers.extend((_protocol("keep-selection", "true"), _protocol("keep-filter", "true")))
-    elif preserve_filter:
-        headers.append(_protocol("keep-filter", "true"))
+    # Rofi 2.0 reads these flags from the previous frame. Arm every frame;
+    # explicit new-selection below controls whether to preserve or reset.
+    headers.extend((_protocol("keep-selection", "true"), _protocol("keep-filter", "true")))
     effective_message = _notice(message)
     if not effective_message and not clear_message:
         effective_message = active.error_message
     if not effective_message and not clear_message and active.refresh_deadline is not None:
         effective_message = "Refreshing in background"
+    if active.pending_action is None and _view_uncertain(
+        snapshot, active.navigation.view, now_value
+    ):
+        inspection = "All" if any(not row["local"] for row in _host_catalog(snapshot)) else "Local"
+        uncertainty = (
+            f"Viewer presence unknown; check {inspection}"
+            if active.navigation.view == VIEW_OPEN
+            else f"Some attachment facts are unknown; check {inspection}"
+        )
+        effective_message = _notice(
+            f"{effective_message} · {uncertainty}" if effective_message else uncertainty
+        )
     effective_message = _action_message(active, effective_message)
     headers.append(_protocol("message", effective_message))
     lifecycle_was_present = state.has_lifecycle
@@ -1162,7 +1294,9 @@ def render_snapshot(
             if active.error_deadline is not None and active.refresh_deadline is None:
                 delay = max(1, math.ceil(active.error_deadline - now_value))
             elif active.viewer_deadline is not None and active.refresh_deadline is None:
-                delay = max(1, math.ceil(active.viewer_deadline - now_value))
+                # Rofi arms the callback from the previous frame's delay.
+                # A stable cadence cannot strand renewal after page changes.
+                delay = AUTO_REFRESH_POLL_SECONDS
             else:
                 delay = AUTO_REFRESH_POLL_SECONDS
             headers.append(_protocol("theme", _timeout_theme(delay)))
@@ -1228,6 +1362,26 @@ def render_snapshot(
             host_unavailable = host_row is not None and not _host_live(host_row)
             if host_unavailable:
                 secondary += " · unavailable"
+        elif active.navigation.view in {VIEW_OPEN, VIEW_ATTACHED}:
+            uncertain = _view_uncertain(snapshot, active.navigation.view, now_value)
+            text = (
+                "No open viewers here"
+                if active.navigation.view == VIEW_OPEN
+                else "No attached sessions"
+            )
+            inspection = (
+                "All" if any(not row["local"] for row in _host_catalog(snapshot)) else "Local"
+            )
+            if uncertain:
+                text = (
+                    "Viewer presence unknown"
+                    if active.navigation.view == VIEW_OPEN
+                    else "Attachment facts unknown"
+                )
+            secondary = (
+                f"Membership unknown; check {inspection}" if uncertain else "No matching sessions"
+            )
+            host_unavailable = uncertain
         else:
             text = "No tmux sessions"
             secondary = "No sessions available"
@@ -1237,10 +1391,14 @@ def render_snapshot(
             empty_options.append(("urgent", "true"))
         empty_options.append(("display", text + ROW_SEPARATOR + secondary))
         rows = [text + _row_options(empty_options)]
-    if preserve:
+    if preserve or (not continuation and active.highlighted is not None):
         new_selection = _highlighted_row_index(rows, active.highlighted)
         if new_selection is not None:
             headers.append(_protocol("new-selection", new_selection))
+        elif active.highlighted is not None:
+            headers.append(_protocol("new-selection", 0))
+    else:
+        headers.append(_protocol("new-selection", 0))
     if continuation:
         return ROFI_RECORD_SEPARATOR.join((*headers, *rows)) + ROFI_RECORD_SEPARATOR
     # Change Rofi's record delimiter after the initial LF-delimited headers;
@@ -1321,10 +1479,25 @@ def _refresh_observation(
     payload: Mapping[str, object] | None, state: ContinuationState, *, now: float
 ) -> tuple[ContinuationState, str]:
     marker = payload.get("remoteRefresh") if isinstance(payload, Mapping) else None
+    viewer_marker = payload.get("viewerRefresh") if isinstance(payload, Mapping) else None
+    if isinstance(viewer_marker, Mapping) and (
+        viewer_marker.get("state") == "running"
+        or not isinstance(marker, Mapping)
+        or marker.get("state") != "running"
+        and viewer_marker.get("state")
+        in {
+            "failed",
+            "stale",
+            "stalled",
+        }
+    ):
+        marker = viewer_marker
     marker_mapping = marker if isinstance(marker, Mapping) else None
     requested = (
         bool(payload.get("remoteRefreshRequested")) if isinstance(payload, Mapping) else False
     )
+    if isinstance(payload, Mapping):
+        requested = requested or bool(payload.get("viewerRefreshRequested"))
     viewer_needed = (
         payload.get("viewerRefreshNeeded") is True if isinstance(payload, Mapping) else False
     )
@@ -1336,6 +1509,13 @@ def _refresh_observation(
     if observed_at is None and isinstance(endpoint, Mapping):
         observed_at = endpoint.get("observedAt")
     viewer_deadline = None
+    next_refresh = payload.get("nextRefreshAt") if isinstance(payload, Mapping) else None
+    if (
+        isinstance(next_refresh, (int, float))
+        and not isinstance(next_refresh, bool)
+        and math.isfinite(next_refresh)
+    ):
+        viewer_deadline = max(now + 1, next_refresh / 1000)
     if (
         not viewer_needed
         and isinstance(observed_at, int)
@@ -1344,7 +1524,9 @@ def _refresh_observation(
     ):
         expiry = observed_at / 1000 + VIEWER_FRESHNESS_SECONDS
         if expiry > now:
-            viewer_deadline = expiry
+            viewer_deadline = (
+                min(viewer_deadline, expiry) if viewer_deadline is not None else expiry
+            )
     marker_updated_at = marker_mapping.get("updatedAt") if marker_mapping is not None else None
     retry_deadline = None
     if (
@@ -1383,13 +1565,13 @@ def _refresh_observation(
                 return replace(
                     state,
                     refresh_deadline=None,
-                    viewer_deadline=retry_deadline if refresh_needed else None,
+                    viewer_deadline=retry_deadline if refresh_needed else viewer_deadline,
                 ), ""
             return (
                 replace(
                     state,
                     refresh_deadline=None,
-                    viewer_deadline=retry_deadline if refresh_needed else None,
+                    viewer_deadline=retry_deadline if refresh_needed else viewer_deadline,
                     error_deadline=now + ERROR_NOTICE_SECONDS,
                     error_message=text,
                     notice_key=key,
@@ -1484,6 +1666,21 @@ def _auto_refresh_callback(
     now: float,
     presentation_cache: PresentationSnapshotCache,
 ) -> str:
+    if (
+        state.refresh_deadline is None
+        and state.viewer_deadline is not None
+        and state.viewer_deadline > now
+    ):
+        cached = presentation_cache.load(state.snapshot_key)
+        if cached is not None:
+            return _render_state(
+                cached,
+                state,
+                preserve=True,
+                timeout=True,
+                now=now,
+                presentation_cache=presentation_cache,
+            )
     try:
         payload, next_state, message = _load_observed(
             model_service, state, start_refresh=True, now=now
@@ -1687,6 +1884,7 @@ def _cached_navigation_callback(
     direction: int,
     *,
     now: float,
+    environ: Mapping[str, str] | None = None,
 ) -> str:
     """Render one arrow callback using only its exact persisted snapshot."""
 
@@ -1710,6 +1908,8 @@ def _cached_navigation_callback(
         # snapshot that created the pending action without a model read.
         return _render_state(snapshot, state, preserve=True, now=now)
     navigation = _cycle_scope(snapshot, state.navigation, direction)
+    if environ is not None:
+        _save_preference(snapshot, navigation, environ)
     next_state = replace(
         state,
         navigation=navigation,
@@ -1820,6 +2020,7 @@ def run_rofi(
                 state,
                 1 if retv == ROFI_RETV_CUSTOM_2 else -1,
                 now=now,
+                environ=environ,
             ),
             end="",
         )
@@ -1996,6 +2197,11 @@ def run_rofi(
             if kind != "session":
                 raise ContractError("invalid_input", "selected row is not a session")
             _open_selection(selected, lifecycle_service)
+            try:
+                bookmark_payload = presentation_cache.load(state.snapshot_key)
+                _save_preference(bookmark_payload, state.navigation, environ, opened=selected)
+            except Exception:  # noqa: BLE001 - opening already succeeded
+                return 0
             return 0
         except Exception as error:  # noqa: BLE001 - action errors keep the picker open
             try:
@@ -2089,6 +2295,7 @@ def run_rofi(
         )
         return 0
     timeout = observed.has_lifecycle
+    observed = _restore_preference(payload, observed, environ, now)
     print(
         _render_state(
             payload,

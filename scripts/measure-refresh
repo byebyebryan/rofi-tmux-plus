@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+"""Measure prepared picker frames and finite refreshes with isolated state."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import io
+import json
+import math
+import os
+import sys
+import time
+import tomllib
+from contextlib import redirect_stdout
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+sys.dont_write_bytecode = True
+
+
+def subprocess_config(endpoint, mesh):
+    import subprocess
+
+    peers = []
+    for host in mesh.hosts if mesh else ():
+        if host.local:
+            continue
+        route = host.routes[0].destination
+        result = subprocess.run(
+            ["ssh", "-G", route], capture_output=True, text=True, timeout=5, check=False
+        )
+        fields = {}
+        for line in result.stdout.splitlines():
+            key, _, value = line.partition(" ")
+            if key in {"controlmaster", "controlpersist"}:
+                fields[key] = value
+        peers.append({"hostId": host.host_id, **fields})
+    return peers
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--warm-samples", type=int, default=20)
+    parser.add_argument("--cold-samples", type=int, default=5)
+    parser.add_argument("--idle-seconds", type=int, default=0)
+    args = parser.parse_args()
+    if (
+        not 1 <= args.warm_samples <= 100
+        or not 1 <= args.cold_samples <= 30
+        or not 0 <= args.idle_seconds <= 60
+    ):
+        parser.error("sample counts must be bounded and positive")
+    root = args.source_root.resolve()
+    sys.path.insert(0, str(root))
+    from rofi_tmux_plus.config import load_config
+    from rofi_tmux_plus.mesh_adapter import HostMeshAdapter
+    from rofi_tmux_plus.picker_model import PickerModelService, RemoteRefresh
+
+    try:
+        from rofi_tmux_plus.picker_model import ViewerRefresh
+    except ImportError:
+        ViewerRefresh = None
+    from rofi_tmux_plus.remote_cache import RemoteCache
+    from rofi_tmux_plus.rofi import run_rofi
+    from rofi_tmux_plus.viewer_cache import LOCAL_ONLY_REVISION
+
+    class PassiveModel(PickerModelService):
+        def load(self, *, start_refresh: bool = True):
+            return super().load(start_refresh=False)
+
+    def frame(config) -> tuple[float, int, int]:
+        output = io.StringIO()
+        started = time.monotonic()
+        with redirect_stdout(output):
+            run_rofi(dict(os.environ, ROFI_RETV="0"), model_service=PassiveModel(config))
+        text = output.getvalue()
+        return (time.monotonic() - started) * 1000, len(text.encode()), text.count("\x00info\x1f")
+
+    def summarize(samples: list[float]) -> dict[str, object]:
+        ordered = sorted(samples)
+        count = len(ordered)
+        middle = count // 2
+        median = ordered[middle] if count % 2 else sum(ordered[middle - 1 : middle + 1]) / 2
+        return {
+            "samples": count,
+            "medianMs": round(median, 3),
+            "p95Ms": round(ordered[math.ceil(count * 0.95) - 1], 3) if count >= 20 else None,
+            "maximumMs": round(ordered[-1], 3),
+            "durationsMs": [round(value, 3) for value in samples],
+        }
+
+    config = load_config()
+    mesh = HostMeshAdapter().load()
+    endpoint = mesh.local_host.host_id if mesh is not None else os.uname().nodename
+    revision = mesh.revision if mesh is not None else LOCAL_ONLY_REVISION
+    results: dict[str, list[float]] = {
+        "warmPreparedFrame": [],
+        "coldPreparedFrame": [],
+        "refresh": [],
+        "ownerRefresh": [],
+        "viewerRefresh": [],
+        "forcedPreparedFrame": [],
+    }
+    old_environment = {
+        key: os.environ.get(key)
+        for key in ("XDG_CACHE_HOME", "XDG_STATE_HOME", "TMUX_PLUS_TIMING_FILE")
+    }
+    events = []
+    idle = {"seconds": args.idle_seconds, "ownerJobs": 0, "viewerJobs": 0, "events": []}
+    with TemporaryDirectory(prefix="tmux-plus-measure-") as temporary:
+        base = Path(temporary)
+        try:
+            timing_path = base / "timings.jsonl"
+            os.environ["TMUX_PLUS_TIMING_FILE"] = str(timing_path)
+            for sample in range(args.cold_samples):
+                sample_root = base / str(sample)
+                os.environ["XDG_CACHE_HOME"] = str(sample_root / "cache")
+                os.environ["XDG_STATE_HOME"] = str(sample_root / "state")
+                duration, _bytes, _rows = frame(config)
+                results["coldPreparedFrame"].append(duration)
+                started = time.monotonic()
+                RemoteRefresh(config, RemoteCache()).run(revision)
+                owner_end = time.monotonic()
+                if ViewerRefresh is not None:
+                    results["ownerRefresh"].append((owner_end - started) * 1000)
+                    ViewerRefresh(config, RemoteCache()).run(revision)
+                    results["viewerRefresh"].append((time.monotonic() - owner_end) * 1000)
+                results["refresh"].append((time.monotonic() - started) * 1000)
+            for _sample in range(args.warm_samples):
+                duration, _bytes, _rows = frame(config)
+                results["warmPreparedFrame"].append(duration)
+            for _sample in range(args.cold_samples):
+                output = io.StringIO()
+                started_forced = time.monotonic()
+                with redirect_stdout(output):
+                    run_rofi(dict(os.environ, ROFI_RETV="10"))
+                results["forcedPreparedFrame"].append((time.monotonic() - started_forced) * 1000)
+            # Keep the fixed idle window separate from forced-refresh helpers.
+            jobs = [RemoteRefresh(config, RemoteCache())]
+            if ViewerRefresh:
+                jobs.append(ViewerRefresh(config, RemoteCache()))
+            stop = time.monotonic() + 16
+            while time.monotonic() < stop and any(
+                (job.status(revision) or {}).get("state") == "running" for job in jobs
+            ):
+                time.sleep(0.1)
+            if timing_path.exists():
+                events = [json.loads(line) for line in timing_path.read_text().splitlines()]
+            if args.idle_seconds:
+                # Real detached helpers use the same isolated roots and timing file.
+                import re
+
+                environment = dict(os.environ, ROFI_RETV="0")
+                started_idle = time.monotonic()
+                event_start = len(events)
+                requested_jobs = []
+                original_spawn = RemoteRefresh._spawn
+
+                def captured_spawn(argv):
+                    kind = (
+                        "viewer" if "viewer" in argv else "owner" if ViewerRefresh else "combined"
+                    )
+                    requested_jobs.append(
+                        {
+                            "kind": kind,
+                            "elapsedMs": round((time.monotonic() - started_idle) * 1000, 3),
+                        }
+                    )
+                    original_spawn(argv)
+
+                RemoteRefresh._spawn = staticmethod(captured_spawn)
+                callbacks = 0
+                callback_ms = []
+                while time.monotonic() - started_idle < args.idle_seconds:
+                    output = io.StringIO()
+                    started_callback = time.monotonic()
+                    with redirect_stdout(output):
+                        run_rofi(environment)
+                    callback_ms.append((time.monotonic() - started_callback) * 1000)
+                    callbacks += 1
+                    match = re.search(r"\x00data\x1f([^\n\x1e]+)", output.getvalue())
+                    if match:
+                        environment = dict(os.environ, ROFI_RETV="28", ROFI_DATA=match.group(1))
+                    time.sleep(1)
+                # Wait only for this experiment's finite running markers.
+                refresh = RemoteRefresh(config, RemoteCache())
+                viewer = ViewerRefresh(config, RemoteCache()) if ViewerRefresh else None
+                stop = time.monotonic() + 16
+                while time.monotonic() < stop and any(
+                    job is not None and (job.status(revision) or {}).get("state") == "running"
+                    for job in (refresh, viewer)
+                ):
+                    time.sleep(0.1)
+                RemoteRefresh._spawn = staticmethod(original_spawn)
+                all_events = (
+                    [json.loads(line) for line in timing_path.read_text().splitlines()]
+                    if timing_path.exists()
+                    else []
+                )
+                idle_events = all_events[event_start:]
+                idle = {
+                    "seconds": args.idle_seconds,
+                    "callbacks": callbacks,
+                    "requestedJobs": requested_jobs,
+                    "finiteHelpers": len(requested_jobs),
+                    "cadence": "One script-mode callback per second; native input tested separately",
+                    "callbackTiming": summarize(callback_ms),
+                    "sshAttempts": sum(row["event"] == "remote_command" for row in idle_events)
+                    if ViewerRefresh
+                    else None,
+                    "ownerPublications": sum(
+                        row["event"] == "owner_cache_publication" for row in idle_events
+                    )
+                    if ViewerRefresh
+                    else None,
+                    "viewerScans": sum(row["event"] == "viewer_scan" for row in idle_events)
+                    if ViewerRefresh
+                    else None,
+                    "meshLists": sum(row["event"] == "mesh_list" for row in idle_events)
+                    if ViewerRefresh
+                    else None,
+                    "localCollections": sum(
+                        row["event"] == "local_inventory" for row in idle_events
+                    )
+                    if ViewerRefresh
+                    else None,
+                    "stdoutBytes": sum(row.get("stdoutBytes", 0) for row in idle_events)
+                    if ViewerRefresh
+                    else None,
+                    "events": idle_events,
+                }
+        finally:
+            for key, value in old_environment.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+    version = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
+    runtime = hashlib.sha256()
+    runtime_files = [
+        root / "pyproject.toml",
+        *sorted((root / "rofi_tmux_plus").glob("*.py")),
+        *sorted((root / "bin").glob("*")),
+    ]
+    for path in runtime_files:
+        if path.is_file():
+            runtime.update(
+                path.relative_to(root).as_posix().encode() + b"\0" + path.read_bytes() + b"\0"
+            )
+    report = {
+        "runtimeDigest": "sha256:" + runtime.hexdigest(),
+        "collectedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "sessionRows": _rows,
+        "frameBytes": _bytes,
+        "schemaVersion": 2,
+        "version": version,
+        "endpoint": endpoint,
+        "hostCount": len(mesh.hosts) if mesh is not None else 1,
+        "displayEnvironment": bool(os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")),
+        "measurements": {name: summarize(values) for name, values in results.items() if values},
+        "phases": {
+            name: summarize([row["durationMs"] for row in events if row["event"] == name])
+            for name in sorted({row["event"] for row in events})
+        },
+        "events": events,
+        "idle": idle,
+        "refreshScope": "Separate owner and viewer jobs"
+        if ViewerRefresh
+        else "Baseline combined owner and viewer job",
+        "sshEffectiveConfig": subprocess_config(endpoint, mesh),
+        "scope": "Prepared frames, real owner reads and passive viewer observations; no session lifecycle action.",
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2) + "\n")
+    args.output.chmod(0o600)
+    print(json.dumps({"output": str(args.output), "endpoint": endpoint, "version": version}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

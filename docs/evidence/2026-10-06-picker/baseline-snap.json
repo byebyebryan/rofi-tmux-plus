@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "version": "0.5.1",
+  "endpoint": "snap",
+  "hostCount": 2,
+  "displayEnvironment": false,
+  "measurements": {
+    "warmPreparedFrame": {
+      "samples": 20,
+      "medianMs": 102.261,
+      "p95Ms": 112.884,
+      "maximumMs": 117.902,
+      "durationsMs": [
+        95.686,
+        103.168,
+        106.005,
+        94.88,
+        102.728,
+        102.298,
+        102.75,
+        96.05,
+        112.884,
+        96.982,
+        108.995,
+        95.771,
+        100.369,
+        117.902,
+        104.084,
+        107.107,
+        100.658,
+        101.116,
+        97.915,
+        102.225
+      ]
+    },
+    "coldPreparedFrame": {
+      "samples": 5,
+      "medianMs": 98.818,
+      "p95Ms": null,
+      "maximumMs": 104.28,
+      "durationsMs": [
+        96.715,
+        104.28,
+        98.818,
+        101.35,
+        92.043
+      ]
+    },
+    "refresh": {
+      "samples": 5,
+      "medianMs": 767.762,
+      "p95Ms": null,
+      "maximumMs": 897.24,
+      "durationsMs": [
+        797.952,
+        767.762,
+        753.613,
+        729.125,
+        897.24
+      ]
+    }
+  },
+  "scope": "Prepared frames and real owner reads; no viewer or session lifecycle action."
+}

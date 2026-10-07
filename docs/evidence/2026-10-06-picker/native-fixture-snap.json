@@ -1,0 +1,15 @@
+{
+  "endpoint": "snap",
+  "nativeRofi": true,
+  "isolatedFixtures": true,
+  "checks": [
+    "initial remembered row activated through native Rofi",
+    "arrow-only selection and Escape preserve bookmark",
+    "view change remains remembered after cancel",
+    "filter retained across Open to Attached and Enter uses visible target",
+    "action cycling and native Ctrl+G cancel produce no lifecycle action",
+    "first and subsequent timer redraws preserve typed filter and highlighted identity",
+    "kill confirmation starts on Cancel and cancelling performs no kill"
+  ],
+  "artifactDirectory": "/tmp/tmux-plus-gui-si55drhv"
+}

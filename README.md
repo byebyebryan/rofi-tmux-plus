@@ -13,7 +13,7 @@ SSH Plus command. It always targets the local default tmux server; test-only
 isolated sockets are not a public CLI feature. It also publishes deterministic
 producer fixtures for consumers.
 
-The private retained-remote cache and bounded detached refresh owner support a
+The private retained-remote cache and bounded detached refresh jobs support a
 Rofi browse surface with Open and guarded Kill actions. The picker now shows
 caller-local viewer presence for local and remote session owners, using a
 ten-second bounded observation refresh. Public `inventory --json --with-viewers`
@@ -35,7 +35,7 @@ For development without installing the console script:
 
 ```sh
 PYTHONPATH=. ./bin/rofi-tmux-plus inventory --json
-rofi -show tmux-plus -modes "tmux-plus:$(pwd)/bin/rofi-tmux-plus" \
+./bin/rofi-tmux-plus-rofi -show tmux-plus -modes "tmux-plus:$(pwd)/bin/rofi-tmux-plus" \
   -kb-custom-1 Alt+r -kb-custom-2 Right -kb-custom-3 Left \
   -kb-custom-7 Tab -kb-custom-8 ISO_Left_Tab \
   -kb-element-next "" -kb-element-prev "" \
@@ -52,8 +52,9 @@ the persistent message shows `Enter:` with both actions, highlights the
 selected one, and separates `Tab: Cycle actions` with a divider. Notices follow
 after a blank line. Enter opens or begins a kill confirmation for
 the session highlighted at that moment. It never acts on Tab. Right and Left
-wrap the flat `All`, `Local`, and Host Mesh remote scopes, while `Alt+R` performs a bounded
-foreground refresh. Escape and `Ctrl+G` use Rofi's native cancel action and
+wrap `Open`, `Attached`, `All`, `Local`, and Host Mesh remote scopes. With no
+remote, the ring is `Open`, `Attached`, `Local`. `Alt+R` requests bounded
+background owner and viewer refreshes. Escape and `Ctrl+G` use Rofi's native cancel action and
 always close the picker. Up and Down move rows; `Ctrl+B` and `Ctrl+F` move the
 filter cursor. `-eh 2` reserves the two physical Pango display lines used by
 each session row.
@@ -73,6 +74,21 @@ snapshots and fails closed if the exact snapshot in `ROFI_DATA` is missing or
 corrupt. Refreshes retain the active action and use stable typed row identity
 to select the same session after a reorder when it still exists.
 
+Tmux Plus `0.6.0` remembers the last view and last successfully opened
+session per viewing endpoint. The launcher prepares one frame and uses Rofi's
+initial selection option; direct script invocation restores the view but does
+not guarantee the initial highlighted row. Bookmarks match the complete session
+reference, survive renames, and never supply lifecycle authority. Each new
+dialog starts with an empty filter and Open action.
+
+Open contains fresh confirmed or qualified viewers on this desktop; Attached
+contains fresh owner observations with positive tmux client counts, including
+clients elsewhere. Both remain present when empty and explain unknown
+membership. Viewer renewal uses retained owner facts and performs no SSH
+inventory. Owner results publish per host as they complete. Idle timer ticks
+use cached frames until renewal is due; navigation and action cycling also
+remain cache-only.
+
 The picker also uses Rofi's row-state tokens to separate observation confidence
 from session age. A live `open here` session row is `active`; retained session
 rows whose host observation is unavailable are `urgent` but remain selectable.
@@ -87,6 +103,8 @@ refresh naturally removes an unavailable marker on the next render; cache age
 alone never creates one.
 
 - [Product and interaction design](docs/DESIGN.md)
+- [Picker refinement plan](docs/tmux-plus-picker-refinement-plan.md)
+- [Candidate validation and rollout](docs/tmux-plus-picker-validation.md)
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)
 - [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md)
 

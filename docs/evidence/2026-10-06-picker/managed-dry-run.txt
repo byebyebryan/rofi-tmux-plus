@@ -1,0 +1,7 @@
+diff --git a/.local/bin/rofi-tmux-plus-rofi b/.local/bin/rofi-tmux-plus-rofi
+new file mode 120000
+index 0000000000000000000000000000000000000000..25b0edcfb54b22b210aa547508d6f8b2340a78a5
+--- /dev/null
++++ b/.local/bin/rofi-tmux-plus-rofi
+@@ -0,0 +1 @@
++../share/rofi/extensions/tmux-plus/bin/rofi-tmux-plus-rofi

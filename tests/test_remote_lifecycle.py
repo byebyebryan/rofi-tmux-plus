@@ -97,7 +97,7 @@ class _Provider:
         self.snapshot = snapshot
         self.loads = 0
 
-    def load(self) -> MeshSnapshot | None:
+    def load(self, *, timeout_seconds: float = 5) -> MeshSnapshot | None:
         self.loads += 1
         return self.snapshot
 

@@ -11,6 +11,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from .bounded_process import BoundedCompleted, run_bounded
+from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshPolicy, MeshStaleError
 from .model import Pane, Session, SessionReference
@@ -737,6 +738,7 @@ class RemoteInventory:
         self._nonce_factory = nonce_factory
         self._now_millis = now_millis
 
+    @timed("remote_command", process_result=True)
     def _run(
         self, argv: Sequence[str], *, timeout: float
     ) -> subprocess.CompletedProcess[str] | BoundedCompleted:
@@ -757,6 +759,7 @@ class RemoteInventory:
             timeout=timeout,
         )
 
+    @timed("compatibility_collection")
     def _legacy_fallback(
         self,
         route: str,
@@ -855,6 +858,7 @@ class RemoteInventory:
             native_hostname=parsed.native_hostname,
         )
 
+    @timed("remote_host", host_argument=1)
     def inventory(
         self,
         host: MeshHost,

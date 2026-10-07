@@ -122,6 +122,8 @@ P8 replaces the previously deployed `Recent` / `Hosts` root pair and per-host
 child layers with leaf-only peer views:
 
 ```text
+Tmux › Open
+Tmux › Attached
 Tmux › All
 Tmux › Local
 Tmux › <remote host in Host Mesh order>
@@ -131,8 +133,9 @@ Tmux › <remote host in Host Mesh order>
 then every authoritative remote in stable Host Mesh order; availability and
 activity never reorder the ring. Empty and unavailable hosts keep their scope.
 When no remote exists, the redundant `All` and `Local` scopes collapse to one
-`Local` view. Tmux Plus starts in `All` when it exists and does not persist a
-host scope between invocations.
+`Local` view, alongside Open and Attached. Tmux Plus defaults to All when it
+exists, otherwise Local, and restores an endpoint-local remembered view and
+last successfully opened complete session reference through its launcher.
 
 Left and Right wrap through scopes without discovery or network work, preserve
 the current filter, and reset selection to the first eligible matching row.
@@ -222,6 +225,8 @@ incidental current directory.
 The picker has leaf-only peer views:
 
 ```text
+Tmux › Open
+Tmux › Attached
 Tmux › All
 Tmux › Local
 Tmux › <remote host in Host Mesh order>
@@ -281,7 +286,7 @@ here now; it is not a proxy for recent activity. The `urgent` token means that
 the current observation cannot establish the retained session or concrete host
 as available. Kill mode deliberately applies both tokens to every selectable
 session row so the managed selected state can show danger. A refresh running in
-the background, a bounded foreground refresh, or an old cache/activity
+the background or an old cache/activity
 timestamp does not otherwise add either token. A successful atomic host
 snapshot clears the unavailable warning on its next render; theme colors remain
 outside this repository.
@@ -293,7 +298,7 @@ Browsing follows the suite-wide Rofi contract:
 | Key | Behavior |
 | --- | --- |
 | Tab / Shift+Tab | Cycle the visible action forward or backward |
-| Left / Right | Wrap through the `All`, `Local`, and remote scopes |
+| Left / Right | Wrap through `Open`, `Attached`, `All`, `Local`, and remote scopes |
 | Enter | Open or begin Kill confirmation for the selected session |
 | Escape | Close Rofi through its native cancel action |
 | Ctrl+G | Close Rofi through the same native cancel action |
@@ -350,18 +355,44 @@ all dynamic values are shell-quoted; local processes use argv arrays. User
 options accepted for programmatic creation are restricted to tmux `@` session
 options.
 
+## Remembered context and filtered views
+
+The Open and Attached views precede All/Local/remote scopes and remain present
+when empty. Open requires fresh endpoint-local confirmed or matched viewer
+presence plus fresh successful owner evidence. Attached requires fresh positive
+owner client counts. Neither implies provider activity or grants a close handle.
+Unknown membership points to All, or Local in local-only mode. Explicit scope
+changes preserve the filter and reset selection; initial preparation alone can
+restore the last successfully opened row. Preferences live under XDG state,
+are bounded owned records, and supply no lifecycle authority.
+
+The launcher prepares one frame, passes its selected row to Rofi, and serves
+that exact frame to the first script callback. Every frame arms keep-filter and
+keep-selection because Rofi 2.0 reads those flags from the preceding frame;
+explicit new-selection controls reset versus preservation. Confirmation keeps
+its frozen reference and starts on Cancel.
+
 ## Discovery and cache lifecycle
 
 Opening the picker must not wait for every SSH host:
 
 1. Query the local default tmux server synchronously.
 2. Load the most recent valid remote snapshots.
-3. Render immediately and start at most one detached remote refresh.
-4. Pin that refresh to one Host Mesh revision and query configured remote hosts
-   concurrently with bounded SSH attempts.
-5. Use Rofi's timeout callback to replace rows while preserving the active
-   filter and selection.
-6. Stop polling and clear transient status after completion or timeout.
+3. Render immediately and request independent finite owner and viewer jobs
+   when their observations are due. Each kind has its own request and run locks.
+4. Pin owner collection to one Host Mesh revision and publish validated host
+   results as they complete. Per-host operation epochs reject late results after
+   a newer observation or mutation reconciliation.
+5. Renew positive viewer observations after seven seconds and expire at ten;
+   other observations renew at ten. Scans read retained owner facts, never SSH
+   inventory, and bind matches to their supporting owner inputs and desktop context.
+6. Use a stable one-second Rofi timer while renewal is scheduled. Idle ticks read
+   only the presentation snapshot until work is due; running jobs can publish
+   progress on the next tick. Preserve the filter and surviving highlighted
+   reference; reset explicitly when a view changes or its row disappears.
+7. Clear transient job status after completion, while retaining the next bounded
+   renewal deadline. Configured owner freshness is independent of viewer scans;
+   expired counts become unknown and leave Open/Attached membership.
 
 The private picker model exposes the complete current logical-host catalog in
 Mesh declaration order separately from observed inventory rows. Thus the flat

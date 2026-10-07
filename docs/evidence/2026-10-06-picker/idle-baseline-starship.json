@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "version": "0.5.1",
+  "endpoint": "starship",
+  "hostCount": 2,
+  "displayEnvironment": false,
+  "measurements": {
+    "warmPreparedFrame": {
+      "samples": 20,
+      "medianMs": 67.344,
+      "p95Ms": 68.93,
+      "maximumMs": 71.195,
+      "durationsMs": [
+        66.198,
+        67.622,
+        65.635,
+        67.1,
+        65.178,
+        66.05,
+        67.256,
+        67.801,
+        66.86,
+        67.83,
+        67.153,
+        68.93,
+        66.998,
+        71.195,
+        67.433,
+        68.355,
+        68.365,
+        68.603,
+        67.246,
+        68.019
+      ]
+    },
+    "coldPreparedFrame": {
+      "samples": 5,
+      "medianMs": 65.892,
+      "p95Ms": null,
+      "maximumMs": 67.988,
+      "durationsMs": [
+        66.915,
+        65.892,
+        64.619,
+        67.988,
+        65.507
+      ]
+    },
+    "refresh": {
+      "samples": 5,
+      "medianMs": 560.329,
+      "p95Ms": null,
+      "maximumMs": 571.113,
+      "durationsMs": [
+        559.837,
+        545.843,
+        566.859,
+        560.329,
+        571.113
+      ]
+    },
+    "forcedPreparedFrame": {
+      "samples": 5,
+      "medianMs": 122.713,
+      "p95Ms": null,
+      "maximumMs": 126.092,
+      "durationsMs": [
+        122.713,
+        124.083,
+        121.325,
+        119.957,
+        126.092
+      ]
+    }
+  },
+  "phases": {},
+  "events": [],
+  "idle": {
+    "seconds": 32,
+    "callbacks": 30,
+    "requestedJobs": [
+      {
+        "kind": "combined",
+        "elapsedMs": 10783.419
+      },
+      {
+        "kind": "combined",
+        "elapsedMs": 21499.44
+      }
+    ],
+    "finiteHelpers": 2,
+    "cadence": "One script-mode callback per second; native input tested separately",
+    "callbackTiming": {
+      "samples": 30,
+      "medianMs": 72.667,
+      "p95Ms": 74.723,
+      "maximumMs": 75.575,
+      "durationsMs": [
+        66.713,
+        68.453,
+        73.519,
+        73.62,
+        71.968,
+        74.258,
+        72.61,
+        74.141,
+        72.724,
+        66.691,
+        70.288,
+        66.091,
+        71.383,
+        72.396,
+        72.826,
+        73.409,
+        72.834,
+        71.854,
+        70.082,
+        68.553,
+        75.575,
+        65.803,
+        73.854,
+        74.723,
+        74.014,
+        73.194,
+        73.356,
+        69.436,
+        74.307,
+        68.367
+      ]
+    },
+    "sshAttempts": null,
+    "ownerPublications": null,
+    "viewerScans": null,
+    "meshLists": null,
+    "localCollections": null,
+    "stdoutBytes": null,
+    "events": []
+  },
+  "refreshScope": "Baseline combined owner and viewer job",
+  "sshEffectiveConfig": [
+    {
+      "hostId": "snap",
+      "controlmaster": "false",
+      "controlpersist": "no"
+    }
+  ],
+  "scope": "Prepared frames, real owner reads and passive viewer observations; no session lifecycle action.",
+  "instrumentationAvailable": false
+}

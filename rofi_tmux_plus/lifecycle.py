@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from .config import Config, has_control, require_clean_text
+from .diagnostics import timed
 from .errors import ContractError, NoServer, clean_message
 from .host import LocalHost, resolve_local_host
 from .model import Session, SessionReference
@@ -273,6 +274,7 @@ class LocalLifecycle:
             )
         return resolve_local_host(host_id, self.host)
 
+    @timed("local_inventory")
     def inventory(
         self, host_id: str, *, panes: bool, option_names: Sequence[str]
     ) -> dict[str, object]:

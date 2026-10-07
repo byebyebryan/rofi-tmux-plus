@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "version": "0.5.1",
+  "endpoint": "starship",
+  "hostCount": 2,
+  "displayEnvironment": false,
+  "measurements": {
+    "warmPreparedFrame": {
+      "samples": 20,
+      "medianMs": 68.665,
+      "p95Ms": 74.526,
+      "maximumMs": 75.781,
+      "durationsMs": [
+        67.187,
+        75.781,
+        69.822,
+        65.66,
+        66.679,
+        70.01,
+        65.703,
+        68.977,
+        71.048,
+        66.623,
+        67.132,
+        65.711,
+        68.937,
+        74.526,
+        67.254,
+        67.657,
+        73.289,
+        68.776,
+        68.555,
+        69.524
+      ]
+    },
+    "coldPreparedFrame": {
+      "samples": 5,
+      "medianMs": 69.237,
+      "p95Ms": null,
+      "maximumMs": 73.206,
+      "durationsMs": [
+        73.206,
+        64.202,
+        67.716,
+        70.635,
+        69.237
+      ]
+    },
+    "refresh": {
+      "samples": 5,
+      "medianMs": 661.545,
+      "p95Ms": null,
+      "maximumMs": 1025.607,
+      "durationsMs": [
+        661.545,
+        619.439,
+        612.239,
+        949.181,
+        1025.607
+      ]
+    }
+  },
+  "scope": "Prepared frames and real owner reads; no viewer or session lifecycle action."
+}

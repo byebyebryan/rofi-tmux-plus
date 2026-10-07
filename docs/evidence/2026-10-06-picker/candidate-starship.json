@@ -1,0 +1,1435 @@
+{
+  "runtimeDigest": "sha256:f609830c4cec806ed810d64326e7bcd620174a128922dc07e26c3ff77c1be1ef",
+  "collectedAt": "2026-10-07T01:11:36Z",
+  "sessionRows": 10,
+  "frameBytes": 8433,
+  "schemaVersion": 2,
+  "version": "0.6.0a1",
+  "endpoint": "starship",
+  "hostCount": 2,
+  "displayEnvironment": false,
+  "measurements": {
+    "warmPreparedFrame": {
+      "samples": 20,
+      "medianMs": 65.939,
+      "p95Ms": 68.045,
+      "maximumMs": 68.429,
+      "durationsMs": [
+        65.566,
+        65.062,
+        66.984,
+        65.268,
+        65.953,
+        67.427,
+        65.924,
+        65.408,
+        64.935,
+        67.707,
+        65.897,
+        67.102,
+        68.429,
+        65.565,
+        65.584,
+        64.762,
+        68.045,
+        67.606,
+        67.325,
+        66.562
+      ]
+    },
+    "coldPreparedFrame": {
+      "samples": 5,
+      "medianMs": 63.691,
+      "p95Ms": null,
+      "maximumMs": 72.114,
+      "durationsMs": [
+        72.114,
+        66.342,
+        63.301,
+        63.691,
+        63.47
+      ]
+    },
+    "refresh": {
+      "samples": 5,
+      "medianMs": 617.301,
+      "p95Ms": null,
+      "maximumMs": 646.297,
+      "durationsMs": [
+        646.297,
+        617.301,
+        610.999,
+        622.764,
+        601.88
+      ]
+    },
+    "ownerRefresh": {
+      "samples": 5,
+      "medianMs": 496.14,
+      "p95Ms": null,
+      "maximumMs": 527.072,
+      "durationsMs": [
+        527.072,
+        496.14,
+        492.694,
+        502.834,
+        484.155
+      ]
+    },
+    "viewerRefresh": {
+      "samples": 5,
+      "medianMs": 119.224,
+      "p95Ms": null,
+      "maximumMs": 121.16,
+      "durationsMs": [
+        119.224,
+        121.16,
+        118.305,
+        119.929,
+        117.725
+      ]
+    },
+    "forcedPreparedFrame": {
+      "samples": 5,
+      "medianMs": 125.241,
+      "p95Ms": null,
+      "maximumMs": 130.002,
+      "durationsMs": [
+        126.405,
+        125.241,
+        122.309,
+        123.264,
+        130.002
+      ]
+    }
+  },
+  "phases": {
+    "local_inventory": {
+      "samples": 38,
+      "medianMs": 8.604,
+      "p95Ms": 9.333,
+      "maximumMs": 9.655,
+      "durationsMs": [
+        9.333,
+        8.468,
+        8.872,
+        8.416,
+        8.004,
+        9.264,
+        9.038,
+        8.48,
+        8.777,
+        8.703,
+        8.733,
+        8.405,
+        8.634,
+        8.611,
+        8.309,
+        8.606,
+        8.557,
+        8.445,
+        8.165,
+        8.68,
+        8.424,
+        9.026,
+        8.874,
+        8.46,
+        8.642,
+        7.312,
+        8.665,
+        8.601,
+        8.395,
+        9.655,
+        9.013,
+        8.476,
+        8.216,
+        8.509,
+        9.075,
+        8.435,
+        8.765,
+        8.413
+      ]
+    },
+    "mesh_list": {
+      "samples": 63,
+      "medianMs": 54.996,
+      "p95Ms": 57.469,
+      "maximumMs": 60.265,
+      "durationsMs": [
+        59.574,
+        58.019,
+        55.123,
+        54.332,
+        54.996,
+        55.741,
+        54.052,
+        56.499,
+        55.593,
+        55.802,
+        53.663,
+        54.527,
+        54.923,
+        53.847,
+        53.822,
+        52.99,
+        55.867,
+        54.716,
+        55.27,
+        54.834,
+        53.035,
+        53.232,
+        56.152,
+        54.047,
+        53.683,
+        53.683,
+        53.399,
+        55.165,
+        53.302,
+        54.329,
+        54.975,
+        54.124,
+        53.648,
+        53.477,
+        55.788,
+        54.293,
+        54.603,
+        56.052,
+        53.987,
+        53.545,
+        54.153,
+        56.068,
+        55.87,
+        55.299,
+        53.232,
+        56.987,
+        56.268,
+        57.469,
+        57.259,
+        56.475,
+        55.8,
+        55.766,
+        54.142,
+        55.779,
+        55.498,
+        56.128,
+        55.695,
+        55.911,
+        60.265,
+        56.794,
+        56.33,
+        53.504,
+        54.672
+      ]
+    },
+    "owner_cache_publication": {
+      "samples": 6,
+      "medianMs": 0.366,
+      "p95Ms": null,
+      "maximumMs": 0.521,
+      "durationsMs": [
+        0.469,
+        0.388,
+        0.344,
+        0.33,
+        0.344,
+        0.521
+      ]
+    },
+    "picker_model": {
+      "samples": 30,
+      "medianMs": 64.124,
+      "p95Ms": 66.469,
+      "maximumMs": 70.523,
+      "durationsMs": [
+        70.523,
+        64.944,
+        61.996,
+        62.374,
+        62.152,
+        63.177,
+        62.553,
+        64.476,
+        62.588,
+        63.285,
+        64.495,
+        63.432,
+        62.786,
+        62.331,
+        65.211,
+        63.39,
+        64.547,
+        65.653,
+        63.088,
+        62.843,
+        62.187,
+        65.427,
+        65.139,
+        64.387,
+        63.861,
+        66.026,
+        64.921,
+        65.147,
+        64.853,
+        66.469
+      ]
+    },
+    "remote_command": {
+      "samples": 6,
+      "medianMs": 326.164,
+      "p95Ms": null,
+      "maximumMs": 355.903,
+      "durationsMs": [
+        355.903,
+        326.237,
+        326.091,
+        333.923,
+        318.896,
+        321.206
+      ]
+    },
+    "remote_host": {
+      "samples": 6,
+      "medianMs": 383.169,
+      "p95Ms": null,
+      "maximumMs": 412.333,
+      "durationsMs": [
+        412.333,
+        384.248,
+        382.091,
+        391.11,
+        373.601,
+        380.611
+      ]
+    },
+    "render_frame": {
+      "samples": 30,
+      "medianMs": 2.026,
+      "p95Ms": 2.398,
+      "maximumMs": 2.415,
+      "durationsMs": [
+        1.051,
+        0.931,
+        0.902,
+        0.905,
+        0.889,
+        1.929,
+        2.033,
+        1.992,
+        2.064,
+        2.171,
+        2.415,
+        1.955,
+        2.121,
+        2.064,
+        1.993,
+        1.946,
+        2.038,
+        2.232,
+        1.976,
+        2.117,
+        2.02,
+        2.064,
+        1.91,
+        2.398,
+        2.116,
+        1.981,
+        2.032,
+        1.963,
+        2.128,
+        2.12
+      ]
+    },
+    "route_report": {
+      "samples": 6,
+      "medianMs": 56.477,
+      "p95Ms": null,
+      "maximumMs": 58.928,
+      "durationsMs": [
+        56.073,
+        57.652,
+        55.688,
+        56.882,
+        54.387,
+        58.928
+      ]
+    },
+    "viewer_cache_publication": {
+      "samples": 8,
+      "medianMs": 0.376,
+      "p95Ms": null,
+      "maximumMs": 0.64,
+      "durationsMs": [
+        0.38,
+        0.348,
+        0.308,
+        0.371,
+        0.291,
+        0.64,
+        0.553,
+        0.477
+      ]
+    },
+    "viewer_scan": {
+      "samples": 8,
+      "medianMs": 0.082,
+      "p95Ms": null,
+      "maximumMs": 0.094,
+      "durationsMs": [
+        0.094,
+        0.078,
+        0.074,
+        0.074,
+        0.077,
+        0.092,
+        0.089,
+        0.085
+      ]
+    }
+  },
+  "events": [
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335491298,
+      "durationMs": 59.574
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335491308,
+      "durationMs": 9.333
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335491309,
+      "durationMs": 70.523
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335491310,
+      "durationMs": 1.051
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335491368,
+      "durationMs": 58.019
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335491725,
+      "durationMs": 355.903,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335491781,
+      "durationMs": 56.073
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335491781,
+      "durationMs": 412.333,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335491837,
+      "durationMs": 55.123
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335491837,
+      "durationMs": 0.469
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335491892,
+      "durationMs": 54.332
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335491901,
+      "durationMs": 8.468
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335491901,
+      "durationMs": 0.094
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335491956,
+      "durationMs": 54.996
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335491957,
+      "durationMs": 0.38
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492013,
+      "durationMs": 55.741
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335492022,
+      "durationMs": 8.872
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335492022,
+      "durationMs": 64.944
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335492023,
+      "durationMs": 0.931
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492077,
+      "durationMs": 54.052
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335492404,
+      "durationMs": 326.237,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335492462,
+      "durationMs": 57.652
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335492462,
+      "durationMs": 384.248,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492518,
+      "durationMs": 56.499
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335492519,
+      "durationMs": 0.388
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492575,
+      "durationMs": 55.593
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335492583,
+      "durationMs": 8.416
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335492584,
+      "durationMs": 0.078
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492640,
+      "durationMs": 55.802
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335492640,
+      "durationMs": 0.348
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492694,
+      "durationMs": 53.663
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335492702,
+      "durationMs": 8.004
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335492702,
+      "durationMs": 61.996
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335492704,
+      "durationMs": 0.902
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335492758,
+      "durationMs": 54.527
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335493085,
+      "durationMs": 326.091,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335493141,
+      "durationMs": 55.688
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335493141,
+      "durationMs": 382.091,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493196,
+      "durationMs": 54.923
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335493196,
+      "durationMs": 0.344
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493250,
+      "durationMs": 53.847
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335493260,
+      "durationMs": 9.264
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335493260,
+      "durationMs": 0.074
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493314,
+      "durationMs": 53.822
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335493314,
+      "durationMs": 0.308
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493368,
+      "durationMs": 52.99
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335493377,
+      "durationMs": 9.038
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335493377,
+      "durationMs": 62.374
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335493378,
+      "durationMs": 0.905
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493434,
+      "durationMs": 55.867
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335493769,
+      "durationMs": 333.923,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335493826,
+      "durationMs": 56.882
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335493826,
+      "durationMs": 391.11,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493881,
+      "durationMs": 54.716
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335493881,
+      "durationMs": 0.33
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335493937,
+      "durationMs": 55.27
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335493945,
+      "durationMs": 8.48
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335493946,
+      "durationMs": 0.074
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494001,
+      "durationMs": 54.834
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335494001,
+      "durationMs": 0.371
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494054,
+      "durationMs": 53.035
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494063,
+      "durationMs": 8.777
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494063,
+      "durationMs": 62.152
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494065,
+      "durationMs": 0.889
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494118,
+      "durationMs": 53.232
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335494437,
+      "durationMs": 318.896,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335494492,
+      "durationMs": 54.387
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335494492,
+      "durationMs": 373.601,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494548,
+      "durationMs": 56.152
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335494549,
+      "durationMs": 0.344
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494603,
+      "durationMs": 54.047
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494612,
+      "durationMs": 8.703
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335494612,
+      "durationMs": 0.077
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494666,
+      "durationMs": 53.683
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335494666,
+      "durationMs": 0.291
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494720,
+      "durationMs": 53.683
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494729,
+      "durationMs": 8.733
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494730,
+      "durationMs": 63.177
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494732,
+      "durationMs": 1.929
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494786,
+      "durationMs": 53.399
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494794,
+      "durationMs": 8.405
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494795,
+      "durationMs": 62.553
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494797,
+      "durationMs": 2.033
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494852,
+      "durationMs": 55.165
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494861,
+      "durationMs": 8.634
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494862,
+      "durationMs": 64.476
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494864,
+      "durationMs": 1.992
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494918,
+      "durationMs": 53.302
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494926,
+      "durationMs": 8.611
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494927,
+      "durationMs": 62.588
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494929,
+      "durationMs": 2.064
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335494984,
+      "durationMs": 54.329
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335494992,
+      "durationMs": 8.309
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335494993,
+      "durationMs": 63.285
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335494995,
+      "durationMs": 2.171
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495050,
+      "durationMs": 54.975
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495059,
+      "durationMs": 8.606
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495060,
+      "durationMs": 64.495
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495063,
+      "durationMs": 2.415
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495117,
+      "durationMs": 54.124
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495126,
+      "durationMs": 8.557
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495126,
+      "durationMs": 63.432
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495129,
+      "durationMs": 1.955
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495183,
+      "durationMs": 53.648
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495191,
+      "durationMs": 8.445
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495192,
+      "durationMs": 62.786
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495194,
+      "durationMs": 2.121
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495248,
+      "durationMs": 53.477
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495256,
+      "durationMs": 8.165
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495257,
+      "durationMs": 62.331
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495259,
+      "durationMs": 2.064
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495315,
+      "durationMs": 55.788
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495324,
+      "durationMs": 8.68
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495324,
+      "durationMs": 65.211
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495327,
+      "durationMs": 1.993
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495381,
+      "durationMs": 54.293
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495390,
+      "durationMs": 8.424
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495390,
+      "durationMs": 63.39
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495393,
+      "durationMs": 1.946
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495447,
+      "durationMs": 54.603
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495457,
+      "durationMs": 9.026
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495457,
+      "durationMs": 64.547
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495460,
+      "durationMs": 2.038
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495516,
+      "durationMs": 56.052
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495525,
+      "durationMs": 8.874
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495526,
+      "durationMs": 65.653
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495528,
+      "durationMs": 2.232
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495582,
+      "durationMs": 53.987
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495591,
+      "durationMs": 8.46
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495591,
+      "durationMs": 63.088
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495594,
+      "durationMs": 1.976
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495648,
+      "durationMs": 53.545
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495656,
+      "durationMs": 8.642
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495657,
+      "durationMs": 62.843
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495659,
+      "durationMs": 2.117
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495714,
+      "durationMs": 54.153
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495721,
+      "durationMs": 7.312
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495722,
+      "durationMs": 62.187
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495724,
+      "durationMs": 2.02
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495780,
+      "durationMs": 56.068
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495789,
+      "durationMs": 8.665
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495790,
+      "durationMs": 65.427
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495792,
+      "durationMs": 2.064
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495848,
+      "durationMs": 55.87
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495857,
+      "durationMs": 8.601
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495858,
+      "durationMs": 65.139
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495860,
+      "durationMs": 1.91
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495915,
+      "durationMs": 55.299
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495924,
+      "durationMs": 8.395
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495924,
+      "durationMs": 64.387
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495927,
+      "durationMs": 2.398
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335495981,
+      "durationMs": 53.232
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335495990,
+      "durationMs": 9.655
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335495991,
+      "durationMs": 63.861
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335495994,
+      "durationMs": 2.116
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496051,
+      "durationMs": 56.987
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496108,
+      "durationMs": 56.268
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496117,
+      "durationMs": 9.013
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335496118,
+      "durationMs": 66.026
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335496120,
+      "durationMs": 1.981
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496178,
+      "durationMs": 57.469
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496188,
+      "durationMs": 57.259
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496191,
+      "durationMs": 56.475
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496198,
+      "durationMs": 8.476
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335496199,
+      "durationMs": 0.092
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496234,
+      "durationMs": 55.8
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496242,
+      "durationMs": 8.216
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335496243,
+      "durationMs": 64.921
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335496245,
+      "durationMs": 2.032
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496255,
+      "durationMs": 55.766
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335496256,
+      "durationMs": 0.64
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496300,
+      "durationMs": 54.142
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496356,
+      "durationMs": 55.779
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496365,
+      "durationMs": 8.509
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335496365,
+      "durationMs": 65.147
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335496368,
+      "durationMs": 1.963
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496423,
+      "durationMs": 55.498
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496435,
+      "durationMs": 56.128
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496445,
+      "durationMs": 9.075
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335496446,
+      "durationMs": 0.089
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496479,
+      "durationMs": 55.695
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496488,
+      "durationMs": 8.435
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335496488,
+      "durationMs": 64.853
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335496491,
+      "durationMs": 2.128
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496502,
+      "durationMs": 55.911
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335496503,
+      "durationMs": 0.553
+    },
+    {
+      "event": "remote_command",
+      "observedAt": 1791335496514,
+      "durationMs": 321.206,
+      "stdoutBytes": 738,
+      "stderrBytes": 56,
+      "returncode": 0
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496551,
+      "durationMs": 60.265
+    },
+    {
+      "event": "route_report",
+      "observedAt": 1791335496573,
+      "durationMs": 58.928
+    },
+    {
+      "event": "remote_host",
+      "observedAt": 1791335496573,
+      "durationMs": 380.611,
+      "hostId": "snap"
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496609,
+      "durationMs": 56.794
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496618,
+      "durationMs": 8.765
+    },
+    {
+      "event": "picker_model",
+      "observedAt": 1791335496618,
+      "durationMs": 66.469
+    },
+    {
+      "event": "render_frame",
+      "observedAt": 1791335496621,
+      "durationMs": 2.12
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496630,
+      "durationMs": 56.33
+    },
+    {
+      "event": "owner_cache_publication",
+      "observedAt": 1791335496630,
+      "durationMs": 0.521
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496686,
+      "durationMs": 53.504
+    },
+    {
+      "event": "local_inventory",
+      "observedAt": 1791335496696,
+      "durationMs": 8.413
+    },
+    {
+      "event": "viewer_scan",
+      "observedAt": 1791335496696,
+      "durationMs": 0.085
+    },
+    {
+      "event": "mesh_list",
+      "observedAt": 1791335496751,
+      "durationMs": 54.672
+    },
+    {
+      "event": "viewer_cache_publication",
+      "observedAt": 1791335496752,
+      "durationMs": 0.477
+    }
+  ],
+  "idle": {
+    "seconds": 0,
+    "ownerJobs": 0,
+    "viewerJobs": 0,
+    "events": []
+  },
+  "refreshScope": "Separate owner and viewer jobs",
+  "sshEffectiveConfig": [
+    {
+      "hostId": "snap",
+      "controlmaster": "false",
+      "controlpersist": "no"
+    }
+  ],
+  "scope": "Prepared frames, real owner reads and passive viewer observations; no session lifecycle action."
+}

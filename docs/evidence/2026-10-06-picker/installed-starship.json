@@ -1,0 +1,23 @@
+{
+  "endpoint": "starship",
+  "installedVersion": "0.6.0a1",
+  "installedModuleDirectory": "/tmp/tmux-plus-installed-venv/lib/python3.13/site-packages/rofi_tmux_plus",
+  "moduleBytesMatchCandidate": true,
+  "consoleScripts": true,
+  "publicCommands": [
+    {
+      "command": "inventory",
+      "sessionCount": 4,
+      "schema": "pass",
+      "singleJsonDocument": true
+    },
+    {
+      "command": "inventory with-viewers",
+      "sessionCount": 4,
+      "schema": "pass",
+      "singleJsonDocument": true
+    }
+  ],
+  "privateOwnerAndViewerJobs": "complete",
+  "hostCount": 2
+}
