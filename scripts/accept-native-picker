@@ -661,8 +661,15 @@ def main():
             passed("native_watch_recovers_without_retaining_observation_error", event=recovered)
             keys(pid, "-M", "ctrl", "-k", "Tab", "-m", "ctrl")
             time.sleep(0.2)
-            keys(pid, "-M", "ctrl", "-M", "shift", "-k", "Tab", "-m", "shift", "-m", "ctrl")
-            time.sleep(0.2)
+            keys(pid, "-M", "ctrl", "-k", "Tab", "-m", "ctrl")
+            index = len(events())
+            native("rename-session", "-t", "azlgamma-v2", "azlgamma-v3")
+            after(
+                index,
+                lambda e: (
+                    e["retv"] == 28 and any("azlgamma-v3" in row["label"] for row in e["rows"])
+                ),
+            )
             assert child_pid(process) == pid
             passed("native_mode_switch_and_reentry_keep_owned_process_alive")
             index = len(events())
@@ -704,7 +711,7 @@ def main():
                 "#{session_id}|#{session_created}|#{session_name}|#{session_attached}|#{session_windows}",
             )
             assert current == baseline.replace("azlbeta", "azlbeta-v2").replace(
-                "azlgamma", "azlgamma-v2"
+                "azlgamma", "azlgamma-v3"
             )
             assert not (root / "ssh-starts").exists()
             passed("owned_roster_attachments_and_windows_preserved")
