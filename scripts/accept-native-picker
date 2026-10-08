@@ -255,6 +255,18 @@ def main():
                     return Path(os.fsdecode(item.split(b"=", 1)[1]))
             raise RuntimeError("owned Rofi has no private runtime")
 
+        def owned_watch(launcher, runtime):
+            fields = (runtime / "notify").read_text().split()
+            if len(fields) != 6 or fields[5] != "1":
+                return None
+            selected = int(fields[4])
+            try:
+                assert f"PPid:\t{launcher.pid}\n" in Path(f"/proc/{selected}/status").read_text()
+                assert b"tmux_observer_client.cli" in Path(f"/proc/{selected}/cmdline").read_bytes()
+            except FileNotFoundError:
+                return None
+            return selected
+
         def keys(pid, *args):
             current = json.loads(command(["niri", "msg", "--json", "windows"], env=env))
             layers = json.loads(command(["niri", "msg", "--json", "layers"], env=env))
@@ -588,9 +600,7 @@ def main():
             assert "pendingAction" not in json.loads(cancelled["headers"]["data"])
             passed("native_confirmation_cancel_returns_to_browse_without_mutation")
             runtime = owned_runtime(pid)
-            watch_pid = int((runtime / "notify").read_text().split()[4])
-            assert f"PPid:\t{process.pid}\n" in Path(f"/proc/{watch_pid}/status").read_text()
-            assert b"tmux_observer_client.cli" in Path(f"/proc/{watch_pid}/cmdline").read_bytes()
+            watch_pid = until(lambda: owned_watch(process, runtime))
             index = len(events())
             os.kill(watch_pid, signal.SIGSTOP)
             try:
@@ -607,6 +617,21 @@ def main():
                     seconds=15,
                 )
                 passed("native_stalled_watch_expires_and_revokes_cached_positives", event=stalled)
+            finally:
+                try:
+                    os.kill(watch_pid, signal.SIGCONT)
+                except ProcessLookupError:
+                    pass  # The supervisor may already have reaped its stalled child.
+            index = len(events())
+            after(
+                index,
+                lambda e: (
+                    e["retv"] == 28 and not json.loads(e["headers"]["data"]).get("errorMessage")
+                ),
+            )
+            watch_pid = until(lambda: owned_watch(process, runtime))
+            os.kill(watch_pid, signal.SIGSTOP)
+            try:
                 (runtime / "notify").write_text("malformed owned diagnostic\n")
                 (runtime / "notify").chmod(0o600)
                 index = len(events())
@@ -619,7 +644,10 @@ def main():
                 )
                 passed("malformed_owned_notification_has_bounded_native_failure")
             finally:
-                os.kill(watch_pid, signal.SIGCONT)
+                try:
+                    os.kill(watch_pid, signal.SIGCONT)
+                except ProcessLookupError:
+                    pass
             index = len(events())
             recovered = after(
                 index,
