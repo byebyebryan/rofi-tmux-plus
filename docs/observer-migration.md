@@ -1,7 +1,7 @@
 # Observer client migration
 
 Tmux Plus `0.7.0a1`: T13 fresh CLI compatibility and T14 prepared/native picker
-acceptance pass for the recorded tuple below. T15 managed selection remains open.
+acceptance and T15 managed selection pass for the recorded tuple below.
 The user selected Starship for graphical tests while Snap is in active use.
 No host was suspended; physical sleep/wake is optional in the always-on scope.
 
@@ -99,7 +99,7 @@ artifact's separate acceptance. Empty views keep custom-input dispatch inert.
 Initial failures now use LF headers and declare the continuation delimiter, so
 Rofi parses the visible error and subsequent read-only callbacks correctly.
 
-## Publication and next gate
+## Publication and managed acceptance
 
 `candidate-artifact build` freezes committed source with the pinned native mode
 and constrained backend. `release-bundle` combines that source archive with the
@@ -107,8 +107,26 @@ verified platform wheel, preserves executable bits and writes a complete member
 manifest for scoped managed verification. It adds no acceptance by assembly.
 
 Observer is published at `v0.1.0a1`; its downloaded wheel checksum matches the
-accepted input, and source CI passed at `28a74b6`. Frontend CI installs that exact
-checksum before source checks. T15 still must publish the frontend bundle, select
-owner/fleet/context startup and the picker via chezmoi, and verify exact installed
-bytes, readiness, recovery and rollback on Snap/Starship. Lifecycle extraction
+accepted input, and source CI passed at `28a74b6`. Frontend `v0.7.0a1` points to
+release/review commit `9c39575`, while its runtime artifacts retain source `92b5c35`.
+Its wheel checksum matches the accepted input. The deterministic managed source/
+native bundle SHA256 is
+`1a5701c0887aa2304e97f6fc4ab0c7512a96a919dec17e899102fdac48ce5e46`.
+Frontend CI passed at `9c39575` after installing the exact pinned Observer wheel.
+
+T15 is accepted through [the managed operations record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+and its exact tuple/member evidence. Scoped chezmoi installation on Snap and
+Starship verifies all 69 Core members, 198 frontend members, manifest, launchers,
+units/drop-ins, owner enablement and desktop startup. Both final prepared frames
+have ready local/remote owners, Mesh and desktop observation; the fresh v1 facade
+and headless picker frame pass. Owner/desktop restart creates new publisher and
+reader incarnations. Rollback restores every previous control and frontend byte,
+stops the scoped units and leaves a healthy old facade; reselection passes again.
+Preexisting native session references survive throughout.
+
+The installed managed bundle also passes 20 graphical cases on Starship using
+the rendered Mod+G arguments and desktop theme with isolated preferences/runtime
+and disposable native sessions. Diagnostic key/mode/window additions are recorded
+separately from the managed binding. Snap receives headless deployment/acceptance
+only. Both hosts stay awake; no alarm or suspend is attempted. Lifecycle extraction
 and native event experiments remain separate follow-ups.

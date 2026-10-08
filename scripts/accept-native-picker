@@ -10,6 +10,7 @@ import importlib.util
 import json
 import math
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -87,6 +88,10 @@ def main():
     parser.add_argument("--artifact", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--host-id", choices=("snap", "starship"), required=True)
+    parser.add_argument("--source-bundle", type=Path, help="verify payloads at their source paths")
+    parser.add_argument(
+        "--managed-binding", type=Path, help="exercise the installed Mod+G arguments"
+    )
     parser.add_argument("--skip-timing", action="store_true", help="diagnostic GUI run only")
     args = parser.parse_args()
     artifact, _wheel = builder().verify(args.artifact)
@@ -103,11 +108,27 @@ def main():
         )
     )
     parent = Path(package).parent.parent
+    if args.source_bundle:
+        assert parent.resolve() == args.source_bundle.resolve()
     for member, source in artifact["sourceFiles"].items():
-        path = parent / (source if source.startswith("rofi_tmux_plus/") else member)
+        path = parent / (
+            source if args.source_bundle or source.startswith("rofi_tmux_plus/") else member
+        )
         assert (
             hashlib.sha256(path.read_bytes()).hexdigest() == artifact["members"][member]["sha256"]
         )
+    managed_arguments = None
+    if args.managed_binding:
+        row = next(
+            line
+            for line in args.managed_binding.read_text().splitlines()
+            if line.lstrip().startswith("Mod+G ")
+        )
+        spawn = row.split("{ spawn ", 1)[1].rsplit("; }", 1)[0]
+        values = [json.loads(value) for value in re.findall(r'"(?:\\.|[^"\\])*"', spawn)]
+        assert values[0] == "rofi-tmux-plus-rofi"
+        managed_arguments = values[1:]
+        assert managed_arguments[managed_arguments.index("-modes") + 1] == "tmux-plus"
     env = dict(os.environ)
     for line in command(["systemctl", "--user", "show-environment"]).splitlines():
         key, separator, value = line.partition("=")
@@ -125,6 +146,12 @@ def main():
         "hostId": args.host_id,
         "harnessSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "timingSkipped": args.skip_timing,
+        "installation": "managed source bundle" if args.source_bundle else "wheel",
+        "managedBindingSha256": (
+            hashlib.sha256(args.managed_binding.read_bytes()).hexdigest()
+            if args.managed_binding
+            else None
+        ),
         "cases": [],
         "limits": [
             "Only the named desktop is exercised; other hosts receive no graphical input",
@@ -315,48 +342,67 @@ def main():
         def launch(label):
             index = len(events())
             started = time.monotonic_ns() / 1000000
+            arguments = [
+                str(bins / "rofi-tmux-plus-rofi"),
+                "-no-config",
+                "-normal-window",
+                "-show",
+                "tmux-plus",
+                "-modes",
+                "tmux-plus,keys",
+                "-theme-str",
+                "window { width: 900px; } listview { lines: 6; }",
+                "-kb-custom-1",
+                "Alt+r",
+                "-kb-custom-2",
+                "Right",
+                "-kb-custom-3",
+                "Left",
+                "-kb-custom-7",
+                "Tab",
+                "-kb-custom-8",
+                "ISO_Left_Tab",
+                "-kb-custom-19",
+                "",
+                "-kb-element-next",
+                "",
+                "-kb-element-prev",
+                "",
+                "-kb-row-tab",
+                "",
+                "-kb-mode-next",
+                "Control+Tab",
+                "-kb-mode-previous",
+                "Control+ISO_Left_Tab",
+                "-kb-move-char-back",
+                "Control+b",
+                "-kb-move-char-forward",
+                "Control+f",
+                "-kb-accept-custom",
+                "Control+Return",
+                "-kb-screenshot",
+                "F12",
+            ]
+            if managed_arguments is not None:
+                arguments = [str(bins / "rofi-tmux-plus-rofi"), *managed_arguments]
+                # Rofi chooses the first occurrence. Replace the few diagnostic
+                # bindings instead of appending duplicate options to Mod+G.
+                for option, value in (
+                    ("-config", str(Path.home() / ".config/rofi/config.rasi")),
+                    ("-modes", "tmux-plus,keys"),
+                    ("-kb-custom-19", ""),
+                    ("-kb-mode-next", "Control+Tab"),
+                    ("-kb-mode-previous", "Control+ISO_Left_Tab"),
+                    ("-kb-accept-custom", "Control+Return"),
+                    ("-kb-screenshot", "F12"),
+                ):
+                    if option in arguments:
+                        arguments[arguments.index(option) + 1] = value
+                    else:
+                        arguments.extend((option, value))
+                arguments.append("-normal-window")
             process = start(
-                [
-                    str(bins / "rofi-tmux-plus-rofi"),
-                    "-no-config",
-                    "-normal-window",
-                    "-show",
-                    "tmux-plus",
-                    "-modes",
-                    "tmux-plus,keys",
-                    "-theme-str",
-                    "window { width: 900px; } listview { lines: 6; }",
-                    "-kb-custom-1",
-                    "Alt+r",
-                    "-kb-custom-2",
-                    "Right",
-                    "-kb-custom-3",
-                    "Left",
-                    "-kb-custom-7",
-                    "Tab",
-                    "-kb-custom-8",
-                    "ISO_Left_Tab",
-                    "-kb-custom-19",
-                    "",
-                    "-kb-element-next",
-                    "",
-                    "-kb-element-prev",
-                    "",
-                    "-kb-row-tab",
-                    "",
-                    "-kb-mode-next",
-                    "Control+Tab",
-                    "-kb-mode-previous",
-                    "Control+ISO_Left_Tab",
-                    "-kb-move-char-back",
-                    "Control+b",
-                    "-kb-move-char-forward",
-                    "Control+f",
-                    "-kb-accept-custom",
-                    "Control+Return",
-                    "-kb-screenshot",
-                    "F12",
-                ],
+                arguments,
                 label,
                 gui_env,
             )
