@@ -5,15 +5,18 @@ from __future__ import annotations
 import io
 import os
 import shutil
+import signal
 import stat
 import subprocess
 import sys
+import threading
 from collections.abc import Mapping, Sequence
-from contextlib import redirect_stdout
+from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from .errors import ContractError, clean_message
+from .owned_process import EXEC_ENTRY
 
 INITIAL_FRAME_ENV = "ROFI_TMUX_PLUS_INITIAL_FRAME"
 MAX_INITIAL_FRAME_BYTES = 4 * 1024 * 1024
@@ -70,6 +73,24 @@ def selected_row(frame: str) -> int:
     return 0
 
 
+@contextmanager
+def termination_cleanup():
+    previous = {}
+
+    def interrupted(_signal, _frame):
+        raise KeyboardInterrupt
+
+    try:
+        if threading.current_thread() is threading.main_thread():
+            for selected in (signal.SIGTERM, signal.SIGHUP):
+                previous[selected] = signal.signal(selected, interrupted)
+        yield
+    finally:
+        for selected, handler in previous.items():
+            signal.signal(selected, handler)
+
+
+@termination_cleanup()
 def main(argv: Sequence[str] | None = None) -> int:
     from .native_mode import verify_native
     from .observer_client import observer_api
@@ -123,6 +144,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 environment[INITIAL_FRAME_ENV] = str(path)
                 return subprocess.run(
                     [
+                        sys.executable,
+                        "-c",
+                        EXEC_ENTRY,
+                        str(os.getpid()),
                         executable,
                         "-plugin-path",
                         str(native),

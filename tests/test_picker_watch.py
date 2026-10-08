@@ -16,6 +16,7 @@ from unittest.mock import patch
 from rofi_tmux_plus.errors import ContractError
 from rofi_tmux_plus.native_mode import verify_native
 from rofi_tmux_plus.observer_client import observer_api
+from rofi_tmux_plus.owned_process import EXEC_ENTRY
 from rofi_tmux_plus.picker_notify import (
     decode_notification,
     read_notification,
@@ -138,9 +139,9 @@ class OwnedWatchTests(unittest.TestCase):
                 "import time\ndef main():\n print('ready',flush=True)\n time.sleep(30)\n"
             )
             parent_script = (
-                "import json,os,subprocess,sys; "
-                "child=subprocess.Popen([sys.executable,'-c',json.loads(sys.argv[1]),"
-                "str(os.getpid())],stdout=subprocess.PIPE,text=True); "
+                "import json,os,subprocess,sys; guard=json.loads(sys.argv[1]); "
+                "child=subprocess.Popen([sys.executable,'-c',guard['entry'],"
+                "str(os.getpid()),*guard['args']],stdout=subprocess.PIPE,text=True); "
                 "assert child.stdout.readline().strip()=='ready'; "
                 "print(child.pid,flush=True); sys.stdin.read(); child.wait()"
             )
@@ -172,16 +173,34 @@ finally:
         os.kill(child,signal.SIGKILL)
         os.waitpid(child,0)
 """
-            result = subprocess.run(
-                [sys.executable, "-c", supervisor, parent_script, json.dumps(WATCH_ENTRY)],
-                env=dict(os.environ, PYTHONPATH=temporary),
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=8,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(json.loads(result.stdout), {"signal": -15})
+            for entry, args in (
+                (WATCH_ENTRY, []),
+                (
+                    EXEC_ENTRY,
+                    [
+                        sys.executable,
+                        "-c",
+                        "import time; print('ready',flush=True); time.sleep(30)",
+                    ],
+                ),
+            ):
+                with self.subTest(executed=entry == EXEC_ENTRY):
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            "-c",
+                            supervisor,
+                            parent_script,
+                            json.dumps({"entry": entry, "args": args}),
+                        ],
+                        env=dict(os.environ, PYTHONPATH=temporary),
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        timeout=8,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(json.loads(result.stdout), {"signal": -15})
 
     def wait_for(self, predicate):
         deadline = time.monotonic() + 3

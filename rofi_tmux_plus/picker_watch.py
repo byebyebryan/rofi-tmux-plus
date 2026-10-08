@@ -13,20 +13,17 @@ import threading
 from pathlib import Path
 
 from .observer_client import observer_api
+from .owned_process import PARENT_GUARD
 from .picker_notify import write_notification
 from .prepared_model import boottime_ms, clock_domain
 
-WATCH_ENTRY = """
-import ctypes,os,signal,sys
-parent=int(sys.argv.pop(1))
-libc=ctypes.CDLL(None,use_errno=True)
-libc.prctl.argtypes=[ctypes.c_int]+[ctypes.c_ulong]*4
-libc.prctl.restype=ctypes.c_int
-if libc.prctl(1,signal.SIGTERM,0,0,0)!=0 or os.getppid()!=parent:
-    raise SystemExit(1)
+WATCH_ENTRY = (
+    PARENT_GUARD
+    + """
 from tmux_observer_client.cli import main
 raise SystemExit(main())
 """
+)
 
 
 def notification_material(frame, now):

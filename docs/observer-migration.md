@@ -75,6 +75,12 @@ it; a dead/stalled/malformed watch revokes cached positives. Ten focused tests
 include actual child pipes, a simulated 30-second callback gap and launcher
 SIGKILL cleanup. A Linux parent-death guard terminates the owned public watch
 if its launcher disappears, including the startup parent replacement race.
+The first production-mode smoke run found that SIGTERM of the launcher could
+leave its owned Rofi process alive. The launcher now also guards the fixed Rofi
+exec against parent death and handles TERM/HUP through normal context cleanup.
+The guarded-exec crash test confirms termination and reaping across exec.
+That repair reopens the frozen frontend GUI/package checkpoint; the accepted
+fresh facade above remains evidence for its recorded artifact only.
 
 The first-party Mode ABI 7 wrapper delegates to its fixed packaged helper. It
 reads only bounded, owned regular notifications, wakes callback 28, checks local
