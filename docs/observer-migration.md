@@ -1,7 +1,7 @@
 # Observer client migration
 
-Candidate: Tmux Plus `0.7.0a1`. This is an implementation checkpoint, not a
-selected release or completion of the native/GUI/managed gates.
+Candidate: Tmux Plus `0.7.0a1`. T13 installed fresh CLI compatibility is accepted;
+the native GUI and managed gates remain open.
 
 ## T13 fresh inventory checkpoint
 
@@ -28,14 +28,26 @@ frozen Observer wheel installed in an isolated environment. The initial uv
 CPython 3.13.7 environment lacked `os.pidfd_open`; four existing viewer tests
 errored and one failed there. No viewer behavior or assertion was weakened.
 
-Still required before closing T13: installed frontend native compatibility
-checks against the unchanged v1 contract, including absent/broken Mesh and
-local-only hostname aliases. The producer's bounded FQDN repair passed 28 native
+T13 installed frontend compatibility passed 30 native cases across Snap and
+Starship against the unchanged v1 contract, including absent/broken Mesh,
+fresh rename/full references, panes/options, local-only hostname aliases,
+optional viewers and passivity. Typed frontend failures retain exit status 2.
+The producer's bounded FQDN repair passed 28 native
 installed cases on Snap and Starship and four installed recovery simulations.
 Only its direct-client module changed; the other 63 payloads match the previously
 accepted G3 artifact. See Observer's `native-direct-acceptance.md` and committed
 FQDN evidence. Those checks are producer acceptance, not installed frontend proof.
 The facade also retains well-formed future Host Mesh error codes.
+
+The frozen frontend source is `bb35d947653a842355ce8f164ecf2301355ec80e`;
+its platform wheel SHA256 is
+`c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723`.
+Repeat builds were byte-identical. All 38 installed payloads, including license,
+were verified on both hosts; the installed helper retains executable permissions.
+Snap additionally passed the binary/library tuple and core-pin checks before
+mode loading. Evidence is in [the installed client record](evidence/2026-10-08-observer-client/installed-package.json)
+and [native facade cases](evidence/2026-10-08-observer-client/native-facade.json).
+All disposable endpoint units, children, sockets and roots were removed.
 
 ## Next gates
 
@@ -90,8 +102,7 @@ The wheel is platform-specific and independent of the Python extension ABI.
 Generated library/descriptor files are ignored in the source checkout. Missing,
 changed or unsupported integration files cause bounded startup failure.
 
-Still pending: installed fresh CLI compatibility, the packaged wheel/helper
-permission check, production native GUI/timing/failure/lifetime acceptance,
+Still pending: production native GUI/timing/failure/lifetime acceptance,
 including cancellation and mode re-entry, and managed selection. Source tests
 and compilation do not establish automatic native rendering. Saved context,
 complete references and pending action intent remain frontend state. Snap GUI

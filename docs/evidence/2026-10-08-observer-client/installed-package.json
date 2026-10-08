@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "gate": "T13 installed package",
+  "frontendSourceCommit": "bb35d947653a842355ce8f164ecf2301355ec80e",
+  "wheel": {
+    "bytes": 144044,
+    "file": "rofi_tmux_plus-0.7.0a1-py3-none-linux_x86_64.whl",
+    "sha256": "c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723"
+  },
+  "installedPayloadsVerified": 38,
+  "repeatBuildWheelIdentical": true,
+  "nativeTupleVerifiedWithoutModeLoad": true,
+  "helperExecutableAfterInstallation": true,
+  "producerPinVerified": true,
+  "sourceCheckTests": 276,
+  "limits": [
+    "This package check does not establish GUI or managed acceptance",
+    "Initial harness assertions incorrectly assumed the producer viewer field and exit status; corrected native run retains frontend localViewer and typed-failure exit 2"
+  ]
+}

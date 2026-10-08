@@ -1,0 +1,1519 @@
+{
+  "gate": "T13-installed-frontend-direct",
+  "sourceCommit": "d5a2e97a4e5c2a65599d45818680635f5c790c99",
+  "sourceTreeDirty": false,
+  "legacyBundleSha256": "929aebc003e4af9d0ebe1e2f541c6e45bb03dd996019fbfba425fe5cb454f567",
+  "endpoints": {
+    "snap": {
+      "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d",
+      "templateSha256": {
+        "tmux-observer-owner@.service": "d21e43859d6ee4c45d27f2b3fb8f01d7f1a8720af80eb6861a74ac00d9b9c319",
+        "tmux-observer-fleet@.service": "c50e80f5a0da20474d3a8ee65e3088f4c5a0764f278f28737ac248913e8f52b0"
+      },
+      "actualMeshRevision": "sha256:decab8fc6d7070b36736392e15feb5900732ce251f8b473fe08341139a6a995c",
+      "nativeVersion": "tmux 3.7c",
+      "contextId": "6a6ce4cf5d96a4c208a6a233d1b50689",
+      "nativeReference": {
+        "hostId": "snap",
+        "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-snap"
+      },
+      "clock": {
+        "bootId": "5d60b1d7-389f-45dd-8ba5-c1a50185e848",
+        "timeNamespace": "time:4026531834"
+      },
+      "nativeHostname": "80H1VV3",
+      "uid": 1000,
+      "frontend": {
+        "wheelSha256": "c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723",
+        "sourceCommit": "bb35d947653a842355ce8f164ecf2301355ec80e",
+        "installedRoot": "/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/venv/lib/python3.13/site-packages/rofi_tmux_plus",
+        "payloadsVerified": 38
+      }
+    },
+    "starship": {
+      "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d",
+      "templateSha256": {
+        "tmux-observer-owner@.service": "d21e43859d6ee4c45d27f2b3fb8f01d7f1a8720af80eb6861a74ac00d9b9c319",
+        "tmux-observer-fleet@.service": "c50e80f5a0da20474d3a8ee65e3088f4c5a0764f278f28737ac248913e8f52b0"
+      },
+      "actualMeshRevision": "sha256:ef64c3acc214c797c3630b9b16b94dd6828e5637762358f29b8042147d187653",
+      "nativeVersion": "tmux 3.7c",
+      "contextId": "56f3b556513888c367fd19e975edba47",
+      "nativeReference": {
+        "hostId": "starship",
+        "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-starship"
+      },
+      "clock": {
+        "bootId": "d211a380-0e46-4552-838e-ad29c7b90120",
+        "timeNamespace": "time:4026531834"
+      },
+      "nativeHostname": "starship",
+      "uid": 1000,
+      "frontend": {
+        "wheelSha256": "c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723",
+        "sourceCommit": "bb35d947653a842355ce8f164ecf2301355ec80e",
+        "installedRoot": "/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/venv/lib/python3.13/site-packages/rofi_tmux_plus",
+        "payloadsVerified": 38
+      }
+    }
+  },
+  "cases": [
+    {
+      "name": "same_installed_wheel_private_production_path_layout_and_stopped_observer_services",
+      "result": "passed"
+    },
+    {
+      "name": "installed_core_preserves_empty_versus_absent_option_values",
+      "result": "passed",
+      "endpoint": "snap",
+      "observation": {
+        "protocol": "tmux-observer.observation.v1",
+        "schemaVersion": 1,
+        "source": {
+          "hostId": "snap",
+          "uid": 1000,
+          "server": "default",
+          "nativeHostname": "80H1VV3"
+        },
+        "clock": {
+          "bootId": "5d60b1d7-389f-45dd-8ba5-c1a50185e848",
+          "timeNamespace": "time:4026531834"
+        },
+        "sample": {
+          "startedAt": 526136780,
+          "finishedAt": 526136803,
+          "observedAt": 1791486262368,
+          "coverage": "complete",
+          "error": null
+        },
+        "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessions": [
+          {
+            "hostId": "snap",
+            "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+            "sessionId": "$0",
+            "createdAt": 1791486261,
+            "name": "owned-snap",
+            "activityAt": 1791486261,
+            "lastAttachedAt": null,
+            "attachedClients": 0,
+            "pending": false,
+            "windowCount": 1,
+            "sessionPath": "/home/bryan/code/tmux-observer",
+            "currentWindow": "tmux",
+            "currentPath": "/home/bryan/code/tmux-observer",
+            "panes": [
+              {
+                "paneId": "%0",
+                "pid": 3343436,
+                "currentPath": "/home/bryan/code/tmux-observer",
+                "currentCommand": "sleep"
+              }
+            ],
+            "options": {
+              "@owned-direct-present": "fixture metadata",
+              "@owned-direct-empty": "",
+              "@owned-direct-missing": null
+            }
+          }
+        ],
+        "capabilities": {
+          "panes": true,
+          "options": [
+            "@owned-direct-present",
+            "@owned-direct-empty",
+            "@owned-direct-missing"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fresh_installed_full_fleet_cli_without_daemons",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486262979,
+          "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486262592,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "snap",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer"
+                }
+              ]
+            },
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486262883,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "starship",
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 553.053533,
+        "rawRecordSha256": "7e844dab073254c03fb384f58aef0a611a1e57823d728cc9aa5605aed92684b8"
+      }
+    },
+    {
+      "name": "installed_frontend_optional_viewers_preserve_fresh_native_identity",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486263118,
+          "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486263118,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "snap",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer",
+                  "localViewer": {
+                    "state": "unknown",
+                    "reason": "unsupported_desktop"
+                  }
+                }
+              ]
+            }
+          ],
+          "viewerEndpoint": {
+            "hostId": "snap",
+            "observedAt": 1791486263118
+          }
+        },
+        "durationMs": 127.489772,
+        "rawRecordSha256": "920ec95e662652fa162899d43a6839249b7bf986cb4ef8a10795b0812d321a5d"
+      }
+    },
+    {
+      "name": "selected_remote_casefold_profile_preserves_panes_and_absent_options",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486263637,
+          "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486263556,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "starship",
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan",
+                  "panes": [
+                    {
+                      "paneId": "%0",
+                      "pid": 1559984,
+                      "currentPath": "/home/bryan",
+                      "currentCommand": "sleep"
+                    }
+                  ],
+                  "options": {
+                    "@owned-direct-present": "fixture metadata",
+                    "@owned-direct-missing": null
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 517.939095,
+        "rawRecordSha256": "6f2b041419aaf475b8c52b9fd67ac105d9dd87c96beaaf3da52165dc25b968ec"
+      }
+    },
+    {
+      "name": "empty_option_returns_legacy_compatible_typed_failure",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 2,
+        "value": {
+          "schemaVersion": 1,
+          "ok": false,
+          "error": {
+            "code": "operation_failed",
+            "message": "requested option values cannot be represented by Tmux Session v1"
+          }
+        },
+        "durationMs": 537.391542,
+        "rawRecordSha256": "f6e6b26ad5ec9473cd2fbf769a5b7913ce2b28b91f44ddb97e6f62186e9e61b4"
+      }
+    },
+    {
+      "name": "selected_local_cli_performs_no_ssh",
+      "result": "passed",
+      "endpoint": "snap"
+    },
+    {
+      "name": "invalid_selection_or_revision_prevents_native_or_ssh_reads",
+      "result": "passed",
+      "endpoint": "snap",
+      "code": "unknown_host"
+    },
+    {
+      "name": "invalid_selection_or_revision_prevents_native_or_ssh_reads",
+      "result": "passed",
+      "endpoint": "snap",
+      "code": "stale_mesh"
+    },
+    {
+      "name": "present_broken_mesh_never_falls_back_to_local",
+      "result": "passed",
+      "endpoint": "snap"
+    },
+    {
+      "name": "absent_mesh_only_allows_native_local_fallback",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486264828,
+          "meshRevision": null,
+          "hosts": [
+            {
+              "hostId": "80h1vv3",
+              "display": "80H1VV3",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486264828,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "80h1vv3",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 75.274212,
+        "rawRecordSha256": "894181e6f340c78cfd356d81142bafcd85d5198836a0332cf8da8a419cbff8ae"
+      }
+    },
+    {
+      "name": "absent_mesh_accepts_casefold_native_fqdn_alias_without_ssh",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486264924,
+          "meshRevision": null,
+          "hosts": [
+            {
+              "hostId": "80h1vv3",
+              "display": "80H1VV3",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486264924,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "80h1vv3",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 78.028998,
+        "rawRecordSha256": "bef229c9cdd8e44a3241e6e604fb5f38099767caef14a38b54a7d528a2aed125"
+      }
+    },
+    {
+      "name": "bounded_native_alias_lookup_refuses_unknown_before_tmux_or_ssh",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 2,
+        "value": {
+          "schemaVersion": 1,
+          "ok": false,
+          "error": {
+            "code": "unknown_host",
+            "message": "unknown Host Mesh host",
+            "hostId": "not-an-owned-native-host-alias"
+          }
+        },
+        "durationMs": 74.908298,
+        "rawRecordSha256": "f64f2f927b46afe09b52b973661d3634bd18143b8f346d670692aaaf530e3168"
+      }
+    },
+    {
+      "name": "installed_core_preserves_empty_versus_absent_option_values",
+      "result": "passed",
+      "endpoint": "starship",
+      "observation": {
+        "protocol": "tmux-observer.observation.v1",
+        "schemaVersion": 1,
+        "source": {
+          "hostId": "starship",
+          "uid": 1000,
+          "server": "default",
+          "nativeHostname": "starship"
+        },
+        "clock": {
+          "bootId": "d211a380-0e46-4552-838e-ad29c7b90120",
+          "timeNamespace": "time:4026531834"
+        },
+        "sample": {
+          "startedAt": 526552269,
+          "finishedAt": 526552287,
+          "observedAt": 1791486265089,
+          "coverage": "complete",
+          "error": null
+        },
+        "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessions": [
+          {
+            "hostId": "starship",
+            "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+            "sessionId": "$0",
+            "createdAt": 1791486261,
+            "name": "owned-starship",
+            "activityAt": 1791486261,
+            "lastAttachedAt": null,
+            "attachedClients": 0,
+            "pending": false,
+            "windowCount": 1,
+            "sessionPath": "/home/bryan",
+            "currentWindow": "tmux",
+            "currentPath": "/home/bryan",
+            "panes": [
+              {
+                "paneId": "%0",
+                "pid": 1559984,
+                "currentPath": "/home/bryan",
+                "currentCommand": "sleep"
+              }
+            ],
+            "options": {
+              "@owned-direct-present": "fixture metadata",
+              "@owned-direct-empty": "",
+              "@owned-direct-missing": null
+            }
+          }
+        ],
+        "capabilities": {
+          "panes": true,
+          "options": [
+            "@owned-direct-present",
+            "@owned-direct-empty",
+            "@owned-direct-missing"
+          ]
+        }
+      }
+    },
+    {
+      "name": "fresh_installed_full_fleet_cli_without_daemons",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486265757,
+          "meshRevision": "sha256:dc9d72b870b5b29b92cf4464d161aca2070a9e3355cef2092ba29f6d7576dc10",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486265327,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan"
+                }
+              ]
+            },
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486265695,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "snap",
+              "sessions": [
+                {
+                  "hostId": "snap",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 591.785035,
+        "rawRecordSha256": "0596f54b78ba5aa8bc59d893b8ec8fb4b3e89806b15bedba12dbfa8e8b5d0bd3"
+      }
+    },
+    {
+      "name": "installed_frontend_optional_viewers_preserve_fresh_native_identity",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486265920,
+          "meshRevision": "sha256:dc9d72b870b5b29b92cf4464d161aca2070a9e3355cef2092ba29f6d7576dc10",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486265920,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan",
+                  "localViewer": {
+                    "state": "unknown",
+                    "reason": "unsupported_desktop"
+                  }
+                }
+              ]
+            }
+          ],
+          "viewerEndpoint": {
+            "hostId": "starship",
+            "observedAt": 1791486265920
+          }
+        },
+        "durationMs": 125.708566,
+        "rawRecordSha256": "31ed8b4b0bb3ebc0b99261fe7580ad598bf98508bd0fc4817f96a7c07b19c34d"
+      }
+    },
+    {
+      "name": "selected_remote_casefold_profile_preserves_panes_and_absent_options",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486266481,
+          "meshRevision": "sha256:dc9d72b870b5b29b92cf4464d161aca2070a9e3355cef2092ba29f6d7576dc10",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486266420,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "snap",
+              "sessions": [
+                {
+                  "hostId": "snap",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer",
+                  "panes": [
+                    {
+                      "paneId": "%0",
+                      "pid": 3343436,
+                      "currentPath": "/home/bryan/code/tmux-observer",
+                      "currentCommand": "sleep"
+                    }
+                  ],
+                  "options": {
+                    "@owned-direct-present": "fixture metadata",
+                    "@owned-direct-missing": null
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 542.340528,
+        "rawRecordSha256": "70dd942604dd9501605dbf88188ecdae8db3936e6a227d8eedab2c08416c87a1"
+      }
+    },
+    {
+      "name": "empty_option_returns_legacy_compatible_typed_failure",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 2,
+        "value": {
+          "schemaVersion": 1,
+          "ok": false,
+          "error": {
+            "code": "operation_failed",
+            "message": "requested option values cannot be represented by Tmux Session v1"
+          }
+        },
+        "durationMs": 559.692784,
+        "rawRecordSha256": "f6e6b26ad5ec9473cd2fbf769a5b7913ce2b28b91f44ddb97e6f62186e9e61b4"
+      }
+    },
+    {
+      "name": "selected_local_cli_performs_no_ssh",
+      "result": "passed",
+      "endpoint": "starship"
+    },
+    {
+      "name": "invalid_selection_or_revision_prevents_native_or_ssh_reads",
+      "result": "passed",
+      "endpoint": "starship",
+      "code": "unknown_host"
+    },
+    {
+      "name": "invalid_selection_or_revision_prevents_native_or_ssh_reads",
+      "result": "passed",
+      "endpoint": "starship",
+      "code": "stale_mesh"
+    },
+    {
+      "name": "present_broken_mesh_never_falls_back_to_local",
+      "result": "passed",
+      "endpoint": "starship"
+    },
+    {
+      "name": "absent_mesh_only_allows_native_local_fallback",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486267924,
+          "meshRevision": null,
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486267924,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 61.328565,
+        "rawRecordSha256": "772e20573a3a7eeea44da5cc833cecdd69c4b2b65189989576ac4d7c6b98ab2a"
+      }
+    },
+    {
+      "name": "absent_mesh_accepts_casefold_native_fqdn_alias_without_ssh",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486268038,
+          "meshRevision": null,
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": true,
+              "status": "ok",
+              "observedAt": 1791486268038,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": null,
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 61.386385,
+        "rawRecordSha256": "d8d1006509d4a0ee8fd5ac368ddf9e2d0f3cad562ecfa0611bda69bfe91428ab"
+      }
+    },
+    {
+      "name": "bounded_native_alias_lookup_refuses_unknown_before_tmux_or_ssh",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 2,
+        "value": {
+          "schemaVersion": 1,
+          "ok": false,
+          "error": {
+            "code": "unknown_host",
+            "message": "unknown Host Mesh host",
+            "hostId": "not-an-owned-native-host-alias"
+          }
+        },
+        "durationMs": 64.128178,
+        "rawRecordSha256": "f64f2f927b46afe09b52b973661d3634bd18143b8f346d670692aaaf530e3168"
+      }
+    },
+    {
+      "name": "native_rename_is_fresh_with_preserved_full_identity",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486268822,
+          "meshRevision": "sha256:dc9d72b870b5b29b92cf4464d161aca2070a9e3355cef2092ba29f6d7576dc10",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486268759,
+              "nativeHostname": "80H1VV3",
+              "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "snap",
+              "sessions": [
+                {
+                  "hostId": "snap",
+                  "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-direct-renamed-snap",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan/code/tmux-observer",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan/code/tmux-observer"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 549.21516,
+        "rawRecordSha256": "1aa219cfe5bb32b26e14530876efbf83613c6fa9f30cc4e9c61cd9ede5710731"
+      }
+    },
+    {
+      "name": "reached_host_missing_executable_is_not_unreachable",
+      "result": "passed",
+      "endpoint": "starship",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486269313,
+          "meshRevision": "sha256:dc9d72b870b5b29b92cf4464d161aca2070a9e3355cef2092ba29f6d7576dc10",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "display": "snap",
+              "local": false,
+              "status": "error",
+              "observedAt": 1791486269313,
+              "nativeHostname": null,
+              "serverGeneration": null,
+              "route": "snap",
+              "sessions": [],
+              "error": {
+                "code": "operation_failed",
+                "message": "remote owner returned malformed or incompatible observation"
+              }
+            }
+          ]
+        },
+        "durationMs": 475.037271,
+        "rawRecordSha256": "329270487a6446c8521c9eea89c36adc119b4cb0c9749e2df3847358045126b8"
+      }
+    },
+    {
+      "name": "native_rename_is_fresh_with_preserved_full_identity",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486269894,
+          "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": false,
+              "status": "ok",
+              "observedAt": 1791486269809,
+              "nativeHostname": "starship",
+              "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+              "route": "starship",
+              "sessions": [
+                {
+                  "hostId": "starship",
+                  "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+                  "sessionId": "$0",
+                  "createdAt": 1791486261,
+                  "name": "owned-direct-renamed-starship",
+                  "activityAt": 1791486261,
+                  "lastAttachedAt": null,
+                  "attachedClients": 0,
+                  "pending": false,
+                  "windowCount": 1,
+                  "sessionPath": "/home/bryan",
+                  "currentWindow": "tmux",
+                  "currentPath": "/home/bryan"
+                }
+              ]
+            }
+          ]
+        },
+        "durationMs": 521.686989,
+        "rawRecordSha256": "3e84a4923dab674081669b343f584f8f2ea54f7ec93a499ba8846f3cf4702f18"
+      }
+    },
+    {
+      "name": "reached_host_missing_executable_is_not_unreachable",
+      "result": "passed",
+      "endpoint": "snap",
+      "response": {
+        "returnCode": 0,
+        "value": {
+          "schemaVersion": 1,
+          "generatedAt": 1791486270398,
+          "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "display": "starship",
+              "local": false,
+              "status": "error",
+              "observedAt": 1791486270397,
+              "nativeHostname": null,
+              "serverGeneration": null,
+              "route": "starship",
+              "sessions": [],
+              "error": {
+                "code": "operation_failed",
+                "message": "remote owner returned malformed or incompatible observation"
+              }
+            }
+          ]
+        },
+        "durationMs": 486.700639,
+        "rawRecordSha256": "e0999a1f58e3b9bd430c431088bac2655620522e333291fc94bd0c50d9ce6b2a"
+      }
+    },
+    {
+      "name": "native_roster_attachments_windows_geometry_hooks_options_and_service_lifetime_preserved",
+      "result": "passed"
+    }
+  ],
+  "limits": [
+    "Private Host Mesh SSH executable adds only remote HOME/native/PATH isolation before actual strict non-PTY SSH",
+    "No production endpoint selection, frontend migration, physical suspend or managed deployment acceptance",
+    "128-host capacity remains source-tested; native topology here is two hosts"
+  ],
+  "harnessCommit": "f4ee67a83986e5e5f51f79ad283fa1a49e353b28",
+  "harnessTreeDirty": false,
+  "artifactInput": {
+    "state": "built_unaccepted",
+    "source": {
+      "commit": "d5a2e97a4e5c2a65599d45818680635f5c790c99",
+      "epoch": 1791484706,
+      "tree": "677e3f10b1a665317740de2cea7dab4b02ac9818"
+    },
+    "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d",
+    "descriptorSha256": "4c62c942e7556cc3ced84680d093fc5626b904a24ba19f50bdd872d2ffe42c3a",
+    "sourceFilesMatchHarness": true
+  },
+  "frontendArtifact": {
+    "build": {
+      "builderSha256": "eedbb95ef4c4411380f1c924898bc7b9384cfb945b93460de47ab94fe71aadd3",
+      "constraintsSha256": "9415ac080e4169856325998ab71d3258c16c02a1d0d3cfa837bfca1290faa8db",
+      "implementation": "CPython",
+      "python": "3.14.7",
+      "uv": "uv 0.8.22"
+    },
+    "members": {
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/__init__.py": {
+        "bytes": 77,
+        "executable": false,
+        "sha256": "4769123735f907a1f036b7ffba1fbd04aeb8571fbce11b91cd45276f54fcc921"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/__main__.py": {
+        "bytes": 48,
+        "executable": false,
+        "sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/bounded_process.py": {
+        "bytes": 3915,
+        "executable": false,
+        "sha256": "e17f8ad53a6089515146cbe77256d1efb6fb708062fe2cd50772731e8d5463bd"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/cli.py": {
+        "bytes": 29293,
+        "executable": false,
+        "sha256": "0a31513f0e2cda05dc622a76002399c773f296364f58adf92dbf46dc6a6c97b5"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/config.py": {
+        "bytes": 2959,
+        "executable": false,
+        "sha256": "d2c9c75d54170fefe59a6ff28018269f729b05afc4dd3e5589baab95a6b4747c"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/diagnostics.py": {
+        "bytes": 3136,
+        "executable": false,
+        "sha256": "8293399e776429cc3ca74d2af05b7260c7af893b572768dacedf06b1345798ab"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/errors.py": {
+        "bytes": 1259,
+        "executable": false,
+        "sha256": "45f30f856fa1476583cc3e3c4ca279a69f7b9da112d90fe51392cb3c1c7385a6"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/host.py": {
+        "bytes": 2508,
+        "executable": false,
+        "sha256": "d4b8616182061224b1282239b7b2761873a133dd841a90a79621a651649d7661"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/inventory_service.py": {
+        "bytes": 17882,
+        "executable": false,
+        "sha256": "88c353a0c2a473fca25e23be99db74078e6b5716575077cd0de43aee1ab9280d"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/launcher.py": {
+        "bytes": 6028,
+        "executable": false,
+        "sha256": "271ce26a659111e0d72f63ffa5c78c6cc2f936455d017d2a614d7bddf6baef09"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/lifecycle.py": {
+        "bytes": 29219,
+        "executable": false,
+        "sha256": "be87db5ddee2e6882f89aa76af1b983684139dd7ea58857fa15da9817ca28df9"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/lifecycle_service.py": {
+        "bytes": 12248,
+        "executable": false,
+        "sha256": "88d050f2d0d540fc0d8ced7013a160655b63892707da435f34b42ceea0dc78a9"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/mesh_adapter.py": {
+        "bytes": 15900,
+        "executable": false,
+        "sha256": "bfec8c2a194eb358f460340b1e2db17e36a70f3156b5659a351785999ffcaca7"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/model.py": {
+        "bytes": 2078,
+        "executable": false,
+        "sha256": "09baa5b56fa49049dc2ca5a38c7210ea37baa06524dbf3ceaaf97b16fef1c083"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/native-artifact.json": {
+        "bytes": 1874,
+        "executable": false,
+        "sha256": "4e2efd8ca211acf8b324861a5315bc534d9d8666fcf6334df9ba216d1ef4c6f6"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": {
+        "bytes": 261,
+        "executable": true,
+        "sha256": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": {
+        "bytes": 8685,
+        "executable": false,
+        "sha256": "45821d84d3743ed10f0601dd49e9cbaeabf3dabb29226078c323c6c6096fdce3"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus.so": {
+        "bytes": 22152,
+        "executable": true,
+        "sha256": "99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native_mode.py": {
+        "bytes": 2439,
+        "executable": false,
+        "sha256": "f4b82dc1a3aca23b6296978499ab66c59ff592eb59f61c9bb871aa11e46f425c"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/observer-artifact.json": {
+        "bytes": 3867,
+        "executable": false,
+        "sha256": "b8c8c50dd27d35e5123081a393470321cd2d622d445bfc776b45858758224895"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/observer_client.py": {
+        "bytes": 3701,
+        "executable": false,
+        "sha256": "a9839d44b0d082a12c715e7c5ef715f0d1577e0e87bbfd2f23a4b62bfdb37964"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_model.py": {
+        "bytes": 28683,
+        "executable": false,
+        "sha256": "c17fd02527b5ddb70f9af27f37482da1b5df818830b6729dc0cda5584a16cf07"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_notify.py": {
+        "bytes": 1512,
+        "executable": false,
+        "sha256": "4de518e14fe47b76201e2a0d091e857a54a03fbb17ffbbcf02cd029ecf1376d2"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_runtime.py": {
+        "bytes": 2377,
+        "executable": false,
+        "sha256": "8ada11a364a9f8e790a324140dd4d5f446fa0a938b104a1bfa621cbc7dfd2c70"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_watch.py": {
+        "bytes": 10271,
+        "executable": false,
+        "sha256": "abd60100188b035838ab58fb1b7504d591ed7feb3f29bea0a87a567acfe843a0"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/prepared_model.py": {
+        "bytes": 14320,
+        "executable": false,
+        "sha256": "adda26c309f83f03ad810866c2a82d8f540c6079f20d9b81672077a7f50ef7c5"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/presentation_cache.py": {
+        "bytes": 10285,
+        "executable": false,
+        "sha256": "6fa9c30618f7d9282837c3cee66d9657df3deb2c5d88dfd4c02f5ef548885827"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_cache.py": {
+        "bytes": 22900,
+        "executable": false,
+        "sha256": "d415d81a592c5b381ae4adbb973cc4bb803aba97769e961da9e18ab6c00515a5"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_inventory.py": {
+        "bytes": 41013,
+        "executable": false,
+        "sha256": "6b16e8413d3498a1a3686d0ba176e66722205e222ab0e4937ef58823baf1a5bb"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_lifecycle.py": {
+        "bytes": 44532,
+        "executable": false,
+        "sha256": "681d2ee67f9d801f2b7a83acc2ac29fcd0b8f63250ac8dc0810b31b484fcbcaa"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/rofi.py": {
+        "bytes": 89712,
+        "executable": false,
+        "sha256": "2419e8282aeebc3e5f65919d61771f7090d1396f773182ce0cc291697e0aa133"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/tmux.py": {
+        "bytes": 23383,
+        "executable": false,
+        "sha256": "b456d568a1fae033c17216459ebe125346c8ab29a98a525dfbfe2b8e5804aae2"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/tmux_wire.py": {
+        "bytes": 7233,
+        "executable": false,
+        "sha256": "0ae89d2fd87ee0337731b282a76f6922cd6ca859f0fa07fc8fea97968fc9cb77"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/view_preferences.py": {
+        "bytes": 6657,
+        "executable": false,
+        "sha256": "436bf761455b7713536962f2514a7ba933f133b625842cd22a70bcb2dba8de87"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/viewer_cache.py": {
+        "bytes": 18245,
+        "executable": false,
+        "sha256": "f522a48c6d73e2a0d75b1fda8ce4295a11af26929d064fb61d542678dde95461"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/viewer_service.py": {
+        "bytes": 46645,
+        "executable": false,
+        "sha256": "fecd0332052339b3e708bc1b1793684fc18c9fc9450a7b6d271517eb48da1bb7"
+      },
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/wire.py": {
+        "bytes": 4186,
+        "executable": false,
+        "sha256": "ba0dfd679bc9070560c93a57e0337f9a00fb5ad4a182a390e36df957ddd9b6bd"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/METADATA": {
+        "bytes": 8642,
+        "executable": false,
+        "sha256": "dec4cfaece57ed3b093e39ea80880efe6b663415c7a6ee3e108203b654dece01"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/RECORD": {
+        "bytes": 5114,
+        "executable": false,
+        "sha256": "cb21f46e8808eca22900dec5d397990d921a88f278791afbbde32747cd689a31"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/WHEEL": {
+        "bytes": 101,
+        "executable": false,
+        "sha256": "f9970092cb1a69a202beb028db087f3a8bc09e2245034f5a6e5311040f102750"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/entry_points.txt": {
+        "bytes": 110,
+        "executable": false,
+        "sha256": "a1313d66df267fd5a8dc814aad1892bb3eab970aab18972ed902ac7aad50e1d0"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/licenses/LICENSE": {
+        "bytes": 1066,
+        "executable": false,
+        "sha256": "09f9adb67e3a6659b19893fbfc583eb5dfc605fea5b8e64202d20c41bdac9fb0"
+      },
+      "rofi_tmux_plus-0.7.0a1.dist-info/top_level.txt": {
+        "bytes": 15,
+        "executable": false,
+        "sha256": "03ca2c60104c8da4735549b93eae2d548cfee2aafca34a9dd7b90df5e1208792"
+      }
+    },
+    "native": {
+      "acceptanceState": "built_unaccepted",
+      "architecture": "x86_64",
+      "buildVersions": {
+        "cairo": "1.18.6",
+        "glib-2.0": "2.90.1",
+        "gmodule-2.0": "2.90.1",
+        "pango": "1.58.2"
+      },
+      "compiler": "cc (GCC) 16.2.1 20260810",
+      "files": {
+        "rofi-tmux-plus-mode": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b",
+        "tmux-plus-notify.c": "45821d84d3743ed10f0601dd49e9cbaeabf3dabb29226078c323c6c6096fdce3",
+        "tmux-plus.so": "99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41"
+      },
+      "flags": [
+        "-shared",
+        "-fPIC",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I/usr/include/pango-1.0",
+        "-I/usr/include/harfbuzz",
+        "-I/usr/include/libmount",
+        "-I/usr/include/blkid",
+        "-I/usr/include/fribidi",
+        "-I/usr/include/glib-2.0",
+        "-I/usr/lib/glib-2.0/include",
+        "-I/usr/include/sysprof-6",
+        "-pthread",
+        "-I/usr/include/cairo",
+        "-I/usr/include/freetype2",
+        "-I/usr/include/libpng16",
+        "-I/usr/include/pixman-1",
+        "-lpango-1.0",
+        "-lharfbuzz",
+        "-lgobject-2.0",
+        "-Wl,--export-dynamic",
+        "-lgmodule-2.0",
+        "-pthread",
+        "-lglib-2.0",
+        "-lcairo",
+        "-ldl"
+      ],
+      "headers": {
+        "mode-private.h": "9b4b0148c1feae2bae7e4afc30e848fa5ee11d56d9eecdffecad4c00eadee55b",
+        "mode.h": "292355951931209c898ee31c33d9a76ea8d0e8a104e0cad88bd5201c5dd2ef48"
+      },
+      "modeAbi": 7,
+      "requiredPrivateSymbols": [
+        "script_mode_parse_setup",
+        "rofi_view_get_active",
+        "rofi_view_get_mode",
+        "rofi_view_get_completed",
+        "rofi_view_maybe_update",
+        "rofi_view_trigger_action",
+        "key_binding_get_action_from_name"
+      ],
+      "rofiSha256": "4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca",
+      "rofiVersion": "Version: 2.0.0-dirty",
+      "schemaVersion": 1,
+      "sourceCommit": "bb35d947653a842355ce8f164ecf2301355ec80e",
+      "sourceTreeDirty": false
+    },
+    "observer": {
+      "modules": {
+        "tmux_observer/__init__.py": "6a29bfc80325ad76ed68d48393fbbe48f1f3865373931f36aae3b358474d6af1",
+        "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+        "tmux_observer/_clock.py": "f9eabc6347a603ef14e5fb4e56f1ce68ebb87293c05444cc71fbbcc69c2268ef",
+        "tmux_observer/_hub.py": "5001a2914c7a76741873fc1aaaa2a5d56065342e31a088645732ec4a07821e2b",
+        "tmux_observer/_ipc.py": "9bdf9ff4bd0f6698880325b69f234f6efebb09d11531bac1dceea542cec06239",
+        "tmux_observer/_models.py": "f2eddb94d3202264ce77d03790905e2a9cbef9ad3df14ce61887e87ed05dc3bd",
+        "tmux_observer/_owner_state.py": "024160ca934d928645aef85cb12c01c0e9426db6f6ba8119232d4e82a9c96ae6",
+        "tmux_observer/_process.py": "c2ba06aa0d19336d64dc79afd2cef2c86ee209df58558a8109e0d08cad8174fd",
+        "tmux_observer/_stream.py": "aaf936489b8f3498d47c1148aed109802c43c40364d0227a0714db8b8f4e22c5",
+        "tmux_observer/_tickets.py": "3741288958100fd031b38371479878575253e339b513f7a5a6c0d26b198ddfba",
+        "tmux_observer/_tmux_wire.py": "4bf673d6952ace4d9e5520cd74695a8133703bd91c10ebb9e87274c1d64a4ec4",
+        "tmux_observer/_validation.py": "e6712694831c36477f6c32d0aea38e8bbeb3282a33c024743f054fad14c16e23",
+        "tmux_observer/_wire.py": "d7c4d13d2d4e67106a8fa68ddf441725f70401ac6cb726179e5f1c65aeda60b3",
+        "tmux_observer/cli.py": "209f9089ec23b10ec295bdde6ec3d6fa1a8395312bb3c673de1ed2d136488ea3",
+        "tmux_observer/collector.py": "8ef4846a21cb909c71f6f95b5bb04ac763dabffe7d68829a2c8b49aebd5f7ab4",
+        "tmux_observer/owner.py": "fe747ed5ff2e3b4b04d5a519eb3a19ba81283e3272c396759f1b746f2d3c8cec",
+        "tmux_observer/public.py": "fbe2705fb71e13244a3b2a18834f45e859ff3dca8a37d5d6fa7d23831899989f",
+        "tmux_observer_client/__init__.py": "14ab80d96104b342ef7c016526f413f896b2c43a5d3309162aad0451275bbaa0",
+        "tmux_observer_client/_command.py": "e317d77baf3625819fecab72f24bf9e2e19d5e994384a61f6d74a2a5182b416c",
+        "tmux_observer_client/_context.py": "954673fda3a9addb7cd8c690c234c292ccbb80c06adc7479f97fd5f489965b1e",
+        "tmux_observer_client/_desktop_input.py": "d17ebd7aaf2d82a7e30bdb4d87100212dfb006db982e0c91376eca34383ba80c",
+        "tmux_observer_client/_desktop_scan.py": "42247f353ec24800ac21b45b1689d869f303d66fa9913b2d2c034f001ccef4a6",
+        "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
+        "tmux_observer_client/_fleet_state.py": "d6a8068d2fe95e1ae77f12ce154ffee2a8db4c345c90bbe7a4915c8916c1d984",
+        "tmux_observer_client/_fleet_tickets.py": "29c142575202d43b7732057e1aecd694f2630e054e1e630b7719c218562656f8",
+        "tmux_observer_client/_local_stream.py": "4dea112dff1b9c05e2bf68f24c642745569ac1537f4be49428d097c32911dff0",
+        "tmux_observer_client/_remote_state.py": "82e333deeb245363a3faf22e2609edf88a5a4ad9fb5d2fe0f95bf02c71bdd10b",
+        "tmux_observer_client/_watch.py": "894bf8b5dfcbd3e6cc01e8c5e2e3279931075e53a5b5dbbef6ed34219b6a1738",
+        "tmux_observer_client/cli.py": "01c653fea097d187c63b7d3113e00d4d9eafe2e262c94494150b2d7bf164ce2f",
+        "tmux_observer_client/desktop.py": "396d6d0daac6d7c6eedb047a995efad82480b60bb1f83e54e2e8fc7843c6dfce",
+        "tmux_observer_client/direct.py": "960a7b93bad498e3184129e7f251038d03a5f874883e0221d0447dac86f203fc",
+        "tmux_observer_client/fleet.py": "27e6a6943c9b3f571be270b2a7c1480cdb516dd38b93d4f2ff7cf9e1b8f6fe44",
+        "tmux_observer_client/mesh.py": "35be440c8af2642d120d80190a1b8287c49d34445ff24a70d9baee14859f93aa",
+        "tmux_observer_client/public.py": "864400d34225f03b5649c37f124cb559ac7dcc756f00becec82e688490ae06cc",
+        "tmux_observer_client/ssh.py": "9cc6966463bf16dfc096effd0c9f23d2ca0f5af93978a6b613835f84ee8afaf5"
+      },
+      "schemaVersion": 1,
+      "sourceCommit": "d5a2e97a4e5c2a65599d45818680635f5c790c99",
+      "version": "0.1.0a1",
+      "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d"
+    },
+    "package": {
+      "generator": "setuptools (84.0.0)",
+      "name": "rofi-tmux-plus",
+      "requiresPython": ">=3.11",
+      "version": "0.7.0a1"
+    },
+    "schemaVersion": 1,
+    "source": {
+      "commit": "bb35d947653a842355ce8f164ecf2301355ec80e",
+      "epoch": 1791486041,
+      "tree": "d2d71552792a06f0911629f29f72819c0c07830d"
+    },
+    "sourceFiles": {
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/__init__.py": "rofi_tmux_plus/__init__.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/__main__.py": "rofi_tmux_plus/__main__.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/bounded_process.py": "rofi_tmux_plus/bounded_process.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/cli.py": "rofi_tmux_plus/cli.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/config.py": "rofi_tmux_plus/config.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/diagnostics.py": "rofi_tmux_plus/diagnostics.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/errors.py": "rofi_tmux_plus/errors.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/host.py": "rofi_tmux_plus/host.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/inventory_service.py": "rofi_tmux_plus/inventory_service.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/launcher.py": "rofi_tmux_plus/launcher.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/lifecycle.py": "rofi_tmux_plus/lifecycle.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/lifecycle_service.py": "rofi_tmux_plus/lifecycle_service.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/mesh_adapter.py": "rofi_tmux_plus/mesh_adapter.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/model.py": "rofi_tmux_plus/model.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/native-artifact.json": "rofi_tmux_plus/native/native-artifact.json",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": "rofi_tmux_plus/native/rofi-tmux-plus-mode",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": "rofi_tmux_plus/native/tmux-plus-notify.c",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus.so": "rofi_tmux_plus/native/tmux-plus.so",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/native_mode.py": "rofi_tmux_plus/native_mode.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/observer-artifact.json": "rofi_tmux_plus/observer-artifact.json",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/observer_client.py": "rofi_tmux_plus/observer_client.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_model.py": "rofi_tmux_plus/picker_model.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_notify.py": "rofi_tmux_plus/picker_notify.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_runtime.py": "rofi_tmux_plus/picker_runtime.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/picker_watch.py": "rofi_tmux_plus/picker_watch.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/prepared_model.py": "rofi_tmux_plus/prepared_model.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/presentation_cache.py": "rofi_tmux_plus/presentation_cache.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_cache.py": "rofi_tmux_plus/remote_cache.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_inventory.py": "rofi_tmux_plus/remote_inventory.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/remote_lifecycle.py": "rofi_tmux_plus/remote_lifecycle.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/rofi.py": "rofi_tmux_plus/rofi.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/tmux.py": "rofi_tmux_plus/tmux.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/tmux_wire.py": "rofi_tmux_plus/tmux_wire.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/view_preferences.py": "rofi_tmux_plus/view_preferences.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/viewer_cache.py": "rofi_tmux_plus/viewer_cache.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/viewer_service.py": "rofi_tmux_plus/viewer_service.py",
+      "rofi_tmux_plus-0.7.0a1.data/purelib/rofi_tmux_plus/wire.py": "rofi_tmux_plus/wire.py",
+      "rofi_tmux_plus-0.7.0a1.dist-info/licenses/LICENSE": "LICENSE"
+    },
+    "state": "built_unaccepted",
+    "wheel": {
+      "bytes": 144044,
+      "file": "rofi_tmux_plus-0.7.0a1-py3-none-linux_x86_64.whl",
+      "sha256": "c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723"
+    }
+  },
+  "baseline": {
+    "snap": {
+      "reference": {
+        "hostId": "snap",
+        "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-snap"
+      },
+      "roster": "$0|1791486261|0|1",
+      "hooks": "",
+      "geometry": "@0|80|24|%0|80|24",
+      "options": "@owned-direct-empty ''\n@owned-direct-present \"fixture metadata\""
+    },
+    "starship": {
+      "reference": {
+        "hostId": "starship",
+        "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-starship"
+      },
+      "roster": "$0|1791486261|0|1",
+      "hooks": "",
+      "geometry": "@0|80|24|%0|80|24",
+      "options": "@owned-direct-empty ''\n@owned-direct-present \"fixture metadata\""
+    }
+  },
+  "lastDirectResponse": {
+    "endpoint": "snap",
+    "response": {
+      "returnCode": 0,
+      "value": {
+        "schemaVersion": 1,
+        "generatedAt": 1791486270398,
+        "meshRevision": "sha256:02368959b10ad6a74cc131954cba4aa355fafa6da7a09135edbe9b50b06ef9df",
+        "hosts": [
+          {
+            "hostId": "starship",
+            "display": "starship",
+            "local": false,
+            "status": "error",
+            "observedAt": 1791486270397,
+            "nativeHostname": null,
+            "serverGeneration": null,
+            "route": "starship",
+            "sessions": [],
+            "error": {
+              "code": "operation_failed",
+              "message": "remote owner returned malformed or incompatible observation"
+            }
+          }
+        ]
+      },
+      "durationMs": 486.700639,
+      "rawRecordSha256": "e0999a1f58e3b9bd430c431088bac2655620522e333291fc94bd0c50d9ce6b2a"
+    }
+  },
+  "after": {
+    "snap": {
+      "reference": {
+        "hostId": "snap",
+        "serverGeneration": "tmux-v1:1791486261:3343435:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-direct-renamed-snap"
+      },
+      "roster": "$0|1791486261|0|1",
+      "hooks": "",
+      "geometry": "@0|80|24|%0|80|24",
+      "options": "@owned-direct-empty ''\n@owned-direct-present \"fixture metadata\""
+    },
+    "starship": {
+      "reference": {
+        "hostId": "starship",
+        "serverGeneration": "tmux-v1:1791486261:1559983:/tmp/to-fleet-07c16c6db95141b28b6c6ab0bc20a537/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791486261,
+        "attachedClients": 0,
+        "windowCount": 1,
+        "name": "owned-direct-renamed-starship"
+      },
+      "roster": "$0|1791486261|0|1",
+      "hooks": "",
+      "geometry": "@0|80|24|%0|80|24",
+      "options": "@owned-direct-empty ''\n@owned-direct-present \"fixture metadata\""
+    }
+  },
+  "result": "passed_direct_candidate",
+  "ownedCleanup": "both_endpoint_units_children_sockets_and_private_roots_removed"
+}
