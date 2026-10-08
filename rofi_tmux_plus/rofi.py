@@ -1272,7 +1272,10 @@ def render_snapshot(
     ]
     # Browse mode only acts on an existing typed session row through Enter.
     # Retired custom-input callbacks are inert migration guards.
-    headers.append(_protocol("no-custom", "true"))
+    # Rofi suppresses every hotkey when no row is selected and no-custom is
+    # enabled. Empty/filter-miss views still need read-only adoption/navigation.
+    # Custom-input callbacks remain inert at the dispatch boundary above.
+    headers.append(_protocol("no-custom", "false"))
     # Rofi 2.0 reads these flags from the previous frame. Arm every frame;
     # explicit new-selection below controls whether to preserve or reset.
     headers.extend((_protocol("keep-selection", "true"), _protocol("keep-filter", "true")))
