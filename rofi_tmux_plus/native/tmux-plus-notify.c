@@ -89,6 +89,7 @@ static gboolean read_record(NotifyState *data, Record *record) {
 static gboolean notify_tick(gpointer context) {
     Mode *sw = context;
     void *view = active_view();
+    g_debug("Tmux Plus notify: active=%d selected-mode=%d", view != NULL, view && view_mode(view) == sw);
     if (!view || view_mode(view) != sw) { return G_SOURCE_CONTINUE; }
     if (completed_view(view)) { update_view(view); }
     /* A synchronous delegate update can destroy/switch the mode. Reacquire all
@@ -100,6 +101,7 @@ static gboolean notify_tick(gpointer context) {
     Record record;
     uint64_t now = now_ms();
     gboolean valid = read_record(data, &record);
+    g_debug("Tmux Plus notify: record=%d observed=%d", valid, data->observed);
     gboolean unavailable = !valid || !record.ready || record.received > now ||
         now - record.received >= 10000 || kill((pid_t)record.pid, 0) != 0;
     gboolean due = unavailable;
@@ -201,6 +203,7 @@ static cairo_surface_t *icon(const Mode *sw, unsigned int line, unsigned int hei
 }
 static ModeMode result(Mode *sw, int action, char **input, unsigned int selected) {
     NotifyState *data = mode_get_private_data(sw);
+    g_debug("Tmux Plus result: action=%d selected=%u", action, selected);
     ModeMode next = mode_result(data->script, action, input, selected);
     sw->display_name = data->script->display_name;
     return next;
