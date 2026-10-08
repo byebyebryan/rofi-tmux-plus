@@ -13,6 +13,7 @@ from unittest.mock import Mock, patch
 from rofi_tmux_plus import rofi
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.picker_notify import WATCH_REQUIRED_ENV, write_notification
 from rofi_tmux_plus.picker_runtime import read_private, write_private
 from rofi_tmux_plus.prepared_model import (
     RUNTIME_ENV,
@@ -328,14 +329,83 @@ class PreparedModelTests(unittest.TestCase):
         self.api.read_cached.assert_not_called()
         Path(self.root.name).chmod(0o700)
 
-    def test_cached_navigation_expires_without_model_or_lifecycle_calls(self):
+    def test_browse_cycles_adopt_quiet_renewals_without_collection_or_admission(self):
+        self.fresh_desktop()
+        value = self.model().load().payload
+        key = self.cache.store(value)
+        self.now = 31000
+        self.frame["snapshot"]["hosts"][0]["owner"]["localExpiry"] = 41000
+        self.frame["snapshot"]["desktop"]["expiresAt"] = 41000
+        for retv in ("11", "12", "16", "17"):
+            with self.subTest(retv=retv):
+                self.api.read_cached.reset_mock()
+                state = rofi.ContinuationState(
+                    navigation=rofi.NavigationState(rofi.VIEW_ATTACHED), snapshot_key=key
+                )
+                output = io.StringIO()
+                with (
+                    patch("subprocess.Popen", side_effect=AssertionError("collection")),
+                    patch("rofi_tmux_plus.rofi.load_config", side_effect=AssertionError("config")),
+                    patch(
+                        "rofi_tmux_plus.rofi.LifecycleService", side_effect=AssertionError("action")
+                    ),
+                    redirect_stdout(output),
+                ):
+                    rofi.run_rofi(
+                        {"ROFI_RETV": retv, "ROFI_DATA": rofi._state_data(state)},
+                        model_service=self.model(),
+                        presentation_cache=self.cache,
+                    )
+                self.api.read_cached.assert_called_once_with(self.context)
+                rendered = output.getvalue()
+                self.assertIn('"sessionId":"$2"', rendered)
+                if retv in ("11", "12"):
+                    self.assertNotIn("urgent\x1ftrue", rendered)
+                self.assertNotIn('"status":"unavailable"', rendered)
+                retained = next(
+                    row.split("\x1f", 1)[1]
+                    for row in rendered.split(rofi.ROFI_RECORD_SEPARATOR)
+                    if row.startswith("\0data\x1f")
+                )
+                saved = self.cache.load(rofi._parse_continuation_state(retained).snapshot_key)
+                self.assertEqual(saved["hosts"][0]["ownerExpiry"], 41000)
+                self.assertEqual(saved["prepared"]["desktopExpiry"], 41000)
+
+    def test_browse_cycles_do_not_renew_expired_facts_from_live_watch_metadata(self):
+        self.fresh_desktop()
+        model = self.model(environment={**self.environment, WATCH_REQUIRED_ENV: "1"})
+        write_notification(
+            self.root.name, sequence=1, received=self.now, pid=os.getpid(), ready=True
+        )
+        value = model.load().payload
+        state = rofi.ContinuationState(
+            navigation=rofi.NavigationState(rofi.VIEW_ATTACHED),
+            snapshot_key=self.cache.store(value),
+        )
+        self.now = 31000
+        write_notification(
+            self.root.name, sequence=1, received=self.now, expiry=99000, pid=os.getpid(), ready=True
+        )
+        self.api.read_cached.reset_mock()
+        output = io.StringIO()
+        with redirect_stdout(output):
+            rofi.run_rofi(
+                {"ROFI_RETV": "11", "ROFI_DATA": rofi._state_data(state)},
+                model_service=model,
+                presentation_cache=self.cache,
+            )
+        self.api.read_cached.assert_called_once_with(self.context)
+        self.assertIn('"status":"unavailable"', output.getvalue())
+        self.assertIn("urgent\x1ftrue", output.getvalue())
+
+    def test_cached_navigation_expires_when_prepared_read_fails_without_lifecycle_calls(self):
         self.fresh_desktop()
         value = self.model().load().payload
         state = rofi.ContinuationState(snapshot_key=self.cache.store(value))
         self.now = 31000
         output = io.StringIO()
         with (
-            patch("rofi_tmux_plus.rofi.PreparedModelService", side_effect=AssertionError("model")),
+            patch("rofi_tmux_plus.rofi.PreparedModelService", side_effect=TimeoutError("reader")),
             patch("rofi_tmux_plus.rofi.LifecycleService", side_effect=AssertionError("action")),
             redirect_stdout(output),
         ):
@@ -345,6 +415,44 @@ class PreparedModelTests(unittest.TestCase):
             )
         self.assertNotIn('"sessionId":"$2"', output.getvalue())
         self.assertIn("unknown", output.getvalue())
+        self.assertIn("Updates unavailable", output.getvalue())
+
+    def test_pending_confirmation_cycles_never_adopt_renewed_or_replaced_targets(self):
+        value = self.model().load().payload
+        session = rofi._session_rows(value)[0]
+        selection = json.loads(rofi.selection_payload(session, mesh_revision=None))
+        pending = rofi._new_action(
+            "confirm-kill",
+            rofi.NavigationState(rofi.VIEW_LOCAL, "fixture-local"),
+            selection=selection,
+        )
+        state = rofi.ContinuationState(
+            pending_action=pending,
+            navigation=pending.origin,
+            snapshot_key=self.cache.store(value),
+        )
+        self.now = 31000
+        self.frame["snapshot"]["hosts"][0]["sessions"][0].update(
+            name="replacement", createdAt=session["createdAt"] + 1
+        )
+        self.api.read_cached.reset_mock()
+        for retv in ("11", "12", "16", "17"):
+            with self.subTest(retv=retv):
+                output = io.StringIO()
+                with (
+                    patch(
+                        "rofi_tmux_plus.rofi.LifecycleService", side_effect=AssertionError("action")
+                    ),
+                    redirect_stdout(output),
+                ):
+                    rofi.run_rofi(
+                        {"ROFI_RETV": retv, "ROFI_DATA": rofi._state_data(state)},
+                        model_service=self.model(),
+                        presentation_cache=self.cache,
+                    )
+                self.assertIn('"name":"fixture"', output.getvalue())
+                self.assertNotIn('"name":"replacement"', output.getvalue())
+        self.api.read_cached.assert_not_called()
 
     def test_adoption_preserves_pending_target_without_collecting_or_executing_action(self):
         value = self.model().load().payload

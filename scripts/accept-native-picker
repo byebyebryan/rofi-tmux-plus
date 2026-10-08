@@ -500,6 +500,50 @@ def main():
                 "fixed_installed_native_mode_adopts_actual_prepared_service",
                 screenshot=screenshot(pid, "ready"),
             )
+            initial = next(e for e in events() if e["retv"] == 0)
+            initial_state = json.loads(initial["headers"]["data"])
+            initial_payload = json.loads(
+                (
+                    root
+                    / "cache/rofi-tmux-plus/presentation-v1"
+                    / (initial_state["snapshotKey"] + ".json")
+                ).read_text()
+            )["payload"]
+            old_expiry = max(
+                [h["ownerExpiry"] or 0 for h in initial_payload["hosts"]]
+                + [initial_payload["prepared"]["desktopExpiry"] or 0]
+            )
+            until(
+                lambda: time.clock_gettime_ns(time.CLOCK_BOOTTIME) // 1000000 > old_expiry,
+                seconds=15,
+            )
+            cycled = []
+            for _ in range(6):
+                index = len(events())
+                keys(pid, "-k", "Right")
+                event = after(index, lambda e: e["retv"] == 11)
+                assert all(
+                    json.loads(row["info"]).get("status") != "unavailable" for row in event["rows"]
+                ), event
+                cycled.append(event)
+                if event["headers"]["prompt"] == initial["headers"]["prompt"]:
+                    break
+            else:
+                raise AssertionError("view ring did not return to the initial scope")
+            for _ in range(2):
+                index = len(events())
+                keys(pid, "-k", "Tab")
+                event = after(index, lambda e: e["retv"] == 16)
+                assert all(
+                    json.loads(row["info"]).get("status") != "unavailable" for row in event["rows"]
+                ), event
+                cycled.append(event)
+            passed(
+                "browse_cycles_after_original_lease_expiry_keep_current_rows",
+                originalExpiry=old_expiry,
+                events=cycled,
+                screenshot=screenshot(pid, "renewed-views"),
+            )
             index = len(events())
             runtime = owned_runtime(pid)
             observed_terminal = {}

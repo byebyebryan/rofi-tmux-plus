@@ -1923,6 +1923,31 @@ def _confirm_selection(raw: str | None, action: ActionState) -> str:
     return "kill"
 
 
+def _browse_snapshot(
+    snapshot: dict[str, object],
+    state: ContinuationState,
+    *,
+    now: float,
+    environ: Mapping[str, str] | None = None,
+    model_service: PickerModelService | None = None,
+) -> tuple[dict[str, object], ContinuationState, str]:
+    """Adopt current prepared facts when a browse callback needs a new frame.
+
+    Quiet watch renewals do not redraw Rofi. The persisted presentation can
+    therefore outlive its original leases even while the reader is healthy.
+    Read its current local cache before cycling; notification metadata cannot
+    renew fact authority. Frozen confirmations and legacy snapshots stay exact.
+    """
+    if state.pending_action is not None or not isinstance(snapshot.get("prepared"), Mapping):
+        return snapshot, state, ""
+    try:
+        service = model_service or PreparedModelService(environ=environ)
+        return _load_observed(service, state, start_refresh=False, now=now)
+    except Exception as error:  # noqa: BLE001 - retained rows still undergo expiry checks
+        message = f"Updates unavailable: {_error_message(error)}"
+        return snapshot, _error_state(state, message, now=now, key="callback"), message
+
+
 def _cached_navigation_callback(
     cache: PresentationSnapshotCache,
     state: ContinuationState,
@@ -1930,8 +1955,9 @@ def _cached_navigation_callback(
     *,
     now: float,
     environ: Mapping[str, str] | None = None,
+    model_service: PickerModelService | None = None,
 ) -> str:
-    """Render one arrow callback using only its exact persisted snapshot."""
+    """Cycle views with current prepared facts and no observation admission."""
 
     try:
         snapshot = cache.load(state.snapshot_key)
@@ -1952,6 +1978,9 @@ def _cached_navigation_callback(
         # Action arrows are intentionally inert, but still render the exact
         # snapshot that created the pending action without a model read.
         return _render_state(snapshot, state, preserve=True, now=now)
+    snapshot, state, message = _browse_snapshot(
+        snapshot, state, now=now, environ=environ, model_service=model_service
+    )
     navigation = _cycle_scope(snapshot, state.navigation, direction)
     if environ is not None:
         _save_preference(snapshot, navigation, environ)
@@ -1963,7 +1992,14 @@ def _cached_navigation_callback(
         # because that same identity happens to exist in the new scope.
         highlighted=None if navigation != state.navigation else state.highlighted,
     )
-    return _render_state(snapshot, next_state, preserve_filter=True, now=now)
+    return _render_state(
+        snapshot,
+        next_state,
+        message=message,
+        preserve_filter=True,
+        now=now,
+        presentation_cache=cache,
+    )
 
 
 def _cached_action_callback(
@@ -1972,8 +2008,10 @@ def _cached_action_callback(
     direction: int,
     *,
     now: float,
+    environ: Mapping[str, str] | None = None,
+    model_service: PickerModelService | None = None,
 ) -> str:
-    """Cycle the browse action from the exact persisted presentation snapshot."""
+    """Cycle browse actions with current prepared facts; confirmations stay frozen."""
 
     try:
         snapshot = cache.load(state.snapshot_key)
@@ -1994,11 +2032,16 @@ def _cached_action_callback(
         # Confirmation is guarded state. Tab does not reinterpret it as a
         # browse action or reach lifecycle/model code.
         return _render_state(snapshot, state, preserve=True, now=now)
+    snapshot, state, message = _browse_snapshot(
+        snapshot, state, now=now, environ=environ, model_service=model_service
+    )
     return _render_state(
         snapshot,
         replace(state, action=_cycle_action(state.action, direction)),
+        message=message,
         preserve=True,
         now=now,
+        presentation_cache=cache,
     )
 
 
@@ -2054,6 +2097,8 @@ def run_rofi(
                 state,
                 1 if retv == ROFI_RETV_CUSTOM_7 else -1,
                 now=now,
+                environ=environ,
+                model_service=model_service,
             ),
             end="",
         )
@@ -2067,6 +2112,7 @@ def run_rofi(
                 1 if retv == ROFI_RETV_CUSTOM_2 else -1,
                 now=now,
                 environ=environ,
+                model_service=model_service,
             ),
             end="",
         )
