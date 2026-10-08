@@ -102,6 +102,7 @@ def main():
             [
                 str(python),
                 "-I",
+                "-B",
                 "-c",
                 "import json,rofi_tmux_plus; from rofi_tmux_plus.native_mode import verify_native; from rofi_tmux_plus.observer_client import observer_api; observer_api(); print(json.dumps([rofi_tmux_plus.__file__,str(verify_native()[1])]))",
             ]
@@ -190,6 +191,7 @@ def main():
             XDG_STATE_HOME=str(root / "state"),
             XDG_CACHE_HOME=str(root / "cache"),
             ROFI_PNG_OUTPUT=str(root / "frame.png"),
+            PYTHONDONTWRITEBYTECODE="1",
         )
         for key in ("TMUX", "TMUX_PANE", "PYTHONPATH", "PYTHONHOME"):
             env.pop(key, None)
