@@ -130,3 +130,10 @@ and disposable native sessions. Diagnostic key/mode/window additions are recorde
 separately from the managed binding. Snap receives headless deployment/acceptance
 only. Both hosts stay awake; no alarm or suspend is attempted. Lifecycle extraction
 and native event experiments remain separate follow-ups.
+
+The managed-bundle run measured warm frame p95 71.38 ms, three observed surfaces
+at 132–157 ms, and one explicit local-fixture refresh clearing its notice at
+738 ms, 28 ms after the independent terminal-ticket probe. These remain separate
+descriptive frontend/service checkpoints, not remote networking or graphical p95.
+The exact released cross-tool gate also passes 74 SSH, 278 Tmux and 320 Agent
+tests (four existing Agent skips), contract syncs and isolated public PATH probes.
