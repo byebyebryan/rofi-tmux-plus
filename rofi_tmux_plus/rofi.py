@@ -2040,6 +2040,7 @@ def run_rofi(
                 _error_state(state, text, now=now, key="invalid-action"),
                 message=text,
                 preserve=True,
+                continuation=retv != 0,
                 now=now,
             ),
             end="",
@@ -2083,6 +2084,7 @@ def run_rofi(
                     state, f"Configuration failed: {_error_message(error)}", now=now, key="config"
                 ),
                 preserve=True,
+                continuation=retv != 0,
                 now=now,
                 presentation_cache=presentation_cache,
             ),
@@ -2321,8 +2323,7 @@ def run_rofi(
             )
         return 0
 
-    # Initial invocation: local/cached data renders immediately.  The model
-    # may request one detached remote refresh, which timeout callbacks poll.
+    # Initial invocation: one prepared read, including a visible absent reader.
     try:
         payload, observed, message = _load_observed(
             model_service, state, start_refresh=True, now=now
@@ -2334,6 +2335,7 @@ def run_rofi(
                 _error_state(
                     state, f"Refresh failed: {_error_message(error)}", now=now, key="refresh"
                 ),
+                continuation=False,
                 now=now,
             ),
             end="",

@@ -110,6 +110,29 @@ class PreparedModelTests(unittest.TestCase):
                 self.api.read_cached.assert_called_once_with(self.context)
                 self.assertEqual(list(Path(self.root.name).iterdir()), [])
 
+    def test_initial_reader_and_config_errors_use_initial_header_delimiter(self):
+        for setup in (False, True):
+            with self.subTest(configuration=setup):
+                output = io.StringIO()
+                self.api.read_cached.side_effect = FileNotFoundError("absent")
+                with (
+                    patch("rofi_tmux_plus.rofi.load_config", side_effect=ValueError("invalid")),
+                    redirect_stdout(output),
+                ):
+                    rofi.run_rofi(
+                        {"ROFI_RETV": "0"},
+                        model_service=self.model(),
+                        lifecycle_service=Mock(),
+                        config=None if setup else Config(),
+                        presentation_cache=self.cache,
+                    )
+                initial = output.getvalue()
+                self.assertTrue(initial.startswith("\0prompt\x1fTmux"))
+                self.assertIn("\n\0use-hot-keys\x1ftrue\n", initial)
+                self.assertIn("\n\0delim\x1f", initial)
+                self.assertIn("\n\0no-custom\x1ffalse\n", initial)
+                self.assertIn("failed", initial.lower())
+
     def test_owner_and_desktop_expire_independently_on_suspend_aware_clock(self):
         self.fresh_desktop()
         initial = self.model().load().payload
