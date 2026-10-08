@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import re
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -63,13 +64,13 @@ def client_error(error: Exception) -> ContractError:
     if isinstance(error, ContractError):
         return error
     code = getattr(error, "code", "operation_failed")
-    if code not in {
-        "invalid_input",
-        "unknown_host",
-        "stale_mesh",
-        "host_unreachable",
-        "tmux_missing",
-    }:
+    # Host Mesh v1 deliberately allows future well-formed error codes. Keep
+    # that public contract rather than collapsing provider failures to generic.
+    if (
+        not isinstance(code, str)
+        or len(code) > 64
+        or re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", code, re.ASCII) is None
+    ):
         code = "operation_failed"
     host = getattr(error, "host_id", None)
     return ContractError(code, getattr(error, "message", clean_message(error)), host)

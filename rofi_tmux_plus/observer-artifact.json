@@ -1,4 +1,8 @@
 {
+  "schemaVersion": 1,
+  "version": "0.1.0a1",
+  "sourceCommit": "d5a2e97a4e5c2a65599d45818680635f5c790c99",
+  "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d",
   "modules": {
     "tmux_observer/__init__.py": "6a29bfc80325ad76ed68d48393fbbe48f1f3865373931f36aae3b358474d6af1",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
@@ -30,14 +34,10 @@
     "tmux_observer_client/_watch.py": "894bf8b5dfcbd3e6cc01e8c5e2e3279931075e53a5b5dbbef6ed34219b6a1738",
     "tmux_observer_client/cli.py": "01c653fea097d187c63b7d3113e00d4d9eafe2e262c94494150b2d7bf164ce2f",
     "tmux_observer_client/desktop.py": "396d6d0daac6d7c6eedb047a995efad82480b60bb1f83e54e2e8fc7843c6dfce",
-    "tmux_observer_client/direct.py": "df947cb5a4d6004d0972298b3d689bbc1ac03f1f6aeacee08abd6ef5f088c3a9",
+    "tmux_observer_client/direct.py": "960a7b93bad498e3184129e7f251038d03a5f874883e0221d0447dac86f203fc",
     "tmux_observer_client/fleet.py": "27e6a6943c9b3f571be270b2a7c1480cdb516dd38b93d4f2ff7cf9e1b8f6fe44",
     "tmux_observer_client/mesh.py": "35be440c8af2642d120d80190a1b8287c49d34445ff24a70d9baee14859f93aa",
     "tmux_observer_client/public.py": "864400d34225f03b5649c37f124cb559ac7dcc756f00becec82e688490ae06cc",
     "tmux_observer_client/ssh.py": "9cc6966463bf16dfc096effd0c9f23d2ca0f5af93978a6b613835f84ee8afaf5"
-  },
-  "schemaVersion": 1,
-  "sourceCommit": "3beab8a94719c9690914fc73ca15697e81025e2e",
-  "version": "0.1.0a1",
-  "wheelSha256": "b511fb12304b7693879f7fb878ddacd1c32f1afa6e4ccf2738d34405f24a4b84"
+  }
 }

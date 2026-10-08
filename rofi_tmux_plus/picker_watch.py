@@ -16,6 +16,18 @@ from .observer_client import observer_api
 from .picker_notify import write_notification
 from .prepared_model import boottime_ms, clock_domain
 
+WATCH_ENTRY = """
+import ctypes,os,signal,sys
+parent=int(sys.argv.pop(1))
+libc=ctypes.CDLL(None,use_errno=True)
+libc.prctl.argtypes=[ctypes.c_int]+[ctypes.c_ulong]*4
+libc.prctl.restype=ctypes.c_int
+if libc.prctl(1,signal.SIGTERM,0,0,0)!=0 or os.getppid()!=parent:
+    raise SystemExit(1)
+from tmux_observer_client.cli import main
+raise SystemExit(main())
+"""
+
 
 def notification_material(frame, now):
     """Ignore quiet receipt renewals; keep rows, health, scope and ticket results."""
@@ -90,8 +102,9 @@ class OwnedWatch:
         self.environment["PYTHONPATH"] = str(Path(self.api.prepared.__file__).resolve().parents[1])
         self.command = command or [
             sys.executable,
-            "-m",
-            "tmux_observer_client.cli",
+            "-c",
+            WATCH_ENTRY,
+            str(os.getpid()),
             "watch",
             "--json",
             "--context-id",

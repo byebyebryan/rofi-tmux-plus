@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import shutil
 import stat
 import subprocess
 import sys
@@ -12,7 +13,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from .errors import ContractError
+from .errors import ContractError, clean_message
 
 INITIAL_FRAME_ENV = "ROFI_TMUX_PLUS_INITIAL_FRAME"
 MAX_INITIAL_FRAME_BYTES = 4 * 1024 * 1024
@@ -135,7 +136,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                     check=False,
                 ).returncode
     except (OSError, ValueError, ContractError, RuntimeError) as error:
-        print(f"rofi-tmux-plus-rofi: {error}", file=sys.stderr)
+        message = clean_message(getattr(error, "message", error))
+        print(f"rofi-tmux-plus-rofi: {message}", file=sys.stderr)
+        binary = shutil.which("rofi")
+        if binary is not None:
+            # Public error display loads no candidate mode. Desktop bindings
+            # otherwise hide stderr when a binary/artifact tuple is unsupported.
+            try:
+                subprocess.run(
+                    [binary, "-no-config", "-e", message],
+                    env=environment,
+                    check=False,
+                    timeout=10,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                pass
         return 1
     except KeyboardInterrupt:
         return 130

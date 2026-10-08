@@ -14,15 +14,15 @@ for the existing private refresh harness until the picker migration is accepted.
 
 The dependency version alone is insufficient to identify a prerelease build.
 `observer-artifact.json` pins the accepted producer source
-`3beab8a94719c9690914fc73ca15697e81025e2e`, wheel SHA256
-`b511fb12304b7693879f7fb878ddacd1c32f1afa6e4ccf2738d34405f24a4b84`,
+`d5a2e97a4e5c2a65599d45818680635f5c790c99`, wheel SHA256
+`06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d`,
 and all 35 Python modules. Imports validate exact runtime coverage and bytes;
 absence or drift fails visibly without a native collection fallback. A managed
 frozen-wheel installation may expose the fixed
 `~/.local/share/tmux-observer/python` root. Distribution/installed artifact
 validation must additionally verify the full wheel and managed launcher bytes.
 
-Source checks: 246 tests, canonical bundle checks, compile, Ruff, ShellCheck and
+Source checks: 276 tests, canonical bundle checks, compile, Ruff, ShellCheck and
 candidate text checks passed using Snap's native CPython 3.14.7 with the exact
 frozen Observer wheel installed in an isolated environment. The initial uv
 CPython 3.13.7 environment lacked `os.pidfd_open`; four existing viewer tests
@@ -30,10 +30,12 @@ errored and one failed there. No viewer behavior or assertion was weakened.
 
 Still required before closing T13: installed frontend native compatibility
 checks against the unchanged v1 contract, including absent/broken Mesh and
-local-only hostname aliases. Review found that Observer's fallback currently
-accepts only the short hostname, whereas the released frontend also accepts its
-FQDN. Confirm and repair this at the producer's direct client boundary before
-claiming complete compatibility; do not silently normalize requests in Rofi.
+local-only hostname aliases. The producer's bounded FQDN repair passed 28 native
+installed cases on Snap and Starship and four installed recovery simulations.
+Only its direct-client module changed; the other 63 payloads match the previously
+accepted G3 artifact. See Observer's `native-direct-acceptance.md` and committed
+FQDN evidence. Those checks are producer acceptance, not installed frontend proof.
+The facade also retains well-formed future Host Mesh error codes.
 
 ## Next gates
 
@@ -57,15 +59,18 @@ The next source checkpoint adds one owned public-client watch per picker, with
 bounded framing/liveness, ordering/context checks, one latest notification,
 read-only reconnect and owned child cleanup. Quiet lease renewals update expiry
 metadata without waking the UI. Material changes, resync and ticket results wake
-it; a dead/stalled/malformed watch revokes cached positives. Eight focused tests
-include actual child pipes and a simulated 30-second callback gap.
+it; a dead/stalled/malformed watch revokes cached positives. Ten focused tests
+include actual child pipes, a simulated 30-second callback gap and launcher
+SIGKILL cleanup. A Linux parent-death guard terminates the owned public watch
+if its launcher disappears, including the startup parent replacement race.
 
 The first-party Mode ABI 7 wrapper delegates to its fixed packaged helper. It
 reads only bounded, owned regular notifications, wakes callback 28, checks local
 BOOTTIME expiry/liveness, coalesces callbacks, reacquires borrowed state after
 updates, and removes its timer/root on destruction. The launcher verifies the
 Rofi binary and source/helper/library hashes before loading it. There is no live
-compilation or script/native-read fallback. Source checks now pass 271 tests.
+compilation or script/native-read fallback. Startup failures use a bounded public
+Rofi error display without loading the candidate mode. Source checks pass 276 tests.
 Three isolated compilations with `-Wall -Wextra -Werror` yield library SHA256
 `99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41`.
 These were compile/tuple checks only; no production mode was loaded.

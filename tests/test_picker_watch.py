@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import platform
+import subprocess
 import sys
 import tempfile
 import time
@@ -20,7 +21,7 @@ from rofi_tmux_plus.picker_notify import (
     read_notification,
     write_notification,
 )
-from rofi_tmux_plus.picker_watch import OwnedWatch, notification_material
+from rofi_tmux_plus.picker_watch import WATCH_ENTRY, OwnedWatch, notification_material
 from rofi_tmux_plus.prepared_model import apply_expiry, boottime_ms, clock_domain, project_frame
 
 
@@ -114,6 +115,74 @@ class NotificationTests(unittest.TestCase):
 
 
 class OwnedWatchTests(unittest.TestCase):
+    def test_parent_guard_refuses_a_replaced_launcher_before_importing_the_client(self):
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", WATCH_ENTRY, "0", "watch", "--json"],
+            capture_output=True,
+            check=False,
+            timeout=3,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, b"")
+
+    def test_launcher_crash_terminates_and_reaps_its_guarded_watch(self):
+        # The isolated supervisor adopts its own grandchildren, so this test
+        # leaves neither an orphan watch nor an unreaped process behind.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package = root / "tmux_observer_client"
+            package.mkdir()
+            (package / "__init__.py").touch()
+            (package / "cli.py").write_text(
+                "import time\ndef main():\n print('ready',flush=True)\n time.sleep(30)\n"
+            )
+            parent_script = (
+                "import json,os,subprocess,sys; "
+                "child=subprocess.Popen([sys.executable,'-c',json.loads(sys.argv[1]),"
+                "str(os.getpid())],stdout=subprocess.PIPE,text=True); "
+                "assert child.stdout.readline().strip()=='ready'; "
+                "print(child.pid,flush=True); sys.stdin.read(); child.wait()"
+            )
+            supervisor = """
+import ctypes,json,os,signal,subprocess,sys,time
+libc=ctypes.CDLL(None,use_errno=True)
+assert libc.prctl(36,1,0,0,0)==0
+parent=subprocess.Popen([sys.executable,'-c',sys.argv[1],sys.argv[2]],
+                        stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True)
+child=None
+try:
+    child=int(parent.stdout.readline())
+    parent.kill()
+    parent.wait(timeout=2)
+    deadline=time.monotonic()+2
+    while time.monotonic()<deadline:
+        pid,status=os.waitpid(child,os.WNOHANG)
+        if pid:
+            print(json.dumps({'signal':os.waitstatus_to_exitcode(status)}))
+            child=None
+            break
+        time.sleep(.01)
+    assert child is None,'guarded watch survived its parent'
+finally:
+    if parent.poll() is None:
+        parent.kill()
+        parent.wait()
+    if child is not None:
+        os.kill(child,signal.SIGKILL)
+        os.waitpid(child,0)
+"""
+            result = subprocess.run(
+                [sys.executable, "-c", supervisor, parent_script, json.dumps(WATCH_ENTRY)],
+                env=dict(os.environ, PYTHONPATH=temporary),
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=8,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout), {"signal": -15})
+
     def wait_for(self, predicate):
         deadline = time.monotonic() + 3
         while time.monotonic() < deadline:

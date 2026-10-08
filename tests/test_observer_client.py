@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from rofi_tmux_plus.config import Config
 from rofi_tmux_plus.errors import ContractError
 from rofi_tmux_plus.inventory_service import InventoryService
-from rofi_tmux_plus.observer_client import observer_api
+from rofi_tmux_plus.observer_client import client_error, observer_api
 
 
 class ObserverClientTests(unittest.TestCase):
@@ -50,6 +50,22 @@ class ObserverClientTests(unittest.TestCase):
             requested_hosts=[], mesh_revision=None, panes=False, option_names=[]
         )
         self.assertEqual(result["hosts"][0]["sessions"], [])
+
+    def test_mesh_failure_and_future_codes_keep_the_existing_public_error_contract(self):
+        for code in (
+            "invalid_config",
+            "future_provider_failure",
+            "Future.provider-error",
+            "stale_mesh",
+        ):
+            with self.subTest(code=code):
+                error = type(
+                    "ProviderFailure", (Exception,), {"code": code, "message": "provider refused"}
+                )()
+                self.assertEqual(client_error(error).code, code)
+        for code in ([], "invalid\ncode", "x" * 65):
+            error = type("UnsafeFailure", (Exception,), {"code": code})()
+            self.assertEqual(client_error(error).code, "operation_failed")
 
     def test_supported_client_errors_keep_legacy_code_and_host_without_fallback(self):
         direct = Mock()
