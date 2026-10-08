@@ -123,9 +123,11 @@ def wheel_contents(path):
 def source_member(name):
     if name.startswith("rofi_tmux_plus/"):
         return name
+    if ".data/purelib/rofi_tmux_plus/" in name:
+        return name.split(".data/purelib/", 1)[1]
     if name.endswith(".dist-info/licenses/LICENSE"):
         return "LICENSE"
-    require(".dist-info/" in name, "unexpected wheel member")
+    require(".dist-info/" in name, "unexpected wheel member: " + name)
     return None
 
 
@@ -180,8 +182,10 @@ def verify(descriptor):
         "source-member mapping differs",
     )
     with zipfile.ZipFile(wheel) as zipped:
-        pin = json.loads(zipped.read("rofi_tmux_plus/observer-artifact.json"))
-        native = json.loads(zipped.read("rofi_tmux_plus/native/native-artifact.json"))
+        by_source = {source: member for member, source in value["sourceFiles"].items()}
+        require(len(by_source) == len(value["sourceFiles"]), "duplicate installed payload path")
+        pin = json.loads(zipped.read(by_source["rofi_tmux_plus/observer-artifact.json"]))
+        native = json.loads(zipped.read(by_source["rofi_tmux_plus/native/native-artifact.json"]))
         require(pin == value["observer"], "Observer pin differs")
         require(native == value["native"], "native descriptor differs")
         require(
@@ -190,11 +194,11 @@ def verify(descriptor):
         )
         for filename, digest in native["files"].items():
             require(
-                members["rofi_tmux_plus/native/" + filename]["sha256"] == digest,
+                members[by_source["rofi_tmux_plus/native/" + filename]]["sha256"] == digest,
                 "native payload differs",
             )
         require(
-            members["rofi_tmux_plus/native/rofi-tmux-plus-mode"]["executable"],
+            members[by_source["rofi_tmux_plus/native/rofi-tmux-plus-mode"]]["executable"],
             "native helper lost executable permissions",
         )
     return value, wheel
