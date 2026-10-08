@@ -12,6 +12,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from .errors import ContractError
+
 INITIAL_FRAME_ENV = "ROFI_TMUX_PLUS_INITIAL_FRAME"
 MAX_INITIAL_FRAME_BYTES = 4 * 1024 * 1024
 
@@ -68,6 +70,8 @@ def selected_row(frame: str) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from .observer_client import observer_api
+    from .prepared_model import CONTEXT_ENV, RUNTIME_ENV
     from .rofi import run_rofi
 
     arguments = list(sys.argv[1:] if argv is None else argv)
@@ -96,13 +100,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     environment = {key: value for key, value in os.environ.items() if not key.startswith("ROFI_")}
     output = io.StringIO()
     try:
-        with redirect_stdout(output):
-            run_rofi(dict(environment, ROFI_RETV="0"))
-        frame = output.getvalue()
-        raw = frame.encode("utf-8")
-        if len(raw) > MAX_INITIAL_FRAME_BYTES:
-            raise ValueError("initial picker frame is too large")
         with TemporaryDirectory(prefix="rofi-tmux-plus-launch-") as temporary:
+            environment[RUNTIME_ENV] = temporary
+            environment[CONTEXT_ENV] = observer_api().prepared.desktop_context_id(environment)
+            with redirect_stdout(output):
+                run_rofi(dict(environment, ROFI_RETV="0"))
+            frame = output.getvalue()
+            raw = frame.encode("utf-8")
+            if len(raw) > MAX_INITIAL_FRAME_BYTES:
+                raise ValueError("initial picker frame is too large")
             path = Path(temporary) / "initial-frame"
             path.write_bytes(raw)
             path.chmod(0o600)
@@ -112,7 +118,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 env=environment,
                 check=False,
             ).returncode
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, ContractError) as error:
         print(f"rofi-tmux-plus-rofi: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

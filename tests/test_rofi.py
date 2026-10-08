@@ -1227,7 +1227,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertIn("keep-filter", completed)
         self.assertNotIn("Refreshing in background", completed)
         self.assertIn("delay: 0", completed)
-        self.assertEqual([True, True], model.calls)
+        self.assertEqual([True, False], model.calls)
 
     def test_refresh_preserves_kill_mode_and_highlighted_identity_through_reorder(self) -> None:
         before = payload(
@@ -1322,7 +1322,7 @@ class RofiRefreshTests(unittest.TestCase):
         self.assertIn("keep-selection", refreshed)
         self.assertNotIn("\0new-selection\x1f", refreshed)
 
-    def test_failure_stall_and_stale_show_notice_and_allow_cooldown_limited_retry(
+    def test_failure_stall_and_stale_show_notice_without_callback_refresh(
         self,
     ) -> None:
         for marker_state in ("failed", "stalled", "stale"):
@@ -1361,7 +1361,7 @@ class RofiRefreshTests(unittest.TestCase):
                 self.assertIn("worker stopped", rendered)
                 self.assertNotIn('"refreshDeadline":', rendered)
                 self.assertIn('"errorDeadline":', rendered)
-                self.assertEqual([True], model.calls)
+                self.assertEqual([False], model.calls)
 
     def test_alt_r_is_bounded_foreground_refresh_without_background_restart(self) -> None:
         model = FakeModel(self.fresh)

@@ -208,7 +208,7 @@ class PickerRefinementTests(unittest.TestCase):
         self.assertEqual(model.calls, [])
         self.assertIn("first", frame)
         rofi._auto_refresh_callback(model, state, now=107, presentation_cache=self.cache)
-        self.assertEqual(model.calls, [True])
+        self.assertEqual(model.calls, [False])
 
     def test_launcher_prepares_once_serves_exact_frame_and_cleans_it(self) -> None:
         frame = "\0new-selection\x1f3\nprepared\n"

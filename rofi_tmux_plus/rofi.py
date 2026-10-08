@@ -22,6 +22,7 @@ from .diagnostics import timed
 from .errors import ContractError, clean_message
 from .lifecycle_service import LifecycleService
 from .picker_model import PickerModelService
+from .prepared_model import PreparedModelService, apply_expiry, boottime_ms
 from .presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache, valid_snapshot_key
 from .tmux import validate_session_id
 from .view_preferences import ViewPreferenceStore
@@ -703,6 +704,9 @@ def _owner_observation_fresh(
 ) -> bool:
     if not _host_live(host):
         return False
+    if isinstance(payload, Mapping) and isinstance(payload.get("prepared"), Mapping):
+        expiry = host.get("ownerExpiry")
+        return type(expiry) is int and expiry > boottime_ms()
     observed = host.get("ownerObservedAt", host.get("observedAt"))
     budget = payload.get("ownerFreshnessSeconds", 30) if isinstance(payload, Mapping) else 30
     return (
@@ -880,6 +884,13 @@ def _session_status(
 def _viewer_observation_fresh(payload: Mapping[str, object] | None, now: float) -> bool:
     if not isinstance(payload, Mapping):
         return False
+    if isinstance(payload.get("prepared"), Mapping):
+        expiry = payload["prepared"].get("desktopExpiry")
+        return (
+            payload.get("viewerFactsCurrent") is True
+            and type(expiry) is int
+            and expiry > boottime_ms()
+        )
     observed_at = payload.get("viewerObservedAt")
     endpoint = payload.get("viewerEndpoint")
     if observed_at is None and isinstance(endpoint, Mapping):
@@ -1229,6 +1240,8 @@ def render_snapshot(
 ) -> str:
     """Render a model payload using Rofi's script-mode protocol."""
 
+    if isinstance(snapshot, Mapping):
+        snapshot = apply_expiry(snapshot)
     if state is None:
         state = ContinuationState(
             navigation=navigation or NavigationState(),
@@ -1478,6 +1491,23 @@ def _marker_key(marker: Mapping[str, object]) -> str:
 def _refresh_observation(
     payload: Mapping[str, object] | None, state: ContinuationState, *, now: float
 ) -> tuple[ContinuationState, str]:
+    if isinstance(payload, Mapping) and isinstance(payload.get("prepared"), Mapping):
+        # Only this picker's retained explicit ticket owns its notice. Quiet
+        # source renewals and unrelated tickets cannot create/complete one.
+        marker = payload.get("remoteRefresh")
+        state = replace(state.active(now), viewer_deadline=None)
+        if not isinstance(marker, Mapping) or marker.get("state") == "complete":
+            return replace(state, refresh_deadline=None), ""
+        if marker.get("state") == "running":
+            return replace(state, refresh_deadline=now + AUTO_REFRESH_MAX_SECONDS), "Refreshing"
+        key = "refresh:" + ":".join(
+            str(marker.get(field, "")) for field in ("publisherId", "ticketId", "state")
+        )
+        state = replace(state, refresh_deadline=None)
+        text = _notice(marker.get("message")) or "Requested refresh failed"
+        if state.notice_key == key + ":" + text:
+            return state, state.error_message
+        return _error_state(state, text, now=now, key=key), text
     marker = payload.get("remoteRefresh") if isinstance(payload, Mapping) else None
     viewer_marker = payload.get("viewerRefresh") if isinstance(payload, Mapping) else None
     if isinstance(viewer_marker, Mapping) and (
@@ -1667,7 +1697,8 @@ def _auto_refresh_callback(
     presentation_cache: PresentationSnapshotCache,
 ) -> str:
     if (
-        state.refresh_deadline is None
+        not getattr(model_service, "prepared", False)
+        and state.refresh_deadline is None
         and state.viewer_deadline is not None
         and state.viewer_deadline > now
     ):
@@ -1683,9 +1714,11 @@ def _auto_refresh_callback(
             )
     try:
         payload, next_state, message = _load_observed(
-            model_service, state, start_refresh=True, now=now
+            model_service, state, start_refresh=False, now=now
         )
     except Exception as error:  # noqa: BLE001 - visible script callback boundary
+        if getattr(model_service, "prepared", False):
+            state = replace(state, refresh_deadline=None, viewer_deadline=None)
         next_state = _error_state(
             state, f"Refresh failed: {_error_message(error)}", now=now, key="callback"
         )
@@ -2028,7 +2061,7 @@ def run_rofi(
     presentation_cache = presentation_cache or PresentationSnapshotCache(environ=environ)
     try:
         selected_config = config or load_config()
-        model_service = model_service or PickerModelService(selected_config)
+        model_service = model_service or PreparedModelService(selected_config, environ=environ)
         lifecycle_service = lifecycle_service or LifecycleService(selected_config)
     except Exception as error:  # noqa: BLE001 - visible Rofi boundary
         print(

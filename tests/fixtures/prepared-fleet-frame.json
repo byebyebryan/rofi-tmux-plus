@@ -1,0 +1,117 @@
+{
+  "protocol": "tmux-observer.fleet.v1",
+  "schemaVersion": 1,
+  "kind": "status",
+  "readerId": "33333333-3333-4333-8333-333333333333",
+  "clock": {
+    "bootId": "00000000-0000-4000-8000-000000000000",
+    "timeNamespace": "time:10"
+  },
+  "contextId": "00000000000000000000000000000000",
+  "encodedAt": 130,
+  "sequence": 0,
+  "viewRevision": 1,
+  "snapshot": {
+    "protocol": "tmux-observer.fleet.v1",
+    "schemaVersion": 1,
+    "readerId": "33333333-3333-4333-8333-333333333333",
+    "clock": {
+      "bootId": "00000000-0000-4000-8000-000000000000",
+      "timeNamespace": "time:10"
+    },
+    "contextId": "00000000000000000000000000000000",
+    "encodedAt": 130,
+    "viewRevision": 1,
+    "mesh": {
+      "revision": null,
+      "state": "local_only",
+      "localHostId": "fixture-local"
+    },
+    "desktop": {
+      "contextId": "00000000000000000000000000000000",
+      "epoch": 0,
+      "state": "unsupported",
+      "startedAt": null,
+      "acceptedAt": null,
+      "expiresAt": null,
+      "inputHash": null,
+      "error": {
+        "code": "unsupported_desktop",
+        "message": "fixture headless context"
+      }
+    },
+    "hosts": [
+      {
+        "hostId": "fixture-local",
+        "display": "Fixture local",
+        "local": true,
+        "owner": {
+          "source": {
+            "hostId": "fixture-local",
+            "uid": 1000,
+            "server": "default",
+            "nativeHostname": "fixture-local"
+          },
+          "clock": {
+            "bootId": "00000000-0000-4000-8000-000000000000",
+            "timeNamespace": "time:10"
+          },
+          "publisherId": "11111111-1111-4111-8111-111111111111",
+          "encodedAt": 130,
+          "serverGeneration": "tmux-v1:1700000000:4321:/tmp/tmux-fixture/default",
+          "sample": {
+            "startedAt": 100,
+            "finishedAt": 120,
+            "observedAt": 1700000000000,
+            "coverage": "complete",
+            "error": null
+          },
+          "receipt": {
+            "state": "ready",
+            "attempted": 1,
+            "accepted": 1,
+            "acceptedAttempt": 1,
+            "startedAt": 100,
+            "acceptedAt": 125,
+            "expiresAt": 10100,
+            "lastAttemptAt": 100,
+            "lastAttemptResult": "complete",
+            "leaseMs": 10000,
+            "remainingMs": 9970,
+            "inFlight": false
+          },
+          "transport": "local",
+          "localExpiry": 10100,
+          "proof": null,
+          "error": null
+        },
+        "sessions": [
+          {
+            "hostId": "fixture-local",
+            "serverGeneration": "tmux-v1:1700000000:4321:/tmp/tmux-fixture/default",
+            "sessionId": "$2",
+            "createdAt": 1700000001,
+            "name": "fixture",
+            "activityAt": 1700000002,
+            "lastAttachedAt": null,
+            "attachedClients": 0,
+            "pending": false,
+            "windowCount": 1,
+            "sessionPath": "/tmp",
+            "currentWindow": "fixture",
+            "currentPath": "/tmp",
+            "localViewer": {
+              "state": "unknown",
+              "reason": "unsupported_desktop"
+            }
+          }
+        ]
+      }
+    ],
+    "ticket": null,
+    "error": null
+  },
+  "requestId": "fixture-1",
+  "error": null,
+  "ticket": null
+}

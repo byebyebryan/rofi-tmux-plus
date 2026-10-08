@@ -37,11 +37,27 @@ claiming complete compatibility; do not silently normalize requests in Rofi.
 
 ## Next gates
 
-T14 replaces picker observation jobs with the public cached facade, BOOTTIME
-expiry and explicit refresh tickets. The launcher then owns one watch per picker
-and a verified native notification mode. Background adoption remains read-only;
-saved context, complete references and pending action intent remain frontend
-state. Snap GUI acceptance and Starship GUI status are separate.
+The T14 prepared-model checkpoint replaces the default picker observation jobs
+with one public cached read. Missing/warming readers fail visibly; startup and
+callback 28 admit no refresh, create no service and collect no native facts.
+The launcher supplies a private per-picker runtime and captured desktop context.
+Alt+R stores a publisher/ticket identity there; each pending callback uses scoped
+terminal lookup even when rows/revision are equal. A deadline or lost reader ends
+the matching notice without retrying a source. Post-action reconciliation requests
+only the affected owner; actions keep their independent validation.
+
+Owner and desktop expiry use local BOOTTIME. Cached navigation rechecks boot,
+namespace, context and expiry, preserving historical complete references while
+revoking Open/Attached positives. Wall-clock activity labels remain separate.
+Seventeen focused tests cover these composed behaviors, fixed notice lifetime,
+pending-target retention, and bounded regular runtime files. The existing timeout
+tests now explicitly require read-only adoption rather than refreshing jobs.
+
+Still pending: one owned watch per picker, its notification/expiry/liveness
+delivery, and the verified native integration artifact. Source model tests do not
+establish automatic native rendering or production GUI/timing acceptance. Saved
+context, complete references and pending action intent remain frontend state.
+Snap GUI acceptance and Starship GUI status are separate.
 
 T15 publishes accepted exact artifacts and selects them with scoped chezmoi
 rollout, recovery and rollback checks on Snap and Starship. The producer's
