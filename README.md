@@ -5,6 +5,12 @@ sessions. It presents one mixed session inventory, uses `rofi-ssh-plus` for
 logical hosts and SSH routes, and exposes generic tmux lifecycle operations
 for `rofi-agent-plus`.
 
+The picker consumes Tmux Observer's prepared local views and watch updates. The
+reviewed [component boundary note](docs/observer-boundaries.md) defines the next
+extraction: native observation, networking, desktop association and action clients
+retain their own contracts; Tmux Plus retains presentation and user intent.
+Action implementation still lives here today. These docs do not change the API.
+
 Tmux Session Contract v1 provides strict versioned JSON inventory across the
 local default server and compatible Host Mesh remotes, plus safe `open`,
 `create`, `rename`, and `kill` operations on either side. Remote inventory is bounded,
@@ -13,10 +19,10 @@ SSH Plus command. It always targets the local default tmux server; test-only
 isolated sockets are not a public CLI feature. It also publishes deterministic
 producer fixtures for consumers.
 
-The private retained-remote cache and bounded detached refresh jobs support a
-Rofi browse surface with Open and guarded Kill actions. The picker now shows
-caller-local viewer presence for local and remote session owners, using a
-ten-second bounded observation refresh. Public `inventory --json --with-viewers`
+The native Rofi browse surface has Open and guarded Kill actions. Observer's
+owner and desktop collection runs independently of the picker; startup and
+browsing read prepared facts without native collection or service activation.
+Public `inventory --json --with-viewers` remains an explicit fresh read and
 adds the caller endpoint and per-session `open`, `none`, or `unknown` state;
 plain inventory stays unchanged. These observations do not provide viewer
 handles or change guarded actions. The public lifecycle contract continues to
@@ -31,11 +37,13 @@ conflicting metadata, incomplete scans, and pending sessions remain unknown.
 This display hint supplies no verified close handle and does not alter batch
 eligibility. No additional SSH request or provider lifecycle hook is used.
 
-For development without installing the console script:
+For development without installing the console script, inventory is an explicit
+fresh read. The picker additionally requires the accepted Observer installation,
+prepared services and packaged native mode for the supported Rofi binary:
 
 ```sh
 PYTHONPATH=. ./bin/rofi-tmux-plus inventory --json
-./bin/rofi-tmux-plus-rofi -show tmux-plus -modes "tmux-plus:$(pwd)/bin/rofi-tmux-plus" \
+./bin/rofi-tmux-plus-rofi -show tmux-plus -modes tmux-plus \
   -kb-custom-1 Alt+r -kb-custom-2 Right -kb-custom-3 Left \
   -kb-custom-7 Tab -kb-custom-8 ISO_Left_Tab \
   -kb-element-next "" -kb-element-prev "" \
@@ -45,8 +53,10 @@ PYTHONPATH=. ./bin/rofi-tmux-plus inventory --json
   -eh 2
 ```
 
-Rofi must invoke the executable as a script mode and provide the callbacks
-above. Open is the initial action; Tab advances to Kill and Shift+Tab reverses
+The launcher validates and loads the native `tmux-plus` mode, with the callbacks
+above. See [migration](docs/observer-migration.md) and the
+[current repair](docs/tmux-plus-0.7.0a2.md) for their separate acceptance scopes.
+Open is the initial action; Tab advances to Kill and Shift+Tab reverses
 the ordered action cycle, with wraparound. The prompt shows the host scope;
 the persistent message shows `Enter:` with both actions, highlights the
 selected one, and separates `Tab: Cycle actions` with a divider. Notices follow
@@ -67,12 +77,12 @@ Escape paths cannot mutate a session. Current Escape and `Ctrl+G` never enter
 the script callback path. Pending kill confirmation is separate from the
 browse action and native cancel discards it.
 
-Each model render is retained in a private content-addressed snapshot cache so
-Left/Right and Tab/Shift+Tab callbacks can render from the exact presentation
-without reading Host Mesh or local tmux. The cache keeps the newest 256 owned
-snapshots and fails closed if the exact snapshot in `ROFI_DATA` is missing or
-corrupt. Refreshes retain the active action and use stable typed row identity
-to select the same session after a reorder when it still exists.
+Each model render is retained in a private content-addressed presentation cache.
+Left/Right and Tab/Shift+Tab adopt current validated prepared facts and persist the
+renewed frame without native collection or action dispatch. Pending confirmations
+retain their exact frozen presentation/target. The cache keeps the newest 256
+owned snapshots and fails closed when the required snapshot is missing or corrupt.
+Updates retain the active action and stable typed session selection when possible.
 
 Tmux Plus `0.6.0` remembers the last view and last successfully opened
 session per viewing endpoint. The launcher prepares one frame and uses Rofi's
@@ -84,10 +94,10 @@ dialog starts with an empty filter and Open action.
 Open contains fresh confirmed or qualified viewers on this desktop; Attached
 contains fresh owner observations with positive tmux client counts, including
 clients elsewhere. Both remain present when empty and explain unknown
-membership. Viewer renewal uses retained owner facts and performs no SSH
-inventory. Owner results publish per host as they complete. Idle timer ticks
-use cached frames until renewal is due; navigation and action cycling also
-remain cache-only.
+membership. Observer keeps owner and desktop receipts independent. Its watch
+delivers material changes and relevant expiry; quiet renewal does not force a UI
+redraw. Timer adoption, navigation and action cycling use prepared state without
+foreground tmux/SSH collection. Explicit Alt+R tracks a bounded refresh ticket.
 
 The picker also uses Rofi's row-state tokens to separate observation confidence
 from session age. A live `open here` session row is `active`; retained session
@@ -103,22 +113,24 @@ refresh naturally removes an unavailable marker on the next render; cache age
 alone never creates one.
 
 - [Product and interaction design](docs/DESIGN.md)
+- [Observer and action-client boundaries](docs/observer-boundaries.md)
 - [Picker refinement plan](docs/tmux-plus-picker-refinement-plan.md)
 - [Candidate validation and rollout](docs/tmux-plus-picker-validation.md)
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)
 - [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md)
 
-The intended suite ownership is:
+The current read ownership and remaining action extraction are:
 
 ```text
-rofi-ssh-plus ────────> rofi-tmux-plus
-  logical hosts          generic tmux lifecycle
-       │                         │
-       └────────────┬────────────┘
-                    v
-             rofi-agent-plus
-       provider discovery and resume
+rofi-ssh-plus ──> Observer fleet/desktop reader ──> Tmux Plus UI
+  host/routes              ^
+                      tmux-observer
+                     native owner facts
+
+Tmux Plus public CLI ──> lifecycle implementation (separate client planned)
+                              ^
+                        Agent Plus consumer
 ```
 
-Each layer communicates through versioned JSON commands. It does not import
-another repository's Python internals or read another tool's private state.
+Components consume public versioned contracts/client facades. They do not import
+another repository's private implementation or treat observation as action authority.

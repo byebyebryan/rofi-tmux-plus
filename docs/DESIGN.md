@@ -1,5 +1,13 @@
 # Design: rofi-tmux-plus
 
+This document retains the original product/CLI implementation milestones.
+Current Observer-backed read behavior is recorded in
+[migration](observer-migration.md) and the [0.7.0a2 repair](tmux-plus-0.7.0a2.md).
+The next UI/action separation is defined by [observer boundaries](observer-boundaries.md).
+The selected Tmux tuple is owned by chezmoi's
+[`tmux-observer-operations.md`](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md);
+the older suite ledger referenced below retains its historical checkpoint.
+
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
 private retained remote cache and refresh lifecycle, fail-closed callback
 recovery, and automated fleet acceptance are complete. P7 removed the
