@@ -1,0 +1,397 @@
+{
+  "build": {
+    "builderSha256": "eedbb95ef4c4411380f1c924898bc7b9384cfb945b93460de47ab94fe71aadd3",
+    "constraintsSha256": "9415ac080e4169856325998ab71d3258c16c02a1d0d3cfa837bfca1290faa8db",
+    "implementation": "CPython",
+    "python": "3.14.7",
+    "uv": "uv 0.8.22"
+  },
+  "members": {
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/__init__.py": {
+      "bytes": 77,
+      "executable": false,
+      "sha256": "4769123735f907a1f036b7ffba1fbd04aeb8571fbce11b91cd45276f54fcc921"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/__main__.py": {
+      "bytes": 48,
+      "executable": false,
+      "sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/bounded_process.py": {
+      "bytes": 3915,
+      "executable": false,
+      "sha256": "e17f8ad53a6089515146cbe77256d1efb6fb708062fe2cd50772731e8d5463bd"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/cli.py": {
+      "bytes": 29293,
+      "executable": false,
+      "sha256": "0a31513f0e2cda05dc622a76002399c773f296364f58adf92dbf46dc6a6c97b5"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/config.py": {
+      "bytes": 2959,
+      "executable": false,
+      "sha256": "d2c9c75d54170fefe59a6ff28018269f729b05afc4dd3e5589baab95a6b4747c"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/diagnostics.py": {
+      "bytes": 3136,
+      "executable": false,
+      "sha256": "8293399e776429cc3ca74d2af05b7260c7af893b572768dacedf06b1345798ab"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/errors.py": {
+      "bytes": 1259,
+      "executable": false,
+      "sha256": "45f30f856fa1476583cc3e3c4ca279a69f7b9da112d90fe51392cb3c1c7385a6"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/host.py": {
+      "bytes": 2508,
+      "executable": false,
+      "sha256": "d4b8616182061224b1282239b7b2761873a133dd841a90a79621a651649d7661"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/inventory_service.py": {
+      "bytes": 17882,
+      "executable": false,
+      "sha256": "88c353a0c2a473fca25e23be99db74078e6b5716575077cd0de43aee1ab9280d"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/launcher.py": {
+      "bytes": 6752,
+      "executable": false,
+      "sha256": "3e6c5eaf90246c062e04f69715890eae1db97c9a684db6e8c7fd0066695d988d"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/lifecycle.py": {
+      "bytes": 29219,
+      "executable": false,
+      "sha256": "be87db5ddee2e6882f89aa76af1b983684139dd7ea58857fa15da9817ca28df9"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/lifecycle_service.py": {
+      "bytes": 12248,
+      "executable": false,
+      "sha256": "88d050f2d0d540fc0d8ced7013a160655b63892707da435f34b42ceea0dc78a9"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/mesh_adapter.py": {
+      "bytes": 15900,
+      "executable": false,
+      "sha256": "bfec8c2a194eb358f460340b1e2db17e36a70f3156b5659a351785999ffcaca7"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/model.py": {
+      "bytes": 2078,
+      "executable": false,
+      "sha256": "09baa5b56fa49049dc2ca5a38c7210ea37baa06524dbf3ceaaf97b16fef1c083"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/native-artifact.json": {
+      "bytes": 1874,
+      "executable": false,
+      "sha256": "8dc883250056acbf128643f8865791431e4e2a3acb8a7d8f4827268108061fc8"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": {
+      "bytes": 261,
+      "executable": true,
+      "sha256": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": {
+      "bytes": 8944,
+      "executable": false,
+      "sha256": "6237ce56b82a502a5de1afcc232ccd551637c4539ab3ad94d4442d6c4461c0dc"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/tmux-plus.so": {
+      "bytes": 22152,
+      "executable": true,
+      "sha256": "77c7402faed64e1175afc13b3134fd657a93611c0273d2182f1fc0c6fca793d8"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native_mode.py": {
+      "bytes": 2439,
+      "executable": false,
+      "sha256": "f4b82dc1a3aca23b6296978499ab66c59ff592eb59f61c9bb871aa11e46f425c"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/observer-artifact.json": {
+      "bytes": 3867,
+      "executable": false,
+      "sha256": "b8c8c50dd27d35e5123081a393470321cd2d622d445bfc776b45858758224895"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/observer_client.py": {
+      "bytes": 3701,
+      "executable": false,
+      "sha256": "a9839d44b0d082a12c715e7c5ef715f0d1577e0e87bbfd2f23a4b62bfdb37964"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/owned_process.py": {
+      "bytes": 424,
+      "executable": false,
+      "sha256": "098c392e19695ded5d6282a707bad8c4c5deed9c58a71812874e2053fafd363e"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_model.py": {
+      "bytes": 28683,
+      "executable": false,
+      "sha256": "c17fd02527b5ddb70f9af27f37482da1b5df818830b6729dc0cda5584a16cf07"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_notify.py": {
+      "bytes": 1512,
+      "executable": false,
+      "sha256": "4de518e14fe47b76201e2a0d091e857a54a03fbb17ffbbcf02cd029ecf1376d2"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_runtime.py": {
+      "bytes": 2377,
+      "executable": false,
+      "sha256": "8ada11a364a9f8e790a324140dd4d5f446fa0a938b104a1bfa621cbc7dfd2c70"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_watch.py": {
+      "bytes": 10068,
+      "executable": false,
+      "sha256": "b8dc63e059a3a133bc2b5cd10b973b6ba4324fb10df00d8c41a7d73cc53ee3e8"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/prepared_model.py": {
+      "bytes": 14320,
+      "executable": false,
+      "sha256": "adda26c309f83f03ad810866c2a82d8f540c6079f20d9b81672077a7f50ef7c5"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/presentation_cache.py": {
+      "bytes": 10285,
+      "executable": false,
+      "sha256": "6fa9c30618f7d9282837c3cee66d9657df3deb2c5d88dfd4c02f5ef548885827"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_cache.py": {
+      "bytes": 22900,
+      "executable": false,
+      "sha256": "d415d81a592c5b381ae4adbb973cc4bb803aba97769e961da9e18ab6c00515a5"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_inventory.py": {
+      "bytes": 41013,
+      "executable": false,
+      "sha256": "6b16e8413d3498a1a3686d0ba176e66722205e222ab0e4937ef58823baf1a5bb"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_lifecycle.py": {
+      "bytes": 44532,
+      "executable": false,
+      "sha256": "681d2ee67f9d801f2b7a83acc2ac29fcd0b8f63250ac8dc0810b31b484fcbcaa"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/rofi.py": {
+      "bytes": 92353,
+      "executable": false,
+      "sha256": "558e48ad1beee16f386f44d0cd5df979d6dab7b43c859c41d6d75de5a6de2c10"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/tmux.py": {
+      "bytes": 23383,
+      "executable": false,
+      "sha256": "b456d568a1fae033c17216459ebe125346c8ab29a98a525dfbfe2b8e5804aae2"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/tmux_wire.py": {
+      "bytes": 7233,
+      "executable": false,
+      "sha256": "0ae89d2fd87ee0337731b282a76f6922cd6ca859f0fa07fc8fea97968fc9cb77"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/view_preferences.py": {
+      "bytes": 6657,
+      "executable": false,
+      "sha256": "436bf761455b7713536962f2514a7ba933f133b625842cd22a70bcb2dba8de87"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/viewer_cache.py": {
+      "bytes": 18245,
+      "executable": false,
+      "sha256": "f522a48c6d73e2a0d75b1fda8ce4295a11af26929d064fb61d542678dde95461"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/viewer_service.py": {
+      "bytes": 46645,
+      "executable": false,
+      "sha256": "fecd0332052339b3e708bc1b1793684fc18c9fc9450a7b6d271517eb48da1bb7"
+    },
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/wire.py": {
+      "bytes": 4186,
+      "executable": false,
+      "sha256": "ba0dfd679bc9070560c93a57e0337f9a00fb5ad4a182a390e36df957ddd9b6bd"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/METADATA": {
+      "bytes": 8642,
+      "executable": false,
+      "sha256": "a09c31d5aa7e23e43544d6f618a1286afd54078fa49753c0f991d12d314648db"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/RECORD": {
+      "bytes": 5237,
+      "executable": false,
+      "sha256": "abf33e93260c626fa1a2e7a176766a6e57538c442587e8cd35fafb12d69d8583"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/WHEEL": {
+      "bytes": 101,
+      "executable": false,
+      "sha256": "f9970092cb1a69a202beb028db087f3a8bc09e2245034f5a6e5311040f102750"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/entry_points.txt": {
+      "bytes": 110,
+      "executable": false,
+      "sha256": "a1313d66df267fd5a8dc814aad1892bb3eab970aab18972ed902ac7aad50e1d0"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/licenses/LICENSE": {
+      "bytes": 1066,
+      "executable": false,
+      "sha256": "09f9adb67e3a6659b19893fbfc583eb5dfc605fea5b8e64202d20c41bdac9fb0"
+    },
+    "rofi_tmux_plus-0.7.0a2.dist-info/top_level.txt": {
+      "bytes": 15,
+      "executable": false,
+      "sha256": "03ca2c60104c8da4735549b93eae2d548cfee2aafca34a9dd7b90df5e1208792"
+    }
+  },
+  "native": {
+    "acceptanceState": "built_unaccepted",
+    "architecture": "x86_64",
+    "buildVersions": {
+      "cairo": "1.18.6",
+      "glib-2.0": "2.90.1",
+      "gmodule-2.0": "2.90.1",
+      "pango": "1.58.2"
+    },
+    "compiler": "cc (GCC) 16.2.1 20260810",
+    "files": {
+      "rofi-tmux-plus-mode": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b",
+      "tmux-plus-notify.c": "6237ce56b82a502a5de1afcc232ccd551637c4539ab3ad94d4442d6c4461c0dc",
+      "tmux-plus.so": "77c7402faed64e1175afc13b3134fd657a93611c0273d2182f1fc0c6fca793d8"
+    },
+    "flags": [
+      "-shared",
+      "-fPIC",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/usr/include/pango-1.0",
+      "-I/usr/include/harfbuzz",
+      "-I/usr/include/libmount",
+      "-I/usr/include/blkid",
+      "-I/usr/include/fribidi",
+      "-I/usr/include/glib-2.0",
+      "-I/usr/lib/glib-2.0/include",
+      "-I/usr/include/sysprof-6",
+      "-pthread",
+      "-I/usr/include/cairo",
+      "-I/usr/include/freetype2",
+      "-I/usr/include/libpng16",
+      "-I/usr/include/pixman-1",
+      "-lpango-1.0",
+      "-lharfbuzz",
+      "-lgobject-2.0",
+      "-Wl,--export-dynamic",
+      "-lgmodule-2.0",
+      "-pthread",
+      "-lglib-2.0",
+      "-lcairo",
+      "-ldl"
+    ],
+    "headers": {
+      "mode-private.h": "9b4b0148c1feae2bae7e4afc30e848fa5ee11d56d9eecdffecad4c00eadee55b",
+      "mode.h": "292355951931209c898ee31c33d9a76ea8d0e8a104e0cad88bd5201c5dd2ef48"
+    },
+    "modeAbi": 7,
+    "requiredPrivateSymbols": [
+      "script_mode_parse_setup",
+      "rofi_view_get_active",
+      "rofi_view_get_mode",
+      "rofi_view_get_completed",
+      "rofi_view_maybe_update",
+      "rofi_view_trigger_action",
+      "key_binding_get_action_from_name"
+    ],
+    "rofiSha256": "4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca",
+    "rofiVersion": "Version: 2.0.0-dirty",
+    "schemaVersion": 1,
+    "sourceCommit": "388ee6e466ef5321797f495792dac52ab83d230d",
+    "sourceTreeDirty": false
+  },
+  "observer": {
+    "modules": {
+      "tmux_observer/__init__.py": "6a29bfc80325ad76ed68d48393fbbe48f1f3865373931f36aae3b358474d6af1",
+      "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+      "tmux_observer/_clock.py": "f9eabc6347a603ef14e5fb4e56f1ce68ebb87293c05444cc71fbbcc69c2268ef",
+      "tmux_observer/_hub.py": "5001a2914c7a76741873fc1aaaa2a5d56065342e31a088645732ec4a07821e2b",
+      "tmux_observer/_ipc.py": "9bdf9ff4bd0f6698880325b69f234f6efebb09d11531bac1dceea542cec06239",
+      "tmux_observer/_models.py": "f2eddb94d3202264ce77d03790905e2a9cbef9ad3df14ce61887e87ed05dc3bd",
+      "tmux_observer/_owner_state.py": "024160ca934d928645aef85cb12c01c0e9426db6f6ba8119232d4e82a9c96ae6",
+      "tmux_observer/_process.py": "c2ba06aa0d19336d64dc79afd2cef2c86ee209df58558a8109e0d08cad8174fd",
+      "tmux_observer/_stream.py": "aaf936489b8f3498d47c1148aed109802c43c40364d0227a0714db8b8f4e22c5",
+      "tmux_observer/_tickets.py": "3741288958100fd031b38371479878575253e339b513f7a5a6c0d26b198ddfba",
+      "tmux_observer/_tmux_wire.py": "4bf673d6952ace4d9e5520cd74695a8133703bd91c10ebb9e87274c1d64a4ec4",
+      "tmux_observer/_validation.py": "e6712694831c36477f6c32d0aea38e8bbeb3282a33c024743f054fad14c16e23",
+      "tmux_observer/_wire.py": "d7c4d13d2d4e67106a8fa68ddf441725f70401ac6cb726179e5f1c65aeda60b3",
+      "tmux_observer/cli.py": "209f9089ec23b10ec295bdde6ec3d6fa1a8395312bb3c673de1ed2d136488ea3",
+      "tmux_observer/collector.py": "8ef4846a21cb909c71f6f95b5bb04ac763dabffe7d68829a2c8b49aebd5f7ab4",
+      "tmux_observer/owner.py": "fe747ed5ff2e3b4b04d5a519eb3a19ba81283e3272c396759f1b746f2d3c8cec",
+      "tmux_observer/public.py": "fbe2705fb71e13244a3b2a18834f45e859ff3dca8a37d5d6fa7d23831899989f",
+      "tmux_observer_client/__init__.py": "14ab80d96104b342ef7c016526f413f896b2c43a5d3309162aad0451275bbaa0",
+      "tmux_observer_client/_command.py": "e317d77baf3625819fecab72f24bf9e2e19d5e994384a61f6d74a2a5182b416c",
+      "tmux_observer_client/_context.py": "954673fda3a9addb7cd8c690c234c292ccbb80c06adc7479f97fd5f489965b1e",
+      "tmux_observer_client/_desktop_input.py": "d17ebd7aaf2d82a7e30bdb4d87100212dfb006db982e0c91376eca34383ba80c",
+      "tmux_observer_client/_desktop_scan.py": "42247f353ec24800ac21b45b1689d869f303d66fa9913b2d2c034f001ccef4a6",
+      "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
+      "tmux_observer_client/_fleet_state.py": "d6a8068d2fe95e1ae77f12ce154ffee2a8db4c345c90bbe7a4915c8916c1d984",
+      "tmux_observer_client/_fleet_tickets.py": "29c142575202d43b7732057e1aecd694f2630e054e1e630b7719c218562656f8",
+      "tmux_observer_client/_local_stream.py": "4dea112dff1b9c05e2bf68f24c642745569ac1537f4be49428d097c32911dff0",
+      "tmux_observer_client/_remote_state.py": "82e333deeb245363a3faf22e2609edf88a5a4ad9fb5d2fe0f95bf02c71bdd10b",
+      "tmux_observer_client/_watch.py": "894bf8b5dfcbd3e6cc01e8c5e2e3279931075e53a5b5dbbef6ed34219b6a1738",
+      "tmux_observer_client/cli.py": "01c653fea097d187c63b7d3113e00d4d9eafe2e262c94494150b2d7bf164ce2f",
+      "tmux_observer_client/desktop.py": "396d6d0daac6d7c6eedb047a995efad82480b60bb1f83e54e2e8fc7843c6dfce",
+      "tmux_observer_client/direct.py": "960a7b93bad498e3184129e7f251038d03a5f874883e0221d0447dac86f203fc",
+      "tmux_observer_client/fleet.py": "27e6a6943c9b3f571be270b2a7c1480cdb516dd38b93d4f2ff7cf9e1b8f6fe44",
+      "tmux_observer_client/mesh.py": "35be440c8af2642d120d80190a1b8287c49d34445ff24a70d9baee14859f93aa",
+      "tmux_observer_client/public.py": "864400d34225f03b5649c37f124cb559ac7dcc756f00becec82e688490ae06cc",
+      "tmux_observer_client/ssh.py": "9cc6966463bf16dfc096effd0c9f23d2ca0f5af93978a6b613835f84ee8afaf5"
+    },
+    "schemaVersion": 1,
+    "sourceCommit": "d5a2e97a4e5c2a65599d45818680635f5c790c99",
+    "version": "0.1.0a1",
+    "wheelSha256": "06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d"
+  },
+  "package": {
+    "generator": "setuptools (84.0.0)",
+    "name": "rofi-tmux-plus",
+    "requiresPython": ">=3.11",
+    "version": "0.7.0a2"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "commit": "388ee6e466ef5321797f495792dac52ab83d230d",
+    "epoch": 1791495733,
+    "tree": "287eb0dd2252c48a8d531240eb79e9483caf2de7"
+  },
+  "sourceFiles": {
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/__init__.py": "rofi_tmux_plus/__init__.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/__main__.py": "rofi_tmux_plus/__main__.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/bounded_process.py": "rofi_tmux_plus/bounded_process.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/cli.py": "rofi_tmux_plus/cli.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/config.py": "rofi_tmux_plus/config.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/diagnostics.py": "rofi_tmux_plus/diagnostics.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/errors.py": "rofi_tmux_plus/errors.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/host.py": "rofi_tmux_plus/host.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/inventory_service.py": "rofi_tmux_plus/inventory_service.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/launcher.py": "rofi_tmux_plus/launcher.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/lifecycle.py": "rofi_tmux_plus/lifecycle.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/lifecycle_service.py": "rofi_tmux_plus/lifecycle_service.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/mesh_adapter.py": "rofi_tmux_plus/mesh_adapter.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/model.py": "rofi_tmux_plus/model.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/native-artifact.json": "rofi_tmux_plus/native/native-artifact.json",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": "rofi_tmux_plus/native/rofi-tmux-plus-mode",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": "rofi_tmux_plus/native/tmux-plus-notify.c",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native/tmux-plus.so": "rofi_tmux_plus/native/tmux-plus.so",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/native_mode.py": "rofi_tmux_plus/native_mode.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/observer-artifact.json": "rofi_tmux_plus/observer-artifact.json",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/observer_client.py": "rofi_tmux_plus/observer_client.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/owned_process.py": "rofi_tmux_plus/owned_process.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_model.py": "rofi_tmux_plus/picker_model.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_notify.py": "rofi_tmux_plus/picker_notify.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_runtime.py": "rofi_tmux_plus/picker_runtime.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/picker_watch.py": "rofi_tmux_plus/picker_watch.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/prepared_model.py": "rofi_tmux_plus/prepared_model.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/presentation_cache.py": "rofi_tmux_plus/presentation_cache.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_cache.py": "rofi_tmux_plus/remote_cache.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_inventory.py": "rofi_tmux_plus/remote_inventory.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/remote_lifecycle.py": "rofi_tmux_plus/remote_lifecycle.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/rofi.py": "rofi_tmux_plus/rofi.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/tmux.py": "rofi_tmux_plus/tmux.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/tmux_wire.py": "rofi_tmux_plus/tmux_wire.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/view_preferences.py": "rofi_tmux_plus/view_preferences.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/viewer_cache.py": "rofi_tmux_plus/viewer_cache.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/viewer_service.py": "rofi_tmux_plus/viewer_service.py",
+    "rofi_tmux_plus-0.7.0a2.data/purelib/rofi_tmux_plus/wire.py": "rofi_tmux_plus/wire.py",
+    "rofi_tmux_plus-0.7.0a2.dist-info/licenses/LICENSE": "LICENSE"
+  },
+  "state": "built_unaccepted",
+  "wheel": {
+    "bytes": 145415,
+    "file": "rofi_tmux_plus-0.7.0a2-py3-none-linux_x86_64.whl",
+    "sha256": "5f15d4d4d8a90067c8f6d28806c6e7df5e7e754638c0044cda54830f838ead0a"
+  }
+}

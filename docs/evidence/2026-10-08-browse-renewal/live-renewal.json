@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "388ee6e466ef5321797f495792dac52ab83d230d",
+  "scope": "Native two-host fleet; passive prepared reads and an owned watch; isolated UI state; no graphical input or lifecycle writes",
+  "observations": [
+    {
+      "initial": {
+        "statuses": [
+          "ok",
+          "ok"
+        ],
+        "expiryOffsetsMs": [
+          8610,
+          9251
+        ],
+        "watchSequence": 1
+      },
+      "currentServiceStatuses": [
+        "ok",
+        "ok"
+      ],
+      "currentExpiryOffsetsMs": [
+        8726,
+        9356
+      ],
+      "watchHealthy": true,
+      "watchSequence": 8,
+      "cycledPages": [
+        {
+          "view": "local",
+          "rows": 8,
+          "urgentRows": 8
+        },
+        {
+          "view": "host",
+          "rows": 7,
+          "urgentRows": 7
+        },
+        {
+          "view": "open",
+          "rows": 0,
+          "urgentRows": 0
+        },
+        {
+          "view": "attached",
+          "rows": 0,
+          "urgentRows": 0
+        },
+        {
+          "view": "all",
+          "rows": 15,
+          "urgentRows": 15
+        }
+      ],
+      "scope": "owned read-only watch, isolated preferences/cache; no GUI, refresh admission or tmux actions",
+      "label": "snap_before",
+      "heldFrameMs": 12000
+    },
+    {
+      "initial": {
+        "statuses": [
+          "ok",
+          "ok"
+        ],
+        "expiryOffsetsMs": [
+          8700,
+          9247
+        ],
+        "watchSequence": 1
+      },
+      "currentServiceStatuses": [
+        "ok",
+        "ok"
+      ],
+      "currentExpiryOffsetsMs": [
+        8769,
+        9184
+      ],
+      "watchHealthy": true,
+      "watchSequence": 7,
+      "cycledPages": [
+        {
+          "view": "local",
+          "rows": 8,
+          "urgentRows": 0
+        },
+        {
+          "view": "host",
+          "rows": 7,
+          "urgentRows": 0
+        },
+        {
+          "view": "open",
+          "rows": 10,
+          "urgentRows": 0
+        },
+        {
+          "view": "attached",
+          "rows": 12,
+          "urgentRows": 0
+        },
+        {
+          "view": "all",
+          "rows": 15,
+          "urgentRows": 0
+        }
+      ],
+      "scope": "owned read-only watch, isolated preferences/cache; no GUI, refresh admission or tmux actions",
+      "label": "snap_source_after",
+      "heldFrameMs": 12000
+    },
+    {
+      "initial": {
+        "statuses": [
+          "ok",
+          "ok"
+        ],
+        "expiryOffsetsMs": [
+          9921,
+          9162
+        ],
+        "watchSequence": 2
+      },
+      "currentServiceStatuses": [
+        "ok",
+        "ok"
+      ],
+      "currentExpiryOffsetsMs": [
+        8082,
+        9311
+      ],
+      "watchHealthy": true,
+      "watchSequence": 2,
+      "cycledPages": [
+        {
+          "view": "local",
+          "rows": 7,
+          "urgentRows": 0
+        },
+        {
+          "view": "host",
+          "rows": 8,
+          "urgentRows": 0
+        },
+        {
+          "view": "open",
+          "rows": 4,
+          "urgentRows": 0
+        },
+        {
+          "view": "attached",
+          "rows": 12,
+          "urgentRows": 0
+        },
+        {
+          "view": "all",
+          "rows": 15,
+          "urgentRows": 0
+        }
+      ],
+      "scope": "owned read-only watch, isolated preferences/cache; no GUI, refresh admission or tmux actions",
+      "label": "starship_wheel_after",
+      "heldFrameMs": 12000
+    }
+  ],
+  "result": "passed"
+}
