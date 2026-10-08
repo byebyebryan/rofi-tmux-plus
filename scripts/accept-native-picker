@@ -1,0 +1,756 @@
+#!/usr/bin/env python3
+"""Native picker probe with installed artifacts and disposable publishers."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.machinery
+import importlib.util
+import json
+import math
+import os
+import shlex
+import shutil
+import signal
+import subprocess
+import tempfile
+import threading
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+RECORDER = r"""
+import io,json,os,sys,time
+from contextlib import redirect_stdout
+from pathlib import Path
+from rofi_tmux_plus import rofi
+original=rofi.run_rofi
+def recorded(*args,**kwargs):
+    env=args[0] if args else kwargs.get('environ') or os.environ
+    start=time.monotonic_ns()/1000000
+    output=io.StringIO()
+    with redirect_stdout(output):
+        result=original(*args,**kwargs)
+    frame=output.getvalue()
+    sys.stdout.write(frame)
+    headers={}
+    rows=[]
+    for line in frame.replace('\x1e','\n').split('\n'):
+        if line.startswith('\0') and '\x1f' in line:
+            key,value=line[1:].split('\x1f',1);headers[key]=value
+        elif '\0info\x1f' in line:
+            label,info=line.split('\0info\x1f',1)
+            rows.append({'label':label,'info':info.split('\x1f',1)[0]})
+    event={'startedAt':start,'finishedAt':time.monotonic_ns()/1000000,
+           'retv':int(env.get('ROFI_RETV','0')),'selected':env.get('ROFI_INFO'),
+           'argv':sys.argv[1:],'before':env.get('ROFI_DATA'),'headers':headers,'rows':rows}
+    with Path(os.environ['TMUX_PLUS_ACCEPT_LOG']).open('a') as out:
+        out.write(json.dumps(event)+'\n')
+    return result
+rofi.run_rofi=recorded
+"""
+
+
+def command(argv, *, env=None, timeout=5, check=True):
+    result = subprocess.run(
+        argv, env=env, capture_output=True, text=True, timeout=timeout, check=False
+    )
+    if check and result.returncode:
+        raise RuntimeError(result.stderr[:2048] or result.stdout[:2048])
+    return result.stdout
+
+
+def until(predicate, seconds=5):
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        result = predicate()
+        if result:
+            return result
+        time.sleep(0.02)
+    raise RuntimeError("owned picker did not reach the expected bounded state")
+
+
+def builder():
+    loader = importlib.machinery.SourceFileLoader(
+        "picker_candidate", str(ROOT / "scripts/candidate-artifact")
+    )
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--python", type=Path, required=True)
+    parser.add_argument("--artifact", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--host-id", choices=("snap", "starship"), required=True)
+    parser.add_argument("--skip-timing", action="store_true", help="diagnostic GUI run only")
+    args = parser.parse_args()
+    artifact, _wheel = builder().verify(args.artifact)
+    python = args.python.absolute()
+    bins = python.parent
+    package, integration = json.loads(
+        command(
+            [
+                str(python),
+                "-I",
+                "-c",
+                "import json,rofi_tmux_plus; from rofi_tmux_plus.native_mode import verify_native; from rofi_tmux_plus.observer_client import observer_api; observer_api(); print(json.dumps([rofi_tmux_plus.__file__,str(verify_native()[1])]))",
+            ]
+        )
+    )
+    parent = Path(package).parent.parent
+    for member, source in artifact["sourceFiles"].items():
+        path = parent / (source if source.startswith("rofi_tmux_plus/") else member)
+        assert (
+            hashlib.sha256(path.read_bytes()).hexdigest() == artifact["members"][member]["sha256"]
+        )
+    env = dict(os.environ)
+    for line in command(["systemctl", "--user", "show-environment"]).splitlines():
+        key, separator, value = line.partition("=")
+        if separator and key in ("DISPLAY", "WAYLAND_DISPLAY", "NIRI_SOCKET", "XDG_RUNTIME_DIR"):
+            env[key] = value
+    if env.get("WAYLAND_DISPLAY") and not env["WAYLAND_DISPLAY"].startswith("/"):
+        env["WAYLAND_DISPLAY"] = env["XDG_RUNTIME_DIR"] + "/" + env["WAYLAND_DISPLAY"]
+    windows = json.loads(command(["niri", "msg", "--json", "windows"], env=env))
+    focused = next((w["id"] for w in windows if w.get("is_focused")), None)
+    assert not command(["pgrep", "-x", "rofi"], check=False), "ordinary Rofi is open"
+    evidence = {
+        "schemaVersion": 1,
+        "gate": "T14-native-picker checkpoint",
+        "artifact": artifact,
+        "hostId": args.host_id,
+        "harnessSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "timingSkipped": args.skip_timing,
+        "cases": [],
+        "limits": [
+            "Only the named desktop is exercised; other hosts receive no graphical input",
+            "Read-only recorder wraps the installed renderer; warm frame timings exclude it",
+            "Visible screenshots are separate checkpoints; callback finish is not compositor presentation",
+        ],
+    }
+    processes = []
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+
+    def passed(name, **details):
+        evidence["cases"].append({"name": name, "result": "passed", **details})
+        print("passed " + name, flush=True)
+
+    with tempfile.TemporaryDirectory(prefix="tp-gui-") as temporary:
+        root = Path(temporary)
+        for name in (
+            "runtime",
+            "native",
+            "config",
+            "state",
+            "cache",
+            "bin",
+            "recorder",
+            "pictures",
+        ):
+            (root / name).mkdir(mode=0o700)
+        (root / "config/user-dirs.dirs").write_text(
+            'XDG_PICTURES_DIR="' + str(root / "pictures") + '"\n'
+        )
+        env.update(
+            PATH=str(root / "bin") + ":" + str(bins) + ":/usr/bin:/bin",
+            TMUX_TMPDIR=str(root / "native"),
+            XDG_RUNTIME_DIR=str(root / "runtime"),
+            XDG_CONFIG_HOME=str(root / "config"),
+            XDG_STATE_HOME=str(root / "state"),
+            XDG_CACHE_HOME=str(root / "cache"),
+            ROFI_PNG_OUTPUT=str(root / "frame.png"),
+        )
+        for key in ("TMUX", "TMUX_PANE", "PYTHONPATH", "PYTHONHOME"):
+            env.pop(key, None)
+        (root / "bin/tmux").write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"$PPID\" >> "
+            + shlex.quote(str(root / "native-parents"))
+            + '\nexec /usr/bin/tmux "$@"\n'
+        )
+        (root / "bin/tmux").chmod(0o755)
+        (root / "bin/ssh").write_text(
+            "#!/bin/sh\nprintf 'unexpected SSH\\n' >> "
+            + shlex.quote(str(root / "ssh-starts"))
+            + "\nexit 1\n"
+        )
+        (root / "bin/ssh").chmod(0o755)
+        (root / "recorder/sitecustomize.py").write_text(RECORDER)
+        gui_env = dict(
+            env,
+            PYTHONPATH=str(root / "recorder"),
+            TMUX_PLUS_ACCEPT_LOG=str(root / "callbacks.jsonl"),
+        )
+
+        def native(*args):
+            return command(
+                ["/usr/bin/tmux", "-f", "/dev/null", "-L", "default", *args], env=env
+            ).strip()
+
+        def start(args, name, environment=env):
+            with (root / (name + ".log")).open("w") as log:
+                process = subprocess.Popen(
+                    args, env=environment, stdout=log, stderr=log, start_new_session=True
+                )
+            processes.append(process)
+            return process
+
+        def stop(process):
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=2)
+
+        def frame():
+            raw = command(
+                [str(bins / "tmux-observer-client"), "snapshot", "--access", "cached", "--json"],
+                env=env,
+                check=False,
+            )
+            return json.loads(raw) if raw else {}
+
+        def ready():
+            value = frame()
+            hosts = (value.get("snapshot") or {}).get("hosts", [])
+            return (
+                value
+                if hosts
+                and hosts[0]["owner"]["receipt"]
+                and hosts[0]["owner"]["receipt"]["state"] == "ready"
+                else None
+            )
+
+        def events():
+            path = root / "callbacks.jsonl"
+            return (
+                [json.loads(line) for line in path.read_text().splitlines()]
+                if path.exists()
+                else []
+            )
+
+        def after(index, predicate):
+            return until(lambda: next((e for e in events()[index:] if predicate(e)), None))
+
+        def child_pid(launcher):
+            for child in (
+                Path(f"/proc/{launcher.pid}/task/{launcher.pid}/children").read_text().split()
+            ):
+                try:
+                    argv = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
+                    if argv[0] == b"/usr/bin/rofi" and str(integration).encode() in argv:
+                        return int(child)
+                except FileNotFoundError:
+                    pass
+            return None
+
+        def owned_runtime(pid):
+            for item in Path(f"/proc/{pid}/environ").read_bytes().split(b"\0"):
+                if item.startswith(b"ROFI_TMUX_PLUS_RUNTIME="):
+                    return Path(os.fsdecode(item.split(b"=", 1)[1]))
+            raise RuntimeError("owned Rofi has no private runtime")
+
+        def keys(pid, *args):
+            current = json.loads(command(["niri", "msg", "--json", "windows"], env=env))
+            layers = json.loads(command(["niri", "msg", "--json", "layers"], env=env))
+            output = json.loads(command(["niri", "msg", "--json", "focused-output"], env=env))[
+                "name"
+            ]
+            assert command(["pgrep", "-x", "rofi"], check=False).split() == [str(pid)], (
+                "another Rofi appeared; no input sent"
+            )
+            exclusive = [
+                l
+                for l in layers
+                if l["keyboard_interactivity"] == "Exclusive" and l["output"] == output
+            ]
+            if any(w.get("pid") == pid for w in current):
+                assert not exclusive and any(
+                    w.get("pid") == pid and w.get("is_focused") for w in current
+                ), "owned Rofi lost focus; no input sent"
+            else:
+                assert exclusive and all(l["namespace"] == "rofi" for l in exclusive), (
+                    "owned Rofi lacks exclusive layer focus; no input sent"
+                )
+            command(["wtype", *args], env=env)
+
+        def screenshot(pid, label):
+            keys(pid, "-k", "F12")
+
+            def complete_png():
+                path = next((root / "pictures").glob("*.png"), None)
+                if path is None or not 100 <= path.stat().st_size <= 64 * 1024 * 1024:
+                    return None
+                raw = path.read_bytes()
+                return (
+                    (path, raw)
+                    if raw.startswith(b"\x89PNG\r\n\x1a\n")
+                    and raw.endswith(b"\0\0\0\0IEND\xaeB`\x82")
+                    else None
+                )
+
+            path, raw = until(complete_png)
+            target = args.output.with_name(args.output.stem + "-" + label + ".png")
+            target.write_bytes(raw)
+            path.unlink()
+            return target.name
+
+        def launch(label):
+            index = len(events())
+            started = time.monotonic_ns() / 1000000
+            process = start(
+                [
+                    str(bins / "rofi-tmux-plus-rofi"),
+                    "-no-config",
+                    "-normal-window",
+                    "-show",
+                    "tmux-plus",
+                    "-modes",
+                    "tmux-plus,keys",
+                    "-theme-str",
+                    "window { width: 900px; } listview { lines: 6; }",
+                    "-kb-custom-1",
+                    "Alt+r",
+                    "-kb-custom-2",
+                    "Right",
+                    "-kb-custom-3",
+                    "Left",
+                    "-kb-custom-7",
+                    "Tab",
+                    "-kb-custom-8",
+                    "ISO_Left_Tab",
+                    "-kb-custom-19",
+                    "",
+                    "-kb-element-next",
+                    "",
+                    "-kb-element-prev",
+                    "",
+                    "-kb-row-tab",
+                    "",
+                    "-kb-mode-next",
+                    "Control+Tab",
+                    "-kb-mode-previous",
+                    "Control+ISO_Left_Tab",
+                    "-kb-move-char-back",
+                    "Control+b",
+                    "-kb-move-char-forward",
+                    "Control+f",
+                    "-kb-accept-custom",
+                    "Control+Return",
+                    "-kb-screenshot",
+                    "F12",
+                ],
+                label,
+                gui_env,
+            )
+            pid = until(lambda: child_pid(process))
+
+            def surface():
+                window = next(
+                    (
+                        w
+                        for w in json.loads(command(["niri", "msg", "--json", "windows"], env=env))
+                        if w.get("pid") == pid
+                    ),
+                    None,
+                )
+                if window:
+                    return window
+                if events()[index:] and any(
+                    l["namespace"] == "rofi"
+                    for l in json.loads(command(["niri", "msg", "--json", "layers"], env=env))
+                ):
+                    return {"layer": True}
+                return None
+
+            window = until(surface)
+            surfaced = time.monotonic_ns() / 1000000
+            if not window.get("layer"):
+                command(
+                    ["niri", "msg", "action", "focus-window", "--id", str(window["id"])], env=env
+                )
+            adopted = after(
+                index,
+                lambda e: e["retv"] == 28,
+            )
+            evidence.setdefault("graphicalCheckpointsMs", []).append(
+                {
+                    "name": label,
+                    "surfaceObserved": surfaced - started,
+                    "firstNativeCallbackFinished": adopted["finishedAt"] - started,
+                    "limit": "surface polling is a bound, not a compositor presentation timestamp",
+                }
+            )
+            return process, pid
+
+        try:
+            for name in ("azlalpha", "azlbeta", "azlgamma"):
+                native("new-session", "-d", "-s", name, "sleep 3600")
+            baseline = native(
+                "list-sessions",
+                "-F",
+                "#{session_id}|#{session_created}|#{session_name}|#{session_attached}|#{session_windows}",
+            )
+            owner = start(
+                [str(bins / "tmux-observer"), "owner", "--host-id", args.host_id], "owner"
+            )
+            fleet = start(
+                [str(bins / "tmux-observer-client"), "fleet", "--host-id", args.host_id], "fleet"
+            )
+            until(ready, seconds=10)
+            assert owner.poll() is None
+            passed("actual_owner_and_fleet_ready_with_disposable_native_sessions")
+            durations = []
+            foreground = []
+            for _ in range(0 if args.skip_timing else 100):
+                at = time.perf_counter_ns()
+                process = subprocess.Popen(
+                    [str(bins / "rofi-tmux-plus")],
+                    env=dict(env, ROFI_RETV="0"),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                raw, error = process.communicate(timeout=2)
+                assert process.returncode == 0 and b"azlalpha" in raw, error[:1024]
+                foreground.append(str(process.pid))
+                durations.append((time.perf_counter_ns() - at) / 1000000)
+            assert not set(foreground).intersection(
+                (root / "native-parents").read_text().split()
+                if (root / "native-parents").exists()
+                else []
+            )
+            assert not (root / "ssh-starts").exists()
+            if durations:
+                p95 = sorted(durations)[math.ceil(len(durations) * 0.95) - 1]
+                evidence["warmFrameMs"] = {
+                    "samples": durations,
+                    "p95": p95,
+                    "target": 150,
+                    "passed": p95 <= 150,
+                }
+                assert p95 <= 150, evidence["warmFrameMs"]
+                passed("100_warm_installed_frames_without_foreground_native_or_ssh", p95Ms=p95)
+            process, pid = launch("picker")
+            passed(
+                "fixed_installed_native_mode_adopts_actual_prepared_service",
+                screenshot=screenshot(pid, "ready"),
+            )
+            index = len(events())
+            runtime = owned_runtime(pid)
+            observed_terminal = {}
+            polling_stop = threading.Event()
+
+            def ticket_probe():
+                try:
+                    ticket_path = runtime / "refresh-ticket.json"
+                    record = until(
+                        lambda: (
+                            json.loads(ticket_path.read_text()) if ticket_path.exists() else None
+                        )
+                    )
+                    while not polling_stop.is_set():
+                        value = json.loads(
+                            command(
+                                [
+                                    str(bins / "tmux-observer-client"),
+                                    "refresh_status",
+                                    "--json",
+                                    "--context-id",
+                                    record["contextId"],
+                                    "--expected-host",
+                                    record["hostId"],
+                                    "--publisher-id",
+                                    record["ticket"]["publisherId"],
+                                    "--ticket-id",
+                                    record["ticket"]["id"],
+                                ],
+                                env=env,
+                            )
+                        )
+                        if value.get("ticket", {}).get("state") in {
+                            "complete",
+                            "failed",
+                            "deadline",
+                            "stale_scope",
+                        }:
+                            observed_terminal.update(
+                                at=time.monotonic_ns() / 1000000, ticket=value["ticket"]
+                            )
+                            return
+                        polling_stop.wait(0.02)
+                except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
+                    observed_terminal["failure"] = str(error)
+
+            probe = threading.Thread(target=ticket_probe)
+            probe.start()
+            keys(pid, "-M", "alt", "-k", "r", "-m", "alt")
+            requested = after(index, lambda e: e["retv"] == 10)
+            terminal = after(
+                index,
+                lambda e: e["retv"] == 28 and "Refreshing" not in e["headers"].get("message", ""),
+            )
+            probe.join(timeout=2)
+            polling_stop.set()
+            probe.join(timeout=2)
+            assert "at" in observed_terminal, observed_terminal
+            before_reference = json.loads(requested["selected"])
+            after_reference = json.loads(terminal["selected"])
+            assert all(
+                before_reference[key] == after_reference[key]
+                for key in ("hostId", "serverGeneration", "sessionId", "createdAt", "meshRevision")
+            )
+            passed(
+                "explicit_refresh_equal_rows_clears_notice_and_retains_reference",
+                requested=requested,
+                adopted=terminal,
+                screenshot=screenshot(pid, "refresh-complete"),
+                serviceTerminal=observed_terminal,
+                noticeCallbackDelayMs=terminal["finishedAt"] - requested["startedAt"],
+                serviceToNoticeCallbackMs=terminal["finishedAt"] - observed_terminal["at"],
+            )
+            index = len(events())
+            keys(pid, "-k", "a", "-k", "l")
+            native("rename-session", "-t", "azlbeta", "azlbeta-v2")
+            published = time.monotonic_ns() / 1000000
+            for _ in range(10):
+                keys(pid, "-k", "a")
+                time.sleep(0.06)
+                keys(pid, "-k", "BackSpace")
+                time.sleep(0.06)
+            adopted = after(
+                index,
+                lambda e: e["retv"] == 28 and any("azlbeta-v2" in r["label"] for r in e["rows"]),
+            )
+            passed(
+                "native_rename_adopted_during_active_input",
+                callbackDelayMs=adopted["finishedAt"] - published,
+                event=adopted,
+                screenshot=screenshot(pid, "typing"),
+            )
+            views = []
+            for _ in range(4):
+                index = len(events())
+                keys(pid, "-k", "Right")
+                views.append(after(index, lambda e: e["retv"] == 11)["headers"]["prompt"])
+            passed(
+                "native_view_arrows_expose_four_scopes",
+                prompts=views,
+                screenshot=screenshot(pid, "views"),
+            )
+            keys(pid, "-M", "ctrl", "-k", "b", "-m", "ctrl", "-k", "z")
+            index = len(events())
+            keys(pid, "-M", "ctrl", "-k", "Return", "-m", "ctrl")
+            captured = after(index, lambda e: e["retv"] == 2)
+            assert captured["argv"] == ["azl"], captured
+            process.wait(timeout=3)
+            passed(
+                "automatic_updates_and_views_preserve_filter_and_caret",
+                finalInput=captured["argv"][0],
+            )
+            process, pid = launch("lifetime")
+            assert events()[-1]["headers"]["prompt"] == "Tmux › Open"
+            passed("relaunch_restores_the_remembered_empty_open_view")
+            index = len(events())
+            keys(pid, "-k", "Left")
+            assert after(index, lambda e: e["retv"] == 12)["headers"]["prompt"] == "Tmux › Local"
+            index = len(events())
+            keys(pid, "-k", "Tab")
+            browse_kill = after(index, lambda e: e["retv"] == 16)
+            assert json.loads(browse_kill["headers"]["data"])["action"] == "kill"
+            index = len(events())
+            keys(pid, "-k", "Return")
+            confirmation = after(index, lambda e: e["retv"] == 1)
+            pending = json.loads(confirmation["headers"]["data"])["pendingAction"]
+            assert pending["selection"]["name"] == "azlalpha", pending
+            native("rename-session", "-t", "azlgamma", "azlgamma-v2")
+            adopted_confirmation = after(
+                len(events()),
+                lambda e: e["retv"] == 28 and "pendingAction" in json.loads(e["headers"]["data"]),
+            )
+            assert json.loads(adopted_confirmation["headers"]["data"])["pendingAction"] == pending
+            assert [json.loads(row["info"])["type"] for row in adopted_confirmation["rows"]] == [
+                "cancel",
+                "kill",
+            ]
+            passed(
+                "prepared_changes_preserve_exact_native_pending_confirmation",
+                selection=pending["selection"],
+                screenshot=screenshot(pid, "confirmation"),
+            )
+            index = len(events())
+            keys(pid, "-k", "Return")
+            cancelled = after(index, lambda e: e["retv"] == 1)
+            assert "pendingAction" not in json.loads(cancelled["headers"]["data"])
+            passed("native_confirmation_cancel_returns_to_browse_without_mutation")
+            runtime = owned_runtime(pid)
+            watch_pid = int((runtime / "notify").read_text().split()[4])
+            assert f"PPid:\t{process.pid}\n" in Path(f"/proc/{watch_pid}/status").read_text()
+            assert b"tmux_observer_client.cli" in Path(f"/proc/{watch_pid}/cmdline").read_bytes()
+            index = len(events())
+            os.kill(watch_pid, signal.SIGSTOP)
+            try:
+                stalled = until(
+                    lambda: next(
+                        (
+                            e
+                            for e in events()[index:]
+                            if e["retv"] == 28
+                            and "picker updates unavailable" in e["headers"].get("message", "")
+                        ),
+                        None,
+                    ),
+                    seconds=15,
+                )
+                passed("native_stalled_watch_expires_and_revokes_cached_positives", event=stalled)
+                (runtime / "notify").write_text("malformed owned diagnostic\n")
+                (runtime / "notify").chmod(0o600)
+                index = len(events())
+                after(
+                    index,
+                    lambda e: (
+                        e["retv"] == 28
+                        and "picker updates unavailable" in e["headers"].get("message", "")
+                    ),
+                )
+                passed("malformed_owned_notification_has_bounded_native_failure")
+            finally:
+                os.kill(watch_pid, signal.SIGCONT)
+            index = len(events())
+            recovered = after(
+                index,
+                lambda e: (
+                    e["retv"] == 28
+                    and "pendingAction" not in json.loads(e["headers"]["data"])
+                    and "unavailable" not in e["headers"].get("message", "").lower()
+                    and not json.loads(e["headers"]["data"]).get("errorMessage")
+                ),
+            )
+            passed("native_watch_recovers_without_retaining_observation_error", event=recovered)
+            keys(pid, "-M", "ctrl", "-k", "Tab", "-m", "ctrl")
+            time.sleep(0.2)
+            keys(pid, "-M", "ctrl", "-M", "shift", "-k", "Tab", "-m", "shift", "-m", "ctrl")
+            time.sleep(0.2)
+            assert child_pid(process) == pid
+            passed("native_mode_switch_and_reentry_keep_owned_process_alive")
+            index = len(events())
+            stop(fleet)
+            lost = after(
+                index,
+                lambda e: (
+                    e["retv"] == 28
+                    and any(
+                        word in e["headers"].get("message", "").lower()
+                        for word in ("unavailable", "failed")
+                    )
+                ),
+            )
+            passed(
+                "fleet_loss_visible_without_direct_fallback",
+                event=lost,
+                screenshot=screenshot(pid, "reader-lost"),
+            )
+            index = len(events())
+            fleet = start(
+                [str(bins / "tmux-observer-client"), "fleet", "--host-id", args.host_id],
+                "fleet-restarted",
+            )
+            until(ready)
+            after(
+                index,
+                lambda e: e["retv"] == 28 and any("azlalpha" in r["label"] for r in e["rows"]),
+            )
+            passed("new_reader_recovers_by_read_only_watch_reconnect")
+            runtime = owned_runtime(pid)
+            stop(process)
+            until(lambda: not Path(f"/proc/{pid}").exists())
+            assert not runtime.exists()
+            passed("launcher_term_removes_owned_rofi_watch_and_runtime")
+            current = native(
+                "list-sessions",
+                "-F",
+                "#{session_id}|#{session_created}|#{session_name}|#{session_attached}|#{session_windows}",
+            )
+            assert current == baseline.replace("azlbeta", "azlbeta-v2").replace(
+                "azlgamma", "azlgamma-v2"
+            )
+            assert not (root / "ssh-starts").exists()
+            passed("owned_roster_attachments_and_windows_preserved")
+            stop(fleet)
+            stop(owner)
+            absent, absent_pid = launch("absent")
+            absent_runtime = owned_runtime(absent_pid)
+            assert any(
+                "unavailable" in e["headers"].get("message", "").lower() for e in events()[-2:]
+            )
+            passed(
+                "absent_prepared_reader_has_visible_bounded_native_outcome",
+                screenshot=screenshot(absent_pid, "absent"),
+            )
+            keys(absent_pid, "-k", "Escape")
+            absent.wait(timeout=3)
+            until(lambda: not Path(f"/proc/{absent_pid}").exists())
+            assert not absent_runtime.exists()
+            passed("native_cancel_removes_owned_rofi_watch_and_runtime")
+            evidence["result"] = "passed_native_checkpoint"
+        except Exception as error:
+            for diagnostic in root.glob("*.log"):
+                shutil.copyfile(
+                    diagnostic, args.output.with_name(args.output.stem + "-" + diagnostic.name)
+                )
+            notifications = {}
+            for process in processes:
+                if process.poll() is None:
+                    selected = child_pid(process)
+                    if selected:
+                        for item in Path(f"/proc/{selected}/environ").read_bytes().split(b"\0"):
+                            if item.startswith(b"ROFI_TMUX_PLUS_RUNTIME="):
+                                notify = Path(os.fsdecode(item.split(b"=", 1)[1])) / "notify"
+                                notifications[str(selected)] = (
+                                    notify.read_text() if notify.exists() else "missing"
+                                )
+            evidence.update(
+                result="failed",
+                notifications=notifications,
+                failure={"code": type(error).__name__, "message": str(error)[:4096]},
+                logs={
+                    p.name: "\n".join(
+                        line
+                        for line in p.read_text().splitlines()
+                        if "Tmux Plus" in line
+                        or "Failed" in line
+                        or "error:" in line
+                        or "ERROR" in line
+                    )[-8192:]
+                    for p in root.glob("*.log")
+                },
+            )
+            raise
+        finally:
+            for process in reversed(processes):
+                stop(process)
+            command(
+                ["/usr/bin/tmux", "-f", "/dev/null", "-L", "default", "kill-server"],
+                env=env,
+                check=False,
+            )
+            if focused is not None:
+                command(
+                    ["niri", "msg", "action", "focus-window", "--id", str(focused)],
+                    env=env,
+                    check=False,
+                )
+            evidence["callbacks"] = events()
+            args.output.write_text(json.dumps(evidence, indent=2) + "\n")
+    evidence["ownedCleanup"] = (
+        "fixture processes, default server, preferences and runtime removed; prior focus restored"
+    )
+    args.output.write_text(json.dumps(evidence, indent=2) + "\n")
+
+
+if __name__ == "__main__":
+    main()

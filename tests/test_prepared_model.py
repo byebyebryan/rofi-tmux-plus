@@ -259,6 +259,25 @@ class PreparedModelTests(unittest.TestCase):
         self.assertIsNone(state.error_deadline)
         self.assertEqual(message, "")
 
+    def test_recovery_clears_observation_notice_but_preserves_action_notice(self):
+        for key in ("payload", "callback", "kill session"):
+            with self.subTest(key=key):
+                previous = rofi._error_state(
+                    rofi.ContinuationState(), "old failure", now=10, key=key
+                )
+                _payload, recovered, _message = rofi._load_observed(
+                    self.model(), previous, start_refresh=False, now=11
+                )
+                rendered = rofi.render_snapshot(
+                    self.model().load().payload, state=recovered, now=11
+                )
+                if key == "kill session":
+                    self.assertEqual(recovered.error_deadline, previous.error_deadline)
+                    self.assertIn("old failure", rendered)
+                else:
+                    self.assertIsNone(recovered.error_deadline)
+                    self.assertNotIn("old failure", rendered)
+
     def test_scoped_reconciliation_requests_only_affected_owner_and_checks_revision(self):
         model = self.model()
         reply = copy.deepcopy(self.frame)

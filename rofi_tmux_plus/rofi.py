@@ -1684,6 +1684,15 @@ def _load_observed(
     payload = _load_payload(model_service, start_refresh=start_refresh)
     next_state, message = _refresh_observation(payload, state, now=now)
     errors = _payload_errors(payload)
+    if (
+        getattr(model_service, "prepared", False)
+        and not errors
+        and next_state.notice_key is not None
+        and next_state.notice_key.startswith(("payload:", "callback:"))
+    ):
+        # Observation errors describe current availability. A recovered reader
+        # must not resurrect its old startup/watch error on the next page change.
+        next_state = replace(next_state, error_deadline=None, error_message="", notice_key=None)
     if not message and not next_state.has_lifecycle and errors:
         key = "payload:" + errors
         if next_state.notice_key != key:
