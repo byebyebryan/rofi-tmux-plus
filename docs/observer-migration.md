@@ -75,13 +75,16 @@ Three isolated compilations with `-Wall -Wextra -Werror` yield library SHA256
 `99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41`.
 These were compile/tuple checks only; no production mode was loaded.
 
-Build the mode into a frozen candidate package before its wheel:
+Build a clean committed candidate with the pinned native mode and hashed backend:
 
 ```sh
-./scripts/build-native-mode --output-directory rofi_tmux_plus/native
-uv build --wheel --out-dir /path/to/owned/candidate
+./scripts/candidate-artifact build --revision HEAD --output /path/to/new/candidate
+./scripts/candidate-artifact verify /path/to/new/candidate/candidate.json
 ```
 
+The builder owns and removes a detached temporary worktree, compares every
+packaged payload with that source, and checks the helper's executable bit.
+It records the wheel, producer pin and native tuple in one immutable descriptor.
 The native descriptor stays `built_unaccepted`; acceptance evidence is separate.
 The wheel is platform-specific and independent of the Python extension ABI.
 Generated library/descriptor files are ignored in the source checkout. Missing,

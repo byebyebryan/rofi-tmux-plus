@@ -1,0 +1,371 @@
+#!/usr/bin/env python3
+"""Build/verify a frozen frontend wheel with its pinned native mode and core manifest.
+
+Artifact validation adapted from tmux-observer scripts/candidate-artifact (MIT).
+"""
+
+from __future__ import annotations
+
+import argparse
+import email.parser
+import hashlib
+import json
+import os
+import platform
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+import tomllib
+import zipfile
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parent.parent
+MAX_WHEEL = 8 * 1024 * 1024
+
+
+def command(argv, *, env=None):
+    result = subprocess.run(argv, env=env, capture_output=True, timeout=120, check=False)
+    if result.returncode:
+        raise RuntimeError(result.stderr.decode(errors="replace")[:2048])
+    return result.stdout
+
+
+def sha256(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def safe_member(name):
+    require(isinstance(name, str) and name not in ("", "."), "unsafe artifact member path")
+    path = PurePosixPath(name)
+    require(
+        isinstance(name, str)
+        and 0 < len(name) <= 512
+        and "\\" not in name
+        and not path.is_absolute()
+        and ".." not in path.parts
+        and name == path.as_posix()
+        and ":" not in path.parts[0],
+        "unsafe artifact member path",
+    )
+    return path
+
+
+def verify_source_payload(source, members):
+    mapping = {name: source_member(name) for name in members if source_member(name)}
+    required = {"LICENSE"}
+    for directory in ("rofi_tmux_plus",):
+        required.update(
+            str(path.relative_to(source))
+            for path in (source / directory).rglob("*")
+            if path.is_file()
+        )
+    require(set(mapping.values()) == required, "wheel source payload coverage differs")
+    for member, filename in mapping.items():
+        require(
+            sha256((source / filename).read_bytes()) == members[member]["sha256"],
+            "built payload differs from committed source: " + filename,
+        )
+    return mapping
+
+
+def wheel_contents(path):
+    info = path.lstat()
+    require(stat.S_ISREG(info.st_mode) and info.st_size <= MAX_WHEEL, "invalid wheel file")
+    members = {}
+    with zipfile.ZipFile(path) as wheel:
+        require(len(wheel.infolist()) <= 256, "wheel member capacity exceeded")
+        total = 0
+        for item in wheel.infolist():
+            safe_member(item.filename)
+            require(
+                not item.is_dir() and item.filename not in members,
+                "duplicate/directory wheel member",
+            )
+            require(not stat.S_ISLNK(item.external_attr >> 16), "wheel symlink rejected")
+            total += item.file_size
+            require(
+                item.file_size <= 1024 * 1024 and total <= MAX_WHEEL,
+                "expanded wheel capacity exceeded",
+            )
+            raw = wheel.read(item)
+            members[item.filename] = {
+                "sha256": sha256(raw),
+                "bytes": len(raw),
+                "executable": bool((item.external_attr >> 16) & 0o111),
+            }
+        names = [name for name in members if name.endswith(".dist-info/METADATA")]
+        require(len(names) == 1, "one package metadata record required")
+        metadata = email.parser.BytesParser().parsebytes(wheel.read(names[0]))
+        require(metadata["Name"] == "rofi-tmux-plus", "wrong wheel package")
+        prefix = names[0].removesuffix("METADATA")
+        properties = email.parser.BytesParser().parsebytes(wheel.read(prefix + "WHEEL"))
+        require(
+            properties["Root-Is-Purelib"] == "false"
+            and properties.get_all("Tag") == ["py3-none-linux_x86_64"],
+            "unsupported wheel layout",
+        )
+        package = {
+            "name": metadata["Name"],
+            "version": metadata["Version"],
+            "requiresPython": metadata["Requires-Python"],
+            "generator": properties["Generator"],
+        }
+    return members, package
+
+
+def source_member(name):
+    if name.startswith("rofi_tmux_plus/"):
+        return name
+    if name.endswith(".dist-info/licenses/LICENSE"):
+        return "LICENSE"
+    require(".dist-info/" in name, "unexpected wheel member")
+    return None
+
+
+def pairs(items):
+    require(len(dict(items)) == len(items), "duplicate candidate descriptor key")
+    return dict(items)
+
+
+def verify(descriptor):
+    require(descriptor.is_file() and not descriptor.is_symlink(), "invalid candidate descriptor")
+    raw = descriptor.read_bytes()
+    require(len(raw) <= 256 * 1024, "candidate descriptor capacity exceeded")
+    value = json.loads(raw, object_pairs_hook=pairs)
+    require(
+        value["schemaVersion"] == 1 and type(value["schemaVersion"]) is int,
+        "unsupported candidate descriptor",
+    )
+    require(value["state"] == "built_unaccepted", "builder cannot assert acceptance or promotion")
+    require(
+        re.fullmatch(r"[0-9a-f]{40}", value["source"]["commit"]) is not None,
+        "invalid source commit",
+    )
+    require(
+        re.fullmatch(r"[0-9a-f]{40}", value["source"]["tree"]) is not None, "invalid source tree"
+    )
+    require(
+        type(value["source"]["epoch"]) is int and value["source"]["epoch"] >= 315532800,
+        "invalid build epoch",
+    )
+    filename = value["wheel"]["file"]
+    require(
+        isinstance(filename, str)
+        and re.fullmatch(r"rofi_tmux_plus-[A-Za-z0-9_.-]+\.whl", filename) is not None,
+        "invalid wheel basename",
+    )
+    wheel = descriptor.parent / filename
+    info = wheel.lstat()
+    require(stat.S_ISREG(info.st_mode) and info.st_size <= MAX_WHEEL, "invalid wheel file")
+    require(
+        type(value["wheel"]["bytes"]) is int and info.st_size == value["wheel"]["bytes"],
+        "wheel byte count differs",
+    )
+    require(sha256(wheel.read_bytes()) == value["wheel"]["sha256"], "wheel checksum differs")
+    members, package = wheel_contents(wheel)
+    require(
+        members == value["members"] and package == value["package"],
+        "wheel content manifest differs",
+    )
+    require(
+        value["sourceFiles"]
+        == {name: source_member(name) for name in members if source_member(name)},
+        "source-member mapping differs",
+    )
+    with zipfile.ZipFile(wheel) as zipped:
+        pin = json.loads(zipped.read("rofi_tmux_plus/observer-artifact.json"))
+        native = json.loads(zipped.read("rofi_tmux_plus/native/native-artifact.json"))
+        require(pin == value["observer"], "Observer pin differs")
+        require(native == value["native"], "native descriptor differs")
+        require(
+            native["sourceCommit"] == value["source"]["commit"] and not native["sourceTreeDirty"],
+            "native source identity differs",
+        )
+        for filename, digest in native["files"].items():
+            require(
+                members["rofi_tmux_plus/native/" + filename]["sha256"] == digest,
+                "native payload differs",
+            )
+        require(
+            members["rofi_tmux_plus/native/rofi-tmux-plus-mode"]["executable"],
+            "native helper lost executable permissions",
+        )
+    return value, wheel
+
+
+def snapshot(repo, revision, destination):
+    commit = (
+        command(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "rev-parse",
+                "--verify",
+                "--end-of-options",
+                revision + "^{commit}",
+            ]
+        )
+        .decode()
+        .strip()
+    )
+    require(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "invalid resolved commit")
+    epoch = int(command(["git", "-C", str(repo), "show", "-s", "--format=%ct", commit]))
+    tree = command(["git", "-C", str(repo), "rev-parse", commit + "^{tree}"]).decode().strip()
+    command(["git", "-C", str(repo), "worktree", "add", "--detach", str(destination), commit])
+    return {"commit": commit, "tree": tree, "epoch": epoch}
+
+
+def build(repo, revision, output):
+    require(
+        not output.exists() and not output.is_symlink(), "candidate output must be a new directory"
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=".rofi-tmux-plus-build-", dir=output.parent
+    ) as temporary:
+        source = Path(temporary) / "source"
+        identity = snapshot(repo, revision, source)
+        try:
+            command(
+                [
+                    sys.executable,
+                    str(source / "scripts/build-native-mode"),
+                    "--output-directory",
+                    str(source / "rofi_tmux_plus/native"),
+                ]
+            )
+            configuration = tomllib.loads((source / "pyproject.toml").read_text())
+            require(
+                configuration["build-system"]["build-backend"] == "setuptools.build_meta",
+                "unsupported build backend",
+            )
+            require(configuration["project"]["name"] == "rofi-tmux-plus", "wrong source package")
+            constraints = source / "packaging/build-constraints.txt"
+            require(constraints.is_file(), "committed build constraints required")
+            backend = re.findall(
+                r"^setuptools==([0-9]+\.[0-9]+\.[0-9]+) \\", constraints.read_text(), re.MULTILINE
+            )
+            require(
+                len(backend) == 1 and "--hash=sha256:" in constraints.read_text(),
+                "hashed exact backend constraint required",
+            )
+            env = dict(os.environ)
+            for key in (
+                "PYTHONPATH",
+                "PYTHONHOME",
+                "UV_BUILD_CONSTRAINT",
+                "UV_NO_BUILD_ISOLATION",
+                "UV_NO_VERIFY_HASHES",
+                "UV_CONFIG_FILE",
+            ):
+                env.pop(key, None)
+            env["SOURCE_DATE_EPOCH"] = str(identity["epoch"])
+            dist = Path(temporary) / "dist"
+            command(
+                [
+                    "uv",
+                    "build",
+                    "--no-config",
+                    "--wheel",
+                    "--python",
+                    sys.executable,
+                    "--no-python-downloads",
+                    "--build-constraints",
+                    str(constraints),
+                    "--require-hashes",
+                    "--out-dir",
+                    str(dist),
+                    str(source),
+                ],
+                env=env,
+            )
+            wheels = list(dist.glob("*.whl"))
+            require(len(wheels) == 1, "one candidate wheel required")
+            wheel = wheels[0]
+            members, package = wheel_contents(wheel)
+            require(
+                package["version"] == configuration["project"]["version"], "built version differs"
+            )
+            require(
+                package["generator"] == "setuptools (" + backend[0] + ")", "built backend differs"
+            )
+            mapping = verify_source_payload(source, members)
+            value = {
+                "schemaVersion": 1,
+                "state": "built_unaccepted",
+                "source": identity,
+                "package": package,
+                "wheel": {
+                    "file": wheel.name,
+                    "sha256": sha256(wheel.read_bytes()),
+                    "bytes": wheel.stat().st_size,
+                },
+                "build": {
+                    "constraintsSha256": sha256(constraints.read_bytes()),
+                    "python": platform.python_version(),
+                    "implementation": platform.python_implementation(),
+                    "uv": command(["uv", "--version"]).decode().strip(),
+                    "builderSha256": sha256(Path(__file__).read_bytes()),
+                },
+                "observer": json.loads(
+                    (source / "rofi_tmux_plus/observer-artifact.json").read_text()
+                ),
+                "native": json.loads(
+                    (source / "rofi_tmux_plus/native/native-artifact.json").read_text()
+                ),
+                "sourceFiles": mapping,
+                "members": members,
+            }
+            # Validate the whole staged directory before exposing a final output.
+            descriptor = dist / "candidate.json"
+            descriptor.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+            verify(descriptor)
+            require(
+                not output.exists() and not output.is_symlink(),
+                "candidate output appeared during build",
+            )
+            dist.rename(output)
+        finally:
+            command(["git", "-C", str(repo), "worktree", "remove", "--force", str(source)])
+    return output / "candidate.json"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    operations = parser.add_subparsers(dest="operation", required=True)
+    selected = operations.add_parser("build")
+    selected.add_argument("--revision", default="HEAD")
+    selected.add_argument("--output", type=Path, required=True)
+    selected = operations.add_parser("verify")
+    selected.add_argument("descriptor", type=Path)
+    args = parser.parse_args()
+    descriptor = (
+        build(ROOT, args.revision, args.output.absolute())
+        if args.operation == "build"
+        else args.descriptor
+    )
+    value, _wheel = verify(descriptor)
+    print(
+        json.dumps(
+            {
+                "descriptor": str(descriptor),
+                "sourceCommit": value["source"]["commit"],
+                "wheelSha256": value["wheel"]["sha256"],
+                "members": len(value["members"]),
+                "state": value["state"],
+            }
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
