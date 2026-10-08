@@ -1,120 +1,114 @@
 # Observer client migration
 
-Candidate: Tmux Plus `0.7.0a1`. T13 installed fresh CLI compatibility is accepted;
-the native GUI and managed gates remain open.
+Tmux Plus `0.7.0a1`: T13 fresh CLI compatibility and T14 prepared/native picker
+acceptance pass for the recorded tuple below. T15 managed selection remains open.
+The user selected Starship for graphical tests while Snap is in active use.
+No host was suspended; physical sleep/wake is optional in the always-on scope.
 
-## T13 fresh inventory checkpoint
+## Accepted tuple
 
-The default public `inventory` path delegates to Observer's supported
-`DirectInventory` client. Host selection, panes/options and fresh access remain
-explicit. Failed host rows expose no historical sessions. Optional local viewer
-enrichment uses the same captured catalog; lifecycle actions continue to perform
-their independent native validation. Explicit legacy read adapters remain only
-for the existing private refresh harness until the picker migration is accepted.
+| Component | Exact identity |
+| --- | --- |
+| Observer source | `d5a2e97a4e5c2a65599d45818680635f5c790c99` |
+| Observer wheel SHA256 | `06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d` |
+| Frontend source | `92b5c357a009822413d229b4cd4fe18e1a777417` |
+| Frontend wheel SHA256 | `4d28a8a103025fc467f4f558a4071f2573fd628170dfa726442f89685811eaa0` |
+| Native library SHA256 | `77c7402faed64e1175afc13b3134fd657a93611c0273d2182f1fc0c6fca793d8` |
+| Rofi binary SHA256 | `4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca` |
 
-The dependency version alone is insufficient to identify a prerelease build.
-`observer-artifact.json` pins the accepted producer source
-`d5a2e97a4e5c2a65599d45818680635f5c790c99`, wheel SHA256
-`06c5b77e36901d0de5d62cf2041edf1733ce34c346a6aa574a323bb50889fb0d`,
-and all 35 Python modules. Imports validate exact runtime coverage and bytes;
-absence or drift fails visibly without a native collection fallback. A managed
-frozen-wheel installation may expose the fixed
-`~/.local/share/tmux-observer/python` root. Distribution/installed artifact
-validation must additionally verify the full wheel and managed launcher bytes.
+The first-party Mode ABI 7 library targets the recorded Rofi 2.0.0-dirty x86_64
+binary/header tuple. The launcher validates files and the binary before loading;
+missing/drifted/unsupported integration produces a bounded public error display.
+There is no live compilation or native-collection fallback.
+Two committed-source builds produced identical wheel bytes. All 39 installed
+runtime/license payloads and executable helper permissions were verified on both
+hosts through [the installed facade](evidence/2026-10-08-native-picker/native-facade.json).
+The immutable [candidate descriptor](evidence/2026-10-08-native-picker/frontend-candidate.json)
+retains `built_unaccepted`; acceptance is this separate scoped record.
 
-Source checks: 276 tests, canonical bundle checks, compile, Ruff, ShellCheck and
-candidate text checks passed using Snap's native CPython 3.14.7 with the exact
-frozen Observer wheel installed in an isolated environment. The initial uv
-CPython 3.13.7 environment lacked `os.pidfd_open`; four existing viewer tests
-errored and one failed there. No viewer behavior or assertion was weakened.
+The producer's FQDN repair passed 28 native direct cases and four installed
+recovery simulations. Only its direct-client module changed; the other 63
+runtime/data/license payloads match the previously accepted always-on G3 wheel.
+See Observer's `native-direct-acceptance.md`, parity and resource records.
 
-T13 installed frontend compatibility passed 30 native cases across Snap and
-Starship against the unchanged v1 contract, including absent/broken Mesh,
-fresh rename/full references, panes/options, local-only hostname aliases,
-optional viewers and passivity. Typed frontend failures retain exit status 2.
-The producer's bounded FQDN repair passed 28 native
-installed cases on Snap and Starship and four installed recovery simulations.
-Only its direct-client module changed; the other 63 payloads match the previously
-accepted G3 artifact. See Observer's `native-direct-acceptance.md` and committed
-FQDN evidence. Those checks are producer acceptance, not installed frontend proof.
-The facade also retains well-formed future Host Mesh error codes.
+## Behavior and verification
 
-The frozen frontend source is `bb35d947653a842355ce8f164ecf2301355ec80e`;
-its platform wheel SHA256 is
-`c0ebe97e596cd5e176be647ce9c4eed719e358e385df7ecd7cae3e8693a84723`.
-Repeat builds were byte-identical. All 38 installed payloads, including license,
-were verified on both hosts; the installed helper retains executable permissions.
-Snap additionally passed the binary/library tuple and core-pin checks before
-mode loading. Evidence is in [the installed client record](evidence/2026-10-08-observer-client/installed-package.json)
-and [native facade cases](evidence/2026-10-08-observer-client/native-facade.json).
-All disposable endpoint units, children, sockets and roots were removed.
+The default public `inventory` delegates to the pinned Observer `DirectInventory`.
+Host selection, fresh reads, panes/options and legacy v1 JSON remain explicit.
+Non-ok fresh rows contain no historical sessions. Optional viewer enrichment uses
+one captured catalog; lifecycle actions retain their independent native validation.
+The unchanged canonical facade passes 30 installed/native cases on Snap/Starship,
+including missing/broken Mesh, aliases, rename/full references, typed exit status 2,
+optional viewers and roster/hooks/options/geometry passivity.
 
-## Next gates
+The picker uses one public cached read and one owned public-client watch.
+Startup and callback 28 admit no refresh, activate no service and collect no
+native facts. Missing/warming readers fail visibly. Alt+R retains one scoped
+publisher/ticket identity; terminal lookup clears its notice even with equal rows.
+Post-action reconciliation requests only the affected owner. Owner and desktop
+leases use local BOOTTIME, and each cached navigation/render rechecks scope,
+watch health and expiry. Complete references survive expiry while Open/Attached
+positives are revoked; those views supply no action authority.
 
-The T14 prepared-model checkpoint replaces the default picker observation jobs
-with one public cached read. Missing/warming readers fail visibly; startup and
-callback 28 admit no refresh, create no service and collect no native facts.
-The launcher supplies a private per-picker runtime and captured desktop context.
-Alt+R stores a publisher/ticket identity there; each pending callback uses scoped
-terminal lookup even when rows/revision are equal. A deadline or lost reader ends
-the matching notice without retrying a source. Post-action reconciliation requests
-only the affected owner; actions keep their independent validation.
+The private watch has bounded framing/partial-input/silence/stderr limits,
+read-only reconnect, latest-notification coalescing and owned process cleanup.
+Quiet lease renewals extend metadata without waking the UI. Material changes,
+ticket results, recovery and expiry wake callback 28. The native mode reacquires
+borrowed state after synchronous updates and removes its timer/root on destruction.
+Launcher TERM/HUP and parent death stop owned Rofi/watch children.
 
-Owner and desktop expiry use local BOOTTIME. Cached navigation rechecks boot,
-namespace, context and expiry, preserving historical complete references while
-revoking Open/Attached positives. Wall-clock activity labels remain separate.
-Seventeen focused tests cover these composed behaviors, fixed notice lifetime,
-pending-target retention, and bounded regular runtime files. The existing timeout
-tests now explicitly require read-only adoption rather than refreshing jobs.
+Source checks pass 278 tests, compile, canonical bundle checks, Ruff, ShellCheck
+and candidate text checks on native CPython 3.14.7. The existing short-deadline
+holding-wrapper test failed once, then passed individually and in the full gate;
+its assertion and production timeout were unchanged. An earlier uv CPython 3.13
+lacked `os.pidfd_open`; native Python was used without weakening viewer checks.
 
-The next source checkpoint adds one owned public-client watch per picker, with
-bounded framing/liveness, ordering/context checks, one latest notification,
-read-only reconnect and owned child cleanup. Quiet lease renewals update expiry
-metadata without waking the UI. Material changes, resync and ticket results wake
-it; a dead/stalled/malformed watch revokes cached positives. Ten focused tests
-include actual child pipes, a simulated 30-second callback gap and launcher
-SIGKILL cleanup. A Linux parent-death guard terminates the owned public watch
-if its launcher disappears, including the startup parent replacement race.
-The first production-mode smoke run found that SIGTERM of the launcher could
-leave its owned Rofi process alive. The launcher now also guards the fixed Rofi
-exec against parent death and handles TERM/HUP through normal context cleanup.
-The guarded-exec crash test confirms termination and reaping across exec.
-That repair reopens the frozen frontend GUI/package checkpoint; the accepted
-fresh facade above remains evidence for its recorded artifact only.
+[Starship production acceptance](evidence/2026-10-08-native-picker/starship-picker-accepted.json)
+passes 20 cases with the exact installed tuple, actual owner/fleet processes,
+disposable native sessions and isolated preferences/runtime. It verifies typing,
+filter/caret, complete selection, view arrows, remembered empty Open view,
+frozen pending confirmation/cancel, actual mode reentry plus subsequent adoption,
+stalled watch/expiry/malformed notification and recovery, lost/new reader,
+absent-reader display, native cancellation and launcher cleanup. Inspected native
+captures show the changed UI and explicit absent-reader outcome. Ordinary sessions
+were untouched; owned roster/attachments/windows remained unchanged apart from
+the harness's named renames. No SSH was started by the local-only picker fixture.
+DMS idle inhibition was temporarily enabled on Starship and restored to its prior
+state after every run. No Snap graphical input followed the user's restriction.
 
-The first-party Mode ABI 7 wrapper delegates to its fixed packaged helper. It
-reads only bounded, owned regular notifications, wakes callback 28, checks local
-BOOTTIME expiry/liveness, coalesces callbacks, reacquires borrowed state after
-updates, and removes its timer/root on destruction. The launcher verifies the
-Rofi binary and source/helper/library hashes before loading it. There is no live
-compilation or script/native-read fallback. Startup failures use a bounded public
-Rofi error display without loading the candidate mode. Source checks pass 276 tests.
-Three isolated compilations with `-Wall -Wextra -Werror` yield library SHA256
-`99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41`.
-These were compile/tuple checks only; no production mode was loaded.
+## Timing and fixes
 
-Build a clean committed candidate with the pinned native mode and hashed backend:
+100 uninstrumented prepared frames on Starship have p95 **73.36 ms**, below the
+150 ms frame target, with no foreground tmux/SSH collection. Three native launches
+observed surfaces at 134-155 ms and first native callback completion at 313-324 ms.
+These are separate individual checkpoints, not a graphical p95 or a precise
+compositor presentation timestamp. The read-only recorder adds callback logging;
+it is excluded from warm-frame samples. Native screenshots establish appearance.
 
-```sh
-./scripts/candidate-artifact build --revision HEAD --output /path/to/new/candidate
-./scripts/candidate-artifact verify /path/to/new/candidate/candidate.json
-```
+The final explicit refresh took 585 ms from request callback start to notice-free
+callback completion. That completion was 9 ms after an independent scoped ticket
+probe observed service completion; probe polling/CLI overhead limits precision.
+An earlier fixture sample took 1.57 seconds with the same producer, showing source
+scheduling can vary. These samples do not establish remote/fleet refresh p95.
 
-The builder owns and removes a detached temporary worktree, compares every
-packaged payload with that source, and checks the helper's executable bit.
-It records the wheel, producer pin and native tuple in one immutable descriptor.
-The native descriptor stays `built_unaccepted`; acceptance evidence is separate.
-The wheel is platform-specific and independent of the Python extension ABI.
-Generated library/descriptor files are ignored in the source checkout. Missing,
-changed or unsupported integration files cause bounded startup failure.
+Native testing repaired launcher termination, empty-view hotkey suppression,
+recovered observation notices resurfacing on page changes, and first-invocation
+error serialization. The [rejected earlier native run](evidence/2026-10-08-native-picker/initial-error-rejected.json)
+retains its failed absent-reader result; it is superseded only by the corrected
+artifact's separate acceptance. Empty views keep custom-input dispatch inert.
+Initial failures now use LF headers and declare the continuation delimiter, so
+Rofi parses the visible error and subsequent read-only callbacks correctly.
 
-Still pending: production native GUI/timing/failure/lifetime acceptance,
-including cancellation and mode re-entry, and managed selection. Source tests
-and compilation do not establish automatic native rendering. Saved context,
-complete references and pending action intent remain frontend state. Snap GUI
-acceptance and Starship GUI status are separate.
+## Publication and next gate
 
-T15 publishes accepted exact artifacts and selects them with scoped chezmoi
-rollout, recovery and rollback checks on Snap and Starship. The producer's
-accepted always-on scope makes physical suspend optional. Both hosts remain
-awake throughout this implementation and its simulated recovery checks.
+`candidate-artifact build` freezes committed source with the pinned native mode
+and constrained backend. `release-bundle` combines that source archive with the
+verified platform wheel, preserves executable bits and writes a complete member
+manifest for scoped managed verification. It adds no acceptance by assembly.
+
+Observer is published at `v0.1.0a1`; its downloaded wheel checksum matches the
+accepted input, and source CI passed at `28a74b6`. Frontend CI installs that exact
+checksum before source checks. T15 still must publish the frontend bundle, select
+owner/fleet/context startup and the picker via chezmoi, and verify exact installed
+bytes, readiness, recovery and rollback on Snap/Starship. Lifecycle extraction
+and native event experiments remain separate follow-ups.

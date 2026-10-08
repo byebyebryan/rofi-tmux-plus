@@ -27,4 +27,20 @@ jobs:
           sudo install --mode=0755 \
             "$shellcheck_tmpdir/shellcheck-v0.11.0/shellcheck" /usr/local/bin/shellcheck
       - name: Run repository gate
-        run: ./scripts/check
+        env:
+          TMUX_OBSERVER_WHEEL: ${{ runner.temp }}/tmux_observer-0.1.0a1-py3-none-any.whl
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, urllib.request
+          from pathlib import Path
+          pin = json.loads(Path("rofi_tmux_plus/observer-artifact.json").read_text())
+          wheel = Path(os.environ["TMUX_OBSERVER_WHEEL"])
+          url = "https://github.com/byebyebryan/tmux-observer/releases/download/v" + pin["version"] + "/" + wheel.name
+          with urllib.request.urlopen(url, timeout=30) as response:
+              raw = response.read(4 * 1024 * 1024 + 1)
+          assert len(raw) <= 4 * 1024 * 1024, "observer artifact exceeds bound"
+          assert hashlib.sha256(raw).hexdigest() == pin["wheelSha256"], "observer artifact drift"
+          wheel.write_bytes(raw)
+          PY
+          python -m pip install --no-deps "$TMUX_OBSERVER_WHEEL"
+          ./scripts/check

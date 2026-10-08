@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Assemble a deterministic managed source tree from an independently accepted wheel."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.machinery
+import importlib.util
+import io
+import json
+import subprocess
+import tarfile
+import time
+import zipfile
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--artifact", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    if args.output.exists() or args.output.is_symlink():
+        parser.error("output must be a new file")
+    loader = importlib.machinery.SourceFileLoader(
+        "candidate", str(ROOT / "scripts/candidate-artifact")
+    )
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    candidate = importlib.util.module_from_spec(spec)
+    loader.exec_module(candidate)
+    descriptor, wheel = candidate.verify(args.artifact)
+    source = descriptor["source"]["commit"]
+    archive = subprocess.run(
+        ["git", "-C", str(ROOT), "archive", "--format=tar", source],
+        capture_output=True,
+        check=True,
+    ).stdout
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(archive)) as tree:
+        for member in tree:
+            if member.isdir():
+                continue
+            path = PurePosixPath(member.name)
+            if not member.isfile() or path.is_absolute() or ".." in path.parts:
+                raise ValueError("source archive contains an unsafe member")
+            files[member.name] = (tree.extractfile(member).read(), bool(member.mode & 0o111))
+    with zipfile.ZipFile(wheel) as installed:
+        for member, destination in descriptor["sourceFiles"].items():
+            if not destination.startswith("rofi_tmux_plus/"):
+                continue
+            raw = installed.read(member)
+            if destination in files and files[destination][0] != raw:
+                raise ValueError("wheel differs from the committed source tree")
+            files[destination] = (raw, descriptor["members"][member]["executable"])
+    manifest = {
+        "schemaVersion": 1,
+        "kind": "rofi-tmux-plus-native-bundle",
+        "candidate": descriptor,
+        "files": {
+            path: {
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+                "executable": executable,
+            }
+            for path, (raw, executable) in sorted(files.items())
+        },
+        "limit": "Assembly preserves build state; acceptance is separate. This manifest excludes itself.",
+    }
+    files["release-manifest.json"] = (
+        (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode(),
+        False,
+    )
+    stamp = tuple(time.gmtime(max(315532800, descriptor["source"]["epoch"]))[:6])
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(
+        args.output, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+    ) as bundle:
+        for path, (raw, executable) in sorted(files.items()):
+            info = zipfile.ZipInfo("tmux-plus/" + path, date_time=stamp)
+            info.create_system = 3
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = (0o100755 if executable else 0o100644) << 16
+            bundle.writestr(info, raw)
+    print(
+        json.dumps(
+            {
+                "bundle": str(args.output),
+                "sourceCommit": source,
+                "sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(),
+                "files": len(files),
+                "wheelSha256": descriptor["wheel"]["sha256"],
+            }
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -69,8 +69,8 @@ ruff check rofi_tmux_plus tests
 ruff format --check rofi_tmux_plus tests
 ruff check scripts/measure-refresh
 ruff format --check scripts/measure-refresh
-ruff check setup.py scripts/build-native-mode scripts/candidate-artifact scripts/accept-native-picker rofi_tmux_plus/native/rofi-tmux-plus-mode
-ruff format --check setup.py scripts/build-native-mode scripts/candidate-artifact scripts/accept-native-picker rofi_tmux_plus/native/rofi-tmux-plus-mode
+ruff check setup.py scripts/build-native-mode scripts/candidate-artifact scripts/release-bundle scripts/accept-native-picker rofi_tmux_plus/native/rofi-tmux-plus-mode
+ruff format --check setup.py scripts/build-native-mode scripts/candidate-artifact scripts/release-bundle scripts/accept-native-picker rofi_tmux_plus/native/rofi-tmux-plus-mode
 command -v shellcheck >/dev/null
 shellcheck scripts/check
 test -x scripts/check-contract-sync
