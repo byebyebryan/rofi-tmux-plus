@@ -13,6 +13,7 @@ from .host import LocalHost, local_host
 from .lifecycle import LocalLifecycle, now_millis
 from .mesh_adapter import HostMeshAdapter, MeshHost, MeshSnapshot, MeshStaleError
 from .model import Session, SessionReference
+from .observer_client import MeshCapture, client_error, observer_api
 from .remote_inventory import RemoteInventory
 from .tmux import TmuxClient, validate_user_option
 from .viewer_service import LocalViewerObservation, ViewerTarget, observe_local_viewers
@@ -33,6 +34,7 @@ class InventoryService:
         whole_deadline_seconds: float = _WHOLE_DEADLINE_SECONDS,
         on_host: Callable[[MeshSnapshot, MeshHost, dict[str, object]], None] | None = None,
         snapshot: MeshSnapshot | None = None,
+        direct_inventory=None,
     ) -> None:
         self._config = config
         self._mesh_adapter = mesh_adapter or HostMeshAdapter()
@@ -41,6 +43,13 @@ class InventoryService:
         self._whole_deadline_seconds = whole_deadline_seconds
         self._on_host = on_host
         self._snapshot = snapshot
+        self._direct_inventory = direct_inventory
+        # Explicit old read adapters remain for the private legacy refresh
+        # harness. The public CLI's default path uses accepted Observer reads.
+        self._observer_default = not any(
+            value is not None for value in (local_tmux, remote_inventory, on_host, snapshot)
+        )
+        self._observer_mesh = mesh_adapter
 
     def inventory(
         self,
@@ -52,6 +61,14 @@ class InventoryService:
         with_viewers: bool = False,
     ) -> dict[str, object]:
         option_names = tuple(dict.fromkeys(validate_user_option(name) for name in option_names))
+        if self._observer_default:
+            return self._observer_inventory(
+                requested_hosts=requested_hosts,
+                mesh_revision=mesh_revision,
+                panes=panes,
+                option_names=option_names,
+                with_viewers=with_viewers,
+            )
         operation_deadline = time.monotonic() + self._whole_deadline_seconds
         snapshot = self._snapshot or self._mesh_adapter.load(
             timeout_seconds=min(5, max(0.001, operation_deadline - time.monotonic()))
@@ -90,6 +107,36 @@ class InventoryService:
             deadline=operation_deadline,
             with_viewers=with_viewers,
         )
+
+    def _observer_inventory(
+        self, *, requested_hosts, mesh_revision, panes, option_names, with_viewers
+    ):
+        deadline = time.monotonic() + self._whole_deadline_seconds
+        captured = None
+        try:
+            direct = self._direct_inventory
+            if direct is None:
+                api = observer_api()
+                captured = MeshCapture(self._observer_mesh or api.mesh.HostMeshAdapter())
+                direct = api.direct.DirectInventory(mesh=captured)
+            response = direct.inventory(
+                requested_hosts=requested_hosts,
+                mesh_revision=mesh_revision,
+                panes=panes,
+                option_names=option_names,
+            )
+        except Exception as error:
+            raise client_error(error) from error
+        # Legacy fresh inventory contains no historical sessions on failed rows.
+        for row in response["hosts"]:
+            if row["status"] != "ok":
+                row["sessions"] = []
+        if with_viewers:
+            snapshot = captured.snapshot if captured is not None else None
+            endpoint = snapshot.local_host.host_id if snapshot is not None else local_host().host_id
+            executable = snapshot.policy.executable if snapshot is not None else None
+            self._enrich_local_viewers(response, endpoint, executable, deadline=deadline)
+        return response
 
     @staticmethod
     def _select_fallback(host: LocalHost, requested: Sequence[str]) -> list[LocalHost]:
