@@ -70,16 +70,16 @@ def selected_row(frame: str) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from .native_mode import verify_native
     from .observer_client import observer_api
+    from .picker_notify import WATCH_REQUIRED_ENV
+    from .picker_watch import OwnedWatch
     from .prepared_model import CONTEXT_ENV, RUNTIME_ENV
     from .rofi import run_rofi
 
     arguments = list(sys.argv[1:] if argv is None else argv)
     if not arguments:
-        executable = Path(sys.argv[0]).resolve().with_name("rofi-tmux-plus")
-        if not executable.is_file():
-            executable = Path(__file__).resolve().parents[1] / "bin/rofi-tmux-plus"
-        arguments = ["-show", "tmux-plus", "-modes", f"tmux-plus:{executable}"]
+        arguments = ["-show", "tmux-plus", "-modes", "tmux-plus"]
         for key, value in (
             ("custom-1", "Alt+r"),
             ("custom-2", "Right"),
@@ -100,25 +100,41 @@ def main(argv: Sequence[str] | None = None) -> int:
     environment = {key: value for key, value in os.environ.items() if not key.startswith("ROFI_")}
     output = io.StringIO()
     try:
+        executable, native = verify_native()
+        # The fixed helper's env-python resolves this selected interpreter.
+        environment["PATH"] = (
+            str(Path(sys.executable).parent) + os.pathsep + environment.get("PATH", "")
+        )
         with TemporaryDirectory(prefix="rofi-tmux-plus-launch-") as temporary:
             environment[RUNTIME_ENV] = temporary
             environment[CONTEXT_ENV] = observer_api().prepared.desktop_context_id(environment)
-            with redirect_stdout(output):
-                run_rofi(dict(environment, ROFI_RETV="0"))
-            frame = output.getvalue()
-            raw = frame.encode("utf-8")
-            if len(raw) > MAX_INITIAL_FRAME_BYTES:
-                raise ValueError("initial picker frame is too large")
-            path = Path(temporary) / "initial-frame"
-            path.write_bytes(raw)
-            path.chmod(0o600)
-            environment[INITIAL_FRAME_ENV] = str(path)
-            return subprocess.run(
-                ["rofi", "-selected-row", str(selected_row(frame)), "-filter", "", *arguments],
-                env=environment,
-                check=False,
-            ).returncode
-    except (OSError, ValueError, ContractError) as error:
+            environment[WATCH_REQUIRED_ENV] = "1"
+            with OwnedWatch(temporary, environment[CONTEXT_ENV], environment):
+                with redirect_stdout(output):
+                    run_rofi(dict(environment, ROFI_RETV="0"))
+                frame = output.getvalue()
+                raw = frame.encode("utf-8")
+                if len(raw) > MAX_INITIAL_FRAME_BYTES:
+                    raise ValueError("initial picker frame is too large")
+                path = Path(temporary) / "initial-frame"
+                path.write_bytes(raw)
+                path.chmod(0o600)
+                environment[INITIAL_FRAME_ENV] = str(path)
+                return subprocess.run(
+                    [
+                        executable,
+                        "-plugin-path",
+                        str(native),
+                        "-selected-row",
+                        str(selected_row(frame)),
+                        "-filter",
+                        "",
+                        *arguments,
+                    ],
+                    env=environment,
+                    check=False,
+                ).returncode
+    except (OSError, ValueError, ContractError, RuntimeError) as error:
         print(f"rofi-tmux-plus-rofi: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

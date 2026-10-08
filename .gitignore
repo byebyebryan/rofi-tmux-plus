@@ -3,3 +3,5 @@ __pycache__/
 .ruff_cache/
 build/
 *.egg-info/
+rofi_tmux_plus/native/tmux-plus.so
+rofi_tmux_plus/native/native-artifact.json

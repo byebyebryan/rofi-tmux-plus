@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from .errors import ContractError, clean_message
 from .observer_client import observer_api
 from .picker_model import PickerModel
+from .picker_notify import WATCH_REQUIRED_ENV, delivery_current, read_notification
 from .picker_runtime import read_private, runtime_root, write_private
 
 RUNTIME_ENV = "ROFI_TMUX_PLUS_RUNTIME"
@@ -56,9 +57,18 @@ def apply_expiry(payload: Mapping, *, now=None, scope=None) -> dict:
         current_scope = False
     current_scope = current_scope and type(lease.get("checkedAt")) is int
     current_scope = current_scope and lease["checkedAt"] <= now
+    watch_current = True
+    if lease.get("watchRuntime") is not None:
+        try:
+            watch_current = delivery_current(read_notification(lease["watchRuntime"]), now)
+        except (OSError, ValueError, KeyError):
+            watch_current = False
     for host in value.get("hosts", []):
         expiry = host.get("ownerExpiry")
         current = current_scope and type(expiry) is int and expiry > now
+        if current and not watch_current:
+            host.update(status="unavailable", unavailable=True)
+            host["error"] = {"code": "watch_unavailable", "message": "picker updates unavailable"}
         if not current and (host.get("status") == "ok" or not current_scope):
             host.update(status="stale", stale=True, unavailable=True, ownerFactsExpired=True)
             host["error"] = {
@@ -66,7 +76,7 @@ def apply_expiry(payload: Mapping, *, now=None, scope=None) -> dict:
                 "message": "owner facts expired" if current_scope else "picker context changed",
             }
     expiry = lease.get("desktopExpiry")
-    if not current_scope or type(expiry) is not int or expiry <= now:
+    if not current_scope or not watch_current or type(expiry) is not int or expiry <= now:
         value["viewerFactsCurrent"] = False
         for host in value.get("hosts", []):
             for session in host.get("sessions", []):
@@ -243,6 +253,11 @@ class PreparedModelService:
 
     def _model(self, frame, record=None):
         payload = project_frame(frame, now=self.now(), scope=self.scope(self.environment))
+        if self.environment.get(WATCH_REQUIRED_ENV) == "1":
+            if self.runtime is None:
+                raise ContractError("operation_failed", "picker watch has no owned runtime")
+            payload["prepared"]["watchRuntime"] = self.runtime
+            payload = apply_expiry(payload, now=self.now(), scope=self.scope(self.environment))
         marker = ticket_marker(record)
         if marker is not None:
             payload["remoteRefresh"] = marker

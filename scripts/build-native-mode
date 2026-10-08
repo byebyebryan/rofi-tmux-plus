@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Build and describe a candidate native mode; perform no mode loading."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import platform
+import shlex
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+ROFI_SHA = "4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca"
+HEADERS = {
+    "mode.h": "292355951931209c898ee31c33d9a76ea8d0e8a104e0cad88bd5201c5dd2ef48",
+    "mode-private.h": "9b4b0148c1feae2bae7e4afc30e848fa5ee11d56d9eecdffecad4c00eadee55b",
+}
+SYMBOLS = (
+    "script_mode_parse_setup",
+    "rofi_view_get_active",
+    "rofi_view_get_mode",
+    "rofi_view_get_completed",
+    "rofi_view_maybe_update",
+    "rofi_view_trigger_action",
+    "key_binding_get_action_from_name",
+)
+
+
+def run(arguments):
+    return subprocess.run(
+        arguments, cwd=ROOT, check=True, capture_output=True, text=True, timeout=30
+    ).stdout.strip()
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-directory", type=Path, required=True)
+    args = parser.parse_args()
+    executable = Path(shutil.which("rofi") or "/absent/rofi").resolve()
+    if platform.machine() != "x86_64" or digest(executable) != ROFI_SHA:
+        raise SystemExit(
+            "unsupported Rofi binary; rebuild and renew native acceptance before selection"
+        )
+    for name, expected in HEADERS.items():
+        if digest(Path("/usr/include/rofi") / name) != expected:
+            raise SystemExit("unsupported Rofi Mode headers")
+    exported = {
+        line.split()[-1] for line in run(["nm", "-D", str(executable)]).splitlines() if line.split()
+    }
+    if not set(SYMBOLS) <= exported:
+        raise SystemExit("required private Rofi symbols are absent")
+    source = ROOT / "rofi_tmux_plus/native/tmux-plus-notify.c"
+    helper = ROOT / "rofi_tmux_plus/native/rofi-tmux-plus-mode"
+    directory = args.output_directory.resolve()
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    library = directory / "tmux-plus.so"
+    flags = ["-shared", "-fPIC", "-Wall", "-Wextra", "-Werror"]
+    flags += shlex.split(run(["pkg-config", "--cflags", "--libs", "pango", "gmodule-2.0", "cairo"]))
+    flags.append("-ldl")
+    run(["cc", str(source), "-o", str(library), *flags])
+    for path in (source, helper):
+        target = directory / path.name
+        if path != target:
+            shutil.copy2(path, target)
+    record = {
+        "schemaVersion": 1,
+        "acceptanceState": "built_unaccepted",
+        "modeAbi": 7,
+        "architecture": platform.machine(),
+        "rofiSha256": ROFI_SHA,
+        "rofiVersion": run([str(executable), "-version"]),
+        "headers": HEADERS,
+        "requiredPrivateSymbols": list(SYMBOLS),
+        "sourceCommit": run(["git", "rev-parse", "HEAD"]),
+        "sourceTreeDirty": bool(run(["git", "status", "--porcelain"])),
+        "files": {
+            path.name: digest(path)
+            for path in (directory / source.name, directory / helper.name, library)
+        },
+        "compiler": run(["cc", "--version"]).splitlines()[0],
+        "flags": flags,
+        "buildVersions": {
+            name: run(["pkg-config", "--modversion", name])
+            for name in ("glib-2.0", "gmodule-2.0", "cairo", "pango")
+        },
+    }
+    descriptor = directory / "native-artifact.json"
+    descriptor.write_text(json.dumps(record, indent=2) + "\n")
+    print(
+        json.dumps(
+            {
+                "descriptor": str(descriptor),
+                "librarySha256": record["files"][library.name],
+                "acceptanceState": record["acceptanceState"],
+            }
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

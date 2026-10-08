@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -23,7 +23,7 @@ rofi-tmux-plus-rofi = "rofi_tmux_plus.launcher:main"
 packages = ["rofi_tmux_plus"]
 
 [tool.setuptools.package-data]
-rofi_tmux_plus = ["observer-artifact.json"]
+rofi_tmux_plus = ["observer-artifact.json", "native/*"]
 
 [tool.ruff]
 line-length = 100

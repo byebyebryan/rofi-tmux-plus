@@ -48,6 +48,7 @@ def observer_api() -> SimpleNamespace:
             if hashlib.sha256((roots[package] / relative).read_bytes()).hexdigest() != digest:
                 raise ValueError("Observer runtime bytes differ from the accepted artifact")
         return SimpleNamespace(
+            protocol=importlib.import_module("tmux_observer.public"),
             prepared=importlib.import_module("tmux_observer_client.public"),
             direct=importlib.import_module("tmux_observer_client.direct"),
             mesh=importlib.import_module("tmux_observer_client.mesh"),

@@ -225,8 +225,18 @@ class PickerRefinementTests(unittest.TestCase):
         with patch(
             "rofi_tmux_plus.rofi.run_rofi", side_effect=lambda _env: print(frame, end="")
         ) as prepare:
-            with patch("rofi_tmux_plus.launcher.subprocess.run", side_effect=run):
+            with (
+                patch("rofi_tmux_plus.launcher.subprocess.run", side_effect=run),
+                patch(
+                    "rofi_tmux_plus.native_mode.verify_native",
+                    return_value=("/usr/bin/rofi", Path(self.temporary.name)),
+                ),
+                patch("rofi_tmux_plus.picker_watch.OwnedWatch") as watch,
+            ):
                 self.assertEqual(launcher.main(["-show", "tmux-plus"]), 0)
+                watch.assert_called_once()
+                watch.return_value.__enter__.assert_called_once()
+                watch.return_value.__exit__.assert_called_once()
             prepare.assert_called_once()
         self.assertFalse(seen[0].exists())
 

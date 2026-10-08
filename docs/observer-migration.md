@@ -53,11 +53,41 @@ Seventeen focused tests cover these composed behaviors, fixed notice lifetime,
 pending-target retention, and bounded regular runtime files. The existing timeout
 tests now explicitly require read-only adoption rather than refreshing jobs.
 
-Still pending: one owned watch per picker, its notification/expiry/liveness
-delivery, and the verified native integration artifact. Source model tests do not
-establish automatic native rendering or production GUI/timing acceptance. Saved
-context, complete references and pending action intent remain frontend state.
-Snap GUI acceptance and Starship GUI status are separate.
+The next source checkpoint adds one owned public-client watch per picker, with
+bounded framing/liveness, ordering/context checks, one latest notification,
+read-only reconnect and owned child cleanup. Quiet lease renewals update expiry
+metadata without waking the UI. Material changes, resync and ticket results wake
+it; a dead/stalled/malformed watch revokes cached positives. Eight focused tests
+include actual child pipes and a simulated 30-second callback gap.
+
+The first-party Mode ABI 7 wrapper delegates to its fixed packaged helper. It
+reads only bounded, owned regular notifications, wakes callback 28, checks local
+BOOTTIME expiry/liveness, coalesces callbacks, reacquires borrowed state after
+updates, and removes its timer/root on destruction. The launcher verifies the
+Rofi binary and source/helper/library hashes before loading it. There is no live
+compilation or script/native-read fallback. Source checks now pass 271 tests.
+Three isolated compilations with `-Wall -Wextra -Werror` yield library SHA256
+`99e1e241aaf88bbfa53f10a975b023788f65eedcf8c255202f98fc01b42c9b41`.
+These were compile/tuple checks only; no production mode was loaded.
+
+Build the mode into a frozen candidate package before its wheel:
+
+```sh
+./scripts/build-native-mode --output-directory rofi_tmux_plus/native
+uv build --wheel --out-dir /path/to/owned/candidate
+```
+
+The native descriptor stays `built_unaccepted`; acceptance evidence is separate.
+The wheel is platform-specific and independent of the Python extension ABI.
+Generated library/descriptor files are ignored in the source checkout. Missing,
+changed or unsupported integration files cause bounded startup failure.
+
+Still pending: installed fresh CLI compatibility, the packaged wheel/helper
+permission check, production native GUI/timing/failure/lifetime acceptance,
+including cancellation and mode re-entry, and managed selection. Source tests
+and compilation do not establish automatic native rendering. Saved context,
+complete references and pending action intent remain frontend state. Snap GUI
+acceptance and Starship GUI status are separate.
 
 T15 publishes accepted exact artifacts and selects them with scoped chezmoi
 rollout, recovery and rollback checks on Snap and Starship. The producer's
