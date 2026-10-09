@@ -457,7 +457,14 @@ def main():
                 "#{session_id}|#{session_created}|#{session_name}|#{session_attached}|#{session_windows}",
             )
             owner = start(
-                [str(bins / "tmux-observer"), "owner", "--host-id", args.host_id], "owner"
+                [
+                    str(bins / "tmux-observer"),
+                    "owner",
+                    "--host-id",
+                    args.host_id,
+                    "--local-attachments",
+                ],
+                "owner",
             )
             fleet = start(
                 [str(bins / "tmux-observer-client"), "fleet", "--host-id", args.host_id], "fleet"
