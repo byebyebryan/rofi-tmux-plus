@@ -136,8 +136,8 @@ unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU again
 5%, and subsequent optimization requires a new producer pin and frozen gates.
 
 
-The current candidate pins Observer source `4bf98f9` and wheel
-`20073881d01c14bfd744ee4e74ed1d6f2c6381389d290876cd5101cb2fb3a9a5`.
+The current candidate pins Observer source `d10ba29` and wheel
+`aab6540a8de50830c502619f30a564964e3d09a48694dce48132fb194d461345`.
 The pin still verifies all 74 Python modules across the three package roots.
 Its native read coalescing, prepared projection reuse, nested wire-check reuse
 and bounded Niri socket reads preserve contracts, sampling cadence and budgets;
@@ -184,3 +184,12 @@ hashes remain byte-equivalent. Producer and consumer source gates pass 324 and
 287 tests. The current ten-minute resource probe and frozen consumer gates are
 pending. Five percent remains the CPU promotion ceiling; no release or managed
 selection is implied by this pin.
+
+The subsequent `7acbbfe` profile measures 5.0971% CPU on Snap and 2.6546% on
+Starship, preserving eight/ten ordinary sessions, generation and hooks before
+and after fleet teardown. It still fails Snap's five-percent ceiling. The current
+pin adds the producer's clock-header isolation correction and complete tree
+traversal optimizations, retaining every occurrence/depth/content/byte check and
+independent validation boundary. Producer and consumer source gates pass 328 and
+287 tests; the current combined artifact's resource and frozen consumer gates
+remain pending. Earlier acceptance records retain their exact original pins.

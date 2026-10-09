@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "version": "0.2.0a1",
-  "sourceCommit": "4bf98f94cab124ab5e917e57811023744d8e3a6c",
-  "wheelSha256": "20073881d01c14bfd744ee4e74ed1d6f2c6381389d290876cd5101cb2fb3a9a5",
+  "sourceCommit": "d10ba29e506365a91c90e094deb28c128523edc2",
+  "wheelSha256": "aab6540a8de50830c502619f30a564964e3d09a48694dce48132fb194d461345",
   "modules": {
     "tmux_observer/__init__.py": "4d4fa05cd1f17837d6dea07fbf6737436a667ff5cfbd43f20efc67239dc50837",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
@@ -21,7 +21,7 @@
     "tmux_observer/_tmux_wire.py": "4bf673d6952ace4d9e5520cd74695a8133703bd91c10ebb9e87274c1d64a4ec4",
     "tmux_observer/_validation.py": "92d6340cacc8f31ba60b606fb853f16bf67647722629bed0b6d8c39460894584",
     "tmux_observer/_validation_common.py": "fcf0a77924e35b4c924e7cfc6d52806dcb53e0e4f1f124963734af369df93019",
-    "tmux_observer/_wire.py": "921eccad532b80c7c95279673c6436e5ae2d42f52c3e63e4243ef85d9750daea",
+    "tmux_observer/_wire.py": "e0c31ba96b158b2d95e6e39f43fc767fe915a9ed1aceb37ba96e59292164835e",
     "tmux_observer/annotations.py": "70e9260bb0dfd0c16408bf9a4f6b259d351235b754f0880e3f9a09c7eba6d226",
     "tmux_observer/attachment_collector.py": "60cda9b59483cd47bcd7f08ac7da9bc701830fc3bb18b686b99713ab5f2ce841",
     "tmux_observer/attachments.py": "1a8b55a18c0497c1d4e9384ebb64f4a5c9c11e844bf91a60fbc92a00135628b4",
@@ -60,7 +60,7 @@
     "tmux_observer_client/_desktop_scan.py": "aecf56f094bef0235112ef554ac4d1a8b09a9258dc62b80dad2aacb19d79c77b",
     "tmux_observer_client/_desktop_types.py": "c9dc984d6652d04f6c06e29d6e7f2f005500e22626867da4adbe425ea7bb4060",
     "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
-    "tmux_observer_client/_fleet_state.py": "8edccf986b54b8d289eaa9e902392976b803bed09ffbe130abf2041e1e92c2a6",
+    "tmux_observer_client/_fleet_state.py": "992be79ef1724c51ae80729f4967c09034a9e25611c32e4d73c1527666dbc385",
     "tmux_observer_client/_fleet_tickets.py": "c9c781a0e69ad84d079b31e38e955f4a8473d66f4882f719cce2c3917df13a7b",
     "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
     "tmux_observer_client/_local_stream.py": "cc6d57a6f3dabd37d57659c4e9fcf1192b3a200dce68048fadd76a9550c24398",
