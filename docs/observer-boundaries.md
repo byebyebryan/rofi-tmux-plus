@@ -136,11 +136,11 @@ unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU again
 5%, and subsequent optimization requires a new producer pin and frozen gates.
 
 
-The next candidate pins Observer source `2cebf8c` and wheel
-`a71428d0d2488e79ab2ccc2ad9115bd15c72e648213c4062c1235fe341213d46`.
+The next candidate pins Observer source `ae8df6e` and wheel
+`ae52080fbfbc1d990af038fd93ef76909cb7b84e2a8b7067c53c062daa00d37d`.
 The pin still verifies all 74 Python modules across the three package roots.
-Its native read coalescing, prepared projection reuse and bounded Niri socket
-reads preserve contracts, sampling cadence and timing/resource budgets;
+Its native read coalescing, prepared projection reuse, nested wire-check reuse
+and bounded Niri socket reads preserve contracts, sampling cadence and budgets;
 287 consumer source tests pass with that exact installed wheel. Frozen installed,
 Snap graphical and actual-session resource gates remain separate from this pin.
 
@@ -159,3 +159,12 @@ five-percent CPU gate at 6.3647% (Starship 2.9777%); memory, native passivity an
 cached-query deadlines pass. The user asks for the cause before selecting any
 replacement CPU budget. Both packages remain unpublished and unselected, with
 the existing managed pair retained.
+
+The next producer repair reduces normal C1/C2 sampling to four native process
+starts for up to 31 sessions, and reuses enclosing plain-tree checks within pure
+validators. Nested semantics and independent byte ceilings remain; mutable Python
+subclasses keep their full fallback. The new producer source passes 319 tests and
+fourteen frozen collector cases on both hosts. Consumer source still passes 287
+tests with the new exact pin. Normal resource acceptance now explicitly matches
+each managed system-Python interpreter. Those new resource and frozen consumer
+gates remain pending; preceding picker evidence retains its original pin.
