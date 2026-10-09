@@ -201,3 +201,14 @@ resource acceptance passes the unchanged five-percent ceiling at 4.3229%/2.6156%
 with memory/query gates passing. Prior failed records retain their original
 identities. The [0.8.0a1 release review](tmux-plus-0.8.0a1.md) separates these
 passes from publication and managed recovery/paired rollback/reselection.
+
+The exact pair is now published and selected on both hosts after installed
+recovery, performed paired rollback with independent saved-byte/control
+verification and reselection. [Managed Snap Mod+G acceptance](evidence/2026-10-08-boundary-b5-field/managed-picker-snap.json)
+passes 21 cases with inspected ready/confirmation screenshots and complete
+owned cleanup. Both endpoints' prepared/fresh/native full-reference rosters
+agree; eight/ten original sessions, server incarnation and hooks survive.
+Installed headless lifecycle checks from each endpoint pass against both owners
+and preserve SSH usage history. The current [release record](tmux-plus-0.8.0a1.md)
+and managed operations ledger own the final scopes; no Starship foreground input
+or physical suspend is claimed.

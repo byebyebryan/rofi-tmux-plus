@@ -54,6 +54,22 @@ with memory and warm query deadlines passing. Capacity uses synthetic logical
 owners on two physical hosts; physical suspend and native-event collection remain
 optional separate work.
 
-Publication, CI using the published producer, and scoped managed selection,
-recovery, paired rollback and reselection are separate gates. Until those gates
-are recorded, the selected managed pair remains Observer 0.1.0a1 / Plus 0.7.0a2.
+Both releases are published with exact wheel/descriptor/checksum assets; Observer
+also publishes all six contracts and Plus publishes its exact native bundle.
+Downloaded asset checksums and complete manifests match. Consumer
+[published-producer CI](https://github.com/byebyebryan/rofi-tmux-plus/actions/runs/37881944178)
+passes; Observer review CI also passes. Scoped managed selection, recovery,
+verified paired rollback and reselection pass on Snap and Starship. The old pair
+was restored byte for byte, including all 15 controls, before reselection. Both
+current prepared/fresh rosters match independent native full references and
+generations: eight Snap sessions and ten Starship sessions.
+
+The [installed Snap binding gate](evidence/2026-10-08-boundary-b5-field/managed-picker-snap.json)
+passes all 21 cases against the managed source bundle and actual Mod+G arguments,
+with isolated preferences/disposable sessions. Ready and confirmation screenshots
+are inspected. Warm frame p95 is 95.39 ms; one owned refresh notice clears in
+318.60 ms, 9.68 ms after the service terminal ticket. Cleanup restores prior
+focus. This retains the timing limits above and claims no Starship graphical run.
+The matching pair is now Observer 0.2.0a1 / Plus 0.8.0a1; the
+[managed operations record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-boundary-operations.md)
+owns deployed byte, service, rollback and session-preservation evidence.

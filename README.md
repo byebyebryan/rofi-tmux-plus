@@ -10,8 +10,9 @@ reviewed [component boundary note](docs/observer-boundaries.md) defines ownershi
 native observation, networking, desktop association and action clients retain their
 own contracts; Tmux Plus retains presentation and user intent. The
 [0.8.0a1 release candidate](docs/tmux-plus-0.8.0a1.md) delegates actions as well
-as reads to the pinned Observer package. Its exact installed/native, Snap picker
-and resource gates pass; publication and managed selection remain separate.
+as reads to the pinned Observer package. Its exact installed/native, Snap picker,
+resource, publication and managed recovery/paired rollback gates pass in their
+recorded scopes.
 
 Tmux Session Contract v1 provides strict versioned JSON inventory across the
 local default server and compatible Host Mesh remotes, plus safe `open`,
