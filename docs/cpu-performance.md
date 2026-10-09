@@ -36,3 +36,13 @@ The [renewed-view screenshot](evidence/2026-10-09-cpu-performance/tmux-cpu-cp3-p
 and [completed refresh](evidence/2026-10-09-cpu-performance/tmux-cpu-cp3-picker-snap-refresh-complete.png)
 have been visually checked. These gates preserve ordinary sessions/preferences
 and provide no Starship foreground or physical-suspend acceptance.
+
+The [managed picker](evidence/2026-10-09-cpu-performance/managed-picker-snap.json)
+also passes all 23 Snap cases using the exact installed bundle and actual Mod+G
+arguments. Its [renewed views](evidence/2026-10-09-cpu-performance/tmux-cpu-cp4-managed-picker-snap-renewed-views.png)
+and [completed refresh](evidence/2026-10-09-cpu-performance/tmux-cpu-cp4-managed-picker-snap-refresh-complete.png)
+screenshots have been visually checked. Both endpoints pass exact installed
+bytes, serial recovery, actual matching rollback/reselection and disposable
+CLI lifecycle gates. Native/prepared/fresh references agree for nine Snap and
+ten Starship sessions. Provider selection and source reconciliation have their
+separate [managed record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-cpu-performance-operations.md).
