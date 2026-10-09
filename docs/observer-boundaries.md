@@ -143,3 +143,19 @@ Its native read coalescing, prepared projection reuse and bounded Niri socket
 reads preserve contracts, sampling cadence and timing/resource budgets;
 287 consumer source tests pass with that exact installed wheel. Frozen installed,
 Snap graphical and actual-session resource gates remain separate from this pin.
+
+The frozen `7a9155e` wheel (`92fe44eb…`) subsequently passes thirty installed CLI
+cases across both hosts and
+[twenty-one native Snap picker cases](evidence/2026-10-08-boundary-b5/snap-picker.json).
+Ready and confirmation screenshots are inspected. Warm frame p95 is 100.50 ms;
+observed launch surfaces are 177–179 ms. One owned explicit Refresh notice clears
+in 246.47 ms, 50.23 ms after the service's terminal ticket. These isolated callback
+and surface observations are not compositor presentation or two-host latency p95.
+Owned processes/preferences are removed and prior focus restored. Starship has
+no foreground testing under the current user constraint.
+
+Observer's exact actual-session resource run still fails Snap's unchanged
+five-percent CPU gate at 6.3647% (Starship 2.9777%); memory, native passivity and
+cached-query deadlines pass. The user asks for the cause before selecting any
+replacement CPU budget. Both packages remain unpublished and unselected, with
+the existing managed pair retained.
