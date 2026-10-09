@@ -110,8 +110,8 @@ B2 desktop matching and B3 action client. B4 then migrates this repository:
 5. Recheck remembered context, quiet renewal, real expiry, filter/caret, watch
    recovery and frozen confirmation with the selected native Rofi integration.
 
-Source/import checks do not establish graphical or installed acceptance. Native
-GUI checks use Starship; Snap remains in active use. Exact artifacts, managed
+Source/import checks do not establish graphical or installed acceptance. Current
+native GUI checks use Snap; Starship remains in active use. Exact artifacts, managed
 selection, rollback and installed checks are a later independent B5 gate.
 No managed selection is implied by this source checkpoint. Public CLI flags,
 schemas, output bounds, clean JSON errors and exits remain unchanged. Ordinary
@@ -136,9 +136,10 @@ unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU again
 5%, and subsequent optimization requires a new producer pin and frozen gates.
 
 
-The next candidate pins Observer source `c84ca2e` and wheel
-`37305415f57e2f3bf6f395554fb0d2336a18497faacfa631e9b3fa08acc34ac6`.
+The next candidate pins Observer source `2cebf8c` and wheel
+`a71428d0d2488e79ab2ccc2ad9115bd15c72e648213c4062c1235fe341213d46`.
 The pin still verifies all 74 Python modules across the three package roots.
-Its native read coalescing preserves contracts and timing/resource budgets;
+Its native read coalescing, prepared projection reuse and bounded Niri socket
+reads preserve contracts, sampling cadence and timing/resource budgets;
 287 consumer source tests pass with that exact installed wheel. Frozen installed,
 Snap graphical and actual-session resource gates remain separate from this pin.
