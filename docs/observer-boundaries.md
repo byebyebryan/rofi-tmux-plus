@@ -134,3 +134,11 @@ running through the same expiry deadline; automatic reconnect remains a separate
 case. No runtime code changed for this harness repair. The candidate is still
 unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU against
 5%, and subsequent optimization requires a new producer pin and frozen gates.
+
+
+The next candidate pins Observer source `c84ca2e` and wheel
+`37305415f57e2f3bf6f395554fb0d2336a18497faacfa631e9b3fa08acc34ac6`.
+The pin still verifies all 74 Python modules across the three package roots.
+Its native read coalescing preserves contracts and timing/resource budgets;
+287 consumer source tests pass with that exact installed wheel. Frozen installed,
+Snap graphical and actual-session resource gates remain separate from this pin.
