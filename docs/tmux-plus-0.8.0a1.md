@@ -25,7 +25,12 @@ Review/tag commits may contain later documentation, while these runtime freezes
 identify the actual wheel and native bundle bytes.
 
 The complete source gate passes 287 consumer tests with the exact Observer wheel;
-Observer passes 328. Thirty installed CLI cases on Snap and Starship cover fresh
+Observer passes 328. The first published-producer CI run exposed six historical
+spawn fixtures that depended on an operator-installed launcher. Their mocked
+starters now receive explicit fixture argv; all 287 tests and repository checks
+pass with PATH limited to the test environment and system bins. Product/runtime
+bytes are unchanged; the failed CI record remains historical evidence.
+Thirty installed CLI cases on Snap and Starship cover fresh
 parity, cached behavior, routed actions, error paths, absence without activation
 and native session preservation. The producer's
 [release record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/tmux-observer-0.2.0a1.md)

@@ -36,6 +36,11 @@ from rofi_tmux_plus.host import LocalHost
 from rofi_tmux_plus.model import Session, SessionReference
 
 
+def _refresh_argv(revision: str, *, kind: str = "owner") -> list[str]:
+    """A mocked spawn uses fixture arguments, independent of an installed launcher."""
+    return ["fixture-refresh", "--mesh-revision", revision, "--kind", kind]
+
+
 def _snapshot(
     *, revision: str = "sha256:one", remotes: tuple[str, ...] = ("beta",)
 ) -> MeshSnapshot:
@@ -429,6 +434,7 @@ class PickerModelTests(unittest.TestCase):
         )
         self.assertIsNone(model.payload["remoteRefresh"])
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_spawn_failure_keeps_live_local_model_and_records_current_failure(self) -> None:
         def fail_spawn(_argv: object) -> None:
             raise OSError("fixture spawn failure")
@@ -457,6 +463,7 @@ class PickerModelTests(unittest.TestCase):
         self.assertEqual(marker["state"], "failed")
         self.assertIn("fixture spawn failure", marker["message"])
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_old_revision_marker_does_not_suppress_current_refresh_request(self) -> None:
         self.cache.write_marker("running", "sha256:old")
         commands: list[list[str]] = []
@@ -735,6 +742,7 @@ class RemoteRefreshTests(unittest.TestCase):
         self.assertEqual(received, [11.0])
         self.assertLess(_REFRESH_HARD_DEADLINE_SECONDS, _REFRESH_STALL_SECONDS)
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_local_only_owner_refresh_never_runs_viewer_or_inventory_work(self) -> None:
         inventory = _Inventory({})
         commands: list[list[str]] = []
@@ -751,6 +759,7 @@ class RemoteRefreshTests(unittest.TestCase):
         self.assertEqual(inventory.calls, [])
         self.assertEqual(refresh.status("local-only")["state"], "complete")
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_refresh_spawn_cooldown_prevents_repeated_helper_storm_after_failure(self) -> None:
         commands: list[list[str]] = []
         failed = _Inventory(ContractError("operation_failed", "fixture unavailable"))

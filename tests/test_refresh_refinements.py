@@ -12,7 +12,7 @@ from reference_frontend.inventory_service import InventoryService
 from reference_frontend.picker_model import PickerModelService, RemoteRefresh, ViewerRefresh
 from reference_frontend.remote_cache import RemoteCache
 from reference_frontend.viewer_cache import ViewerObservationCache
-from test_remote_cache import _Adapter, _LocalTmux, _row, _snapshot
+from test_remote_cache import _Adapter, _LocalTmux, _refresh_argv, _row, _snapshot
 
 from rofi_tmux_plus.config import Config
 
@@ -156,6 +156,7 @@ class RefreshRefinementTests(unittest.TestCase):
             )
             self.assertEqual(value["hosts"][0]["sessions"][0]["localViewer"]["state"], "unknown")
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_request_lock_deduplicates_concurrent_spawn_gap(self) -> None:
         commands = []
         entered = threading.Event()
@@ -179,6 +180,7 @@ class RefreshRefinementTests(unittest.TestCase):
             thread.join(3)
         self.assertEqual(len(commands), 1)
 
+    @patch("reference_frontend.picker_model.detached_refresh_command", _refresh_argv)
     def test_new_owner_inputs_renew_immediately_but_failed_scans_keep_cooldown(self) -> None:
         owner = _row("beta", observed=self.now)
         owner["sessions"][0]["localViewer"] = {"state": "none"}
