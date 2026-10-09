@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 from rofi_tmux_plus import rofi
 from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.observer_client import observer_api
 from rofi_tmux_plus.picker_notify import write_notification
 from rofi_tmux_plus.picker_watch import notification_material
 from rofi_tmux_plus.prepared_model import apply_expiry, project_frame
@@ -139,6 +140,16 @@ class RetainedDisplayTests(unittest.TestCase):
             self.assertRaisesRegex(ContractError, "Prepared local bindings are invalid"),
         ):
             self.payload()
+
+    def test_pinned_contract_binds_real_projection_to_exact_owner_scope(self):
+        actual = observer_api()
+        with patch("rofi_tmux_plus.prepared_model.observer_api", return_value=actual):
+            self.assertTrue(self.payload()["hosts"][0]["viewerFactsCurrent"])
+            self.frame["snapshot"]["hosts"][0]["localBindings"]["publisherId"] = (
+                "99999999-9999-4999-8999-999999999999"
+            )
+            with self.assertRaisesRegex(ContractError, "Prepared local bindings are invalid"):
+                self.payload()
 
     def test_native_renewal_keeps_discovery_time_and_does_not_wake(self):
         first, expiry = notification_material(self.frame, self.now)

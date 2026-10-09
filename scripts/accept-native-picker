@@ -472,6 +472,49 @@ def main():
             until(ready, seconds=10)
             assert owner.poll() is None
             passed("actual_owner_and_fleet_ready_with_disposable_native_sessions")
+            viewer = start(
+                [
+                    "kitty",
+                    "--config",
+                    "NONE",
+                    "--override",
+                    "shell_integration=disabled",
+                    "--title",
+                    "owned-retained-picker",
+                    "tmux",
+                    "-u",
+                    "-L",
+                    "default",
+                    "attach-session",
+                    "-t",
+                    "azlalpha",
+                ],
+                "retained-viewer",
+            )
+            viewer_sid = native("display-message", "-t", "azlalpha", "-p", "#{session_id}")
+
+            def local_binding():
+                value = ready()
+                if value is None:
+                    return None
+                batch = value["snapshot"]["hosts"][0].get("localBindings")
+                if not batch or batch["receipt"]["state"] != "ready":
+                    return None
+                return next(
+                    (
+                        row["association"]
+                        for row in batch["rows"]
+                        if row["sessionRef"]["sessionId"] == viewer_sid
+                    ),
+                    None,
+                )
+
+            original_binding = until(
+                lambda: (
+                    binding if (binding := local_binding()) and binding["state"] == "open" else None
+                ),
+                seconds=10,
+            )
             durations = []
             foreground = []
             for _ in range(0 if args.skip_timing else 100):
@@ -551,6 +594,40 @@ def main():
                 events=cycled,
                 screenshot=screenshot(pid, "renewed-views"),
             )
+            for _ in range(3):
+                index = len(events())
+                keys(pid, "-k", "Right")
+                opened = after(index, lambda e: e["retv"] == 11)
+                if "Open" in opened["headers"]["prompt"]:
+                    break
+            else:
+                raise AssertionError("could not select Open view")
+            assert len(opened["rows"]) == 1
+            selected = json.loads(opened["rows"][0]["info"])
+            assert selected["sessionId"] == viewer_sid and "open here?" in selected["status"]
+            assert local_binding()["resolvedAt"] == original_binding["resolvedAt"]
+            passed(
+                "retained_open_is_qualified_after_original_native_lease_renewal",
+                screenshot=screenshot(pid, "retained-open"),
+                event=opened,
+            )
+            index = len(events())
+            stop(viewer)
+            until(
+                lambda: (
+                    binding if (binding := local_binding()) and binding["state"] == "none" else None
+                )
+            )
+            detached = after(index, lambda e: e["retv"] == 28 and not e["rows"])
+            passed("kitty_close_removes_open_row_through_native_attachment_update", event=detached)
+            for _ in range(3):
+                index = len(events())
+                keys(pid, "-k", "Right")
+                restored = after(index, lambda e: e["retv"] == 11)
+                if restored["headers"]["prompt"] == initial["headers"]["prompt"]:
+                    break
+            else:
+                raise AssertionError("could not restore original view")
             index = len(events())
             runtime = owned_runtime(pid)
             observed_terminal = {}
