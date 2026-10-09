@@ -117,3 +117,20 @@ No managed selection is implied by this source checkpoint. Public CLI flags,
 schemas, output bounds, clean JSON errors and exits remain unchanged. Ordinary
 Open's fresh unique focus/ambiguity tightening is the documented B3 delta;
 verified-viewer/close guards remain owned by the separate action client.
+
+
+The B4 frozen candidate passed 30 installed CLI cases across Snap and Starship,
+then [21 native picker cases on Snap](evidence/2026-10-08-boundary-b4/snap-picker.json),
+including remembered context, typing/caret, refresh, confirmation, local expiry,
+read-only reconnect and cleanup. Ready/confirmation screenshots were inspected.
+Warm frame p95 was 104.55 ms; observed launch surfaces were 175-177 ms. Callback
+completion and surface polling do not establish compositor presentation timing.
+The user moved future foreground testing to Snap while actively using Starship.
+
+The [earlier Starship run](evidence/2026-10-08-boundary-b4/starship-watch-race-rejected.json)
+passed eleven cases then raced the stopped subscription reconnect. The fault
+injection now stops the owned delivery supervisor while leaving the renderer
+running through the same expiry deadline; automatic reconnect remains a separate
+case. No runtime code changed for this harness repair. The candidate is still
+unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU against
+5%, and subsequent optimization requires a new producer pin and frozen gates.

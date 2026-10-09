@@ -699,9 +699,13 @@ def main():
             assert "pendingAction" not in json.loads(cancelled["headers"]["data"])
             passed("native_confirmation_cancel_returns_to_browse_without_mutation")
             runtime = owned_runtime(pid)
-            watch_pid = until(lambda: owned_watch(process, runtime))
+            until(lambda: owned_watch(process, runtime))
             index = len(events())
-            os.kill(watch_pid, signal.SIGSTOP)
+            # Freeze the owned delivery supervisor while Rofi keeps rendering.
+            # Stopping only one subscription races its intentional read-only
+            # reconnect, which can restore delivery before a warning is drawn.
+            # This fault keeps notification delivery absent past its deadline.
+            os.kill(process.pid, signal.SIGSTOP)
             try:
                 stalled = until(
                     lambda: next(
@@ -715,12 +719,14 @@ def main():
                     ),
                     seconds=15,
                 )
-                passed("native_stalled_watch_expires_and_revokes_cached_positives", event=stalled)
+                passed(
+                    "native_stalled_delivery_expires_and_revokes_cached_positives", event=stalled
+                )
             finally:
                 try:
-                    os.kill(watch_pid, signal.SIGCONT)
+                    os.kill(process.pid, signal.SIGCONT)
                 except ProcessLookupError:
-                    pass  # The supervisor may already have reaped its stalled child.
+                    pass
             index = len(events())
             after(
                 index,
@@ -728,8 +734,8 @@ def main():
                     e["retv"] == 28 and not json.loads(e["headers"]["data"]).get("errorMessage")
                 ),
             )
-            watch_pid = until(lambda: owned_watch(process, runtime))
-            os.kill(watch_pid, signal.SIGSTOP)
+            until(lambda: owned_watch(process, runtime))
+            os.kill(process.pid, signal.SIGSTOP)
             try:
                 (runtime / "notify").write_text("malformed owned diagnostic\n")
                 (runtime / "notify").chmod(0o600)
@@ -744,7 +750,7 @@ def main():
                 passed("malformed_owned_notification_has_bounded_native_failure")
             finally:
                 try:
-                    os.kill(watch_pid, signal.SIGCONT)
+                    os.kill(process.pid, signal.SIGCONT)
                 except ProcessLookupError:
                     pass
             index = len(events())
