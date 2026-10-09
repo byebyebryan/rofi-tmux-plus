@@ -45,6 +45,18 @@ callback timings, not compositor presentation percentiles. An initial staging
 attempt used the wrong wheel basename and stopped before graphical launch;
 the correct descriptor-named wheel is used by the accepted gate.
 
-Managed selection, restart recovery and paired rollback/reselection remain
-separate chezmoi gates. The [design note](local-performance.md) records the
-retained-display boundary and limitations.
+The exact accepted wheel and native bundle are published as
+[0.9.0a1](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.9.0a1).
+The independent [paired managed gate](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-local-performance-operations.md)
+passes scoped selection, all installed bytes/controls, native/fresh/prepared
+parity, restart recovery and actual paired rollback/reselection on both hosts.
+Ordinary session references/generations/hooks and unrelated controls survive.
+
+The [managed Snap picker](evidence/2026-10-08-local-performance/managed-picker-snap.json)
+passes the same 23 cases with the actual installed Mod+G arguments. Managed
+retained Open and confirmation screenshots are inspected; owned fixture cleanup
+restores focus. Warm-frame p95 is 100.40 ms; the owned Refresh notice clears in
+582.21 ms, 11.95 ms after observed service completion, with the same callback
+timing limits. Starship still receives no graphical input. The
+[design note](local-performance.md) records the retained-display boundary and
+limitations.
