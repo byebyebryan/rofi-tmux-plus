@@ -136,8 +136,8 @@ unselected: Observer normal-resource acceptance failed Snap at 5.1656% CPU again
 5%, and subsequent optimization requires a new producer pin and frozen gates.
 
 
-The next candidate pins Observer source `ae8df6e` and wheel
-`ae52080fbfbc1d990af038fd93ef76909cb7b84e2a8b7067c53c062daa00d37d`.
+The current candidate pins Observer source `4bf98f9` and wheel
+`20073881d01c14bfd744ee4e74ed1d6f2c6381389d290876cd5101cb2fb3a9a5`.
 The pin still verifies all 74 Python modules across the three package roots.
 Its native read coalescing, prepared projection reuse, nested wire-check reuse
 and bounded Niri socket reads preserve contracts, sampling cadence and budgets;
@@ -160,7 +160,7 @@ cached-query deadlines pass. The user asks for the cause before selecting any
 replacement CPU budget. Both packages remain unpublished and unselected, with
 the existing managed pair retained.
 
-The next producer repair reduces normal C1/C2 sampling to four native process
+The preceding producer repair reduces normal C1/C2 sampling to four native process
 starts for up to 31 sessions, and reuses enclosing plain-tree checks within pure
 validators. Nested semantics and independent byte ceilings remain; mutable Python
 subclasses keep their full fallback. The new producer source passes 319 tests and
@@ -168,3 +168,19 @@ fourteen frozen collector cases on both hosts. Consumer source still passes 287
 tests with the new exact pin. Normal resource acceptance now explicitly matches
 each managed system-Python interpreter. Those new resource and frozen consumer
 gates remain pending; preceding picker evidence retains its original pin.
+
+Frozen `ae8df6e` subsequently measures 5.2673% CPU on Snap and 2.8990% on
+Starship with system Python 3.14.7 and actual ordinary sessions. Its final
+preservation check rejects two sessions added during active use; a subsequent
+native read finds all original references present. The failed resource record
+remains in Observer, and its harness now permits additions while requiring all
+baseline full references, unchanged generation and unchanged hooks.
+
+The current producer additionally freezes each fully validated local association
+receipt into private immutable state. It retains current scope/identity/expiry
+checks on every use and full validation for every incoming wire record. Mutable
+records and independent boundary validators keep their complete checks; input
+hashes remain byte-equivalent. Producer and consumer source gates pass 324 and
+287 tests. The current ten-minute resource probe and frozen consumer gates are
+pending. Five percent remains the CPU promotion ceiling; no release or managed
+selection is implied by this pin.

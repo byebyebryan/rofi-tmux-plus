@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "version": "0.2.0a1",
-  "sourceCommit": "ae8df6e277079dfdda5055f6138674965d80ac3d",
-  "wheelSha256": "ae52080fbfbc1d990af038fd93ef76909cb7b84e2a8b7067c53c062daa00d37d",
+  "sourceCommit": "4bf98f94cab124ab5e917e57811023744d8e3a6c",
+  "wheelSha256": "20073881d01c14bfd744ee4e74ed1d6f2c6381389d290876cd5101cb2fb3a9a5",
   "modules": {
     "tmux_observer/__init__.py": "4d4fa05cd1f17837d6dea07fbf6737436a667ff5cfbd43f20efc67239dc50837",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
@@ -68,13 +68,13 @@
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
     "tmux_observer_client/_remote_state.py": "6bc478adb67294fedb7cac7755410abf43e977ff09dceee95bb912fff489f7dd",
     "tmux_observer_client/_watch.py": "017d1c467696de8038d8e4a26940f1b23a87c3796c2834b62f35c9f3cf55d3cd",
-    "tmux_observer_client/attachments.py": "07eaaddf702da5e0545a2b7f50ba8ddd723f775971b4d4ca3fd6b6d09f27bfcb",
+    "tmux_observer_client/attachments.py": "585b362181c37a75f6289ccfb85b6ab218ae59cfee9b0ae28652a470b1265448",
     "tmux_observer_client/cli.py": "7fab9a80927551b7f5dbf423e9ae2919dc0b00135cebb175282f7fd40cbd6dae",
     "tmux_observer_client/contract.py": "c26cd3b598b8ed1815523efd79360817220c6c619614f526a002006850c4ed85",
     "tmux_observer_client/desktop.py": "7cf1da8eed4f5f46ecc739d4907e1731f0d3fc6280fae40a8a67689b4d828c98",
     "tmux_observer_client/desktop_contract.py": "8b156a921a89d254c634ac3e89fb3d8ed5747a8207720b0e5e41078f00f21f4c",
     "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
-    "tmux_observer_client/fleet.py": "14238f6398267d55b4511dd8af9b0b41ea099ea9316c9e52efb4974d80cc975f",
+    "tmux_observer_client/fleet.py": "1d63f1d764180f565aac2bada01375e04b2ffffb2ee350dd34d2daa8b0a7f2a4",
     "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
     "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
     "tmux_observer_client/ssh.py": "03c463bf14ec72766aed52dbe36268f57d382c2ff5fe986d5e8900bc8929556e"
