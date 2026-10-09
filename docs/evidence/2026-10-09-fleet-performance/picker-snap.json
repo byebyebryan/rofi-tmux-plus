@@ -1,0 +1,2397 @@
+{
+  "schemaVersion": 1,
+  "gate": "T14-native-picker checkpoint",
+  "artifact": {
+    "build": {
+      "builderSha256": "eedbb95ef4c4411380f1c924898bc7b9384cfb945b93460de47ab94fe71aadd3",
+      "constraintsSha256": "9415ac080e4169856325998ab71d3258c16c02a1d0d3cfa837bfca1290faa8db",
+      "implementation": "CPython",
+      "python": "3.14.7",
+      "uv": "uv 0.8.22"
+    },
+    "members": {
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/__init__.py": {
+        "bytes": 77,
+        "executable": false,
+        "sha256": "4769123735f907a1f036b7ffba1fbd04aeb8571fbce11b91cd45276f54fcc921"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/__main__.py": {
+        "bytes": 48,
+        "executable": false,
+        "sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/cli.py": {
+        "bytes": 29357,
+        "executable": false,
+        "sha256": "c9755be7533b0d2a5740b9008350eb56c19f5ce4de66de3956fc5d966fd92539"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/config.py": {
+        "bytes": 2959,
+        "executable": false,
+        "sha256": "d2c9c75d54170fefe59a6ff28018269f729b05afc4dd3e5589baab95a6b4747c"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/diagnostics.py": {
+        "bytes": 3136,
+        "executable": false,
+        "sha256": "8293399e776429cc3ca74d2af05b7260c7af893b572768dacedf06b1345798ab"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/errors.py": {
+        "bytes": 1259,
+        "executable": false,
+        "sha256": "45f30f856fa1476583cc3e3c4ca279a69f7b9da112d90fe51392cb3c1c7385a6"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/host.py": {
+        "bytes": 2508,
+        "executable": false,
+        "sha256": "d4b8616182061224b1282239b7b2761873a133dd841a90a79621a651649d7661"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/inputs.py": {
+        "bytes": 1555,
+        "executable": false,
+        "sha256": "1fdc249c495150e83ad39b1184fcd0e1f3882a9ccc7f220f53f83877764ff61c"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/inventory_service.py": {
+        "bytes": 1524,
+        "executable": false,
+        "sha256": "da2a133b0704bb05323d93be5389bfdbcd88b4cb3b781cf14b72a6db96f13c85"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/launcher.py": {
+        "bytes": 6752,
+        "executable": false,
+        "sha256": "3e6c5eaf90246c062e04f69715890eae1db97c9a684db6e8c7fd0066695d988d"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/lifecycle_service.py": {
+        "bytes": 3389,
+        "executable": false,
+        "sha256": "36eb72426f4aa5851c3d4d0d644d34170806eff20785113698c0061bb239d6e3"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/model.py": {
+        "bytes": 2078,
+        "executable": false,
+        "sha256": "09baa5b56fa49049dc2ca5a38c7210ea37baa06524dbf3ceaaf97b16fef1c083"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/native-artifact.json": {
+        "bytes": 1874,
+        "executable": false,
+        "sha256": "e0011a361ad7fb6c59b8272576a66775013bca2fd7ec8bb6933dba783901aa9f"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": {
+        "bytes": 261,
+        "executable": true,
+        "sha256": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": {
+        "bytes": 8944,
+        "executable": false,
+        "sha256": "6237ce56b82a502a5de1afcc232ccd551637c4539ab3ad94d4442d6c4461c0dc"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus.so": {
+        "bytes": 22152,
+        "executable": true,
+        "sha256": "77c7402faed64e1175afc13b3134fd657a93611c0273d2182f1fc0c6fca793d8"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native_mode.py": {
+        "bytes": 2439,
+        "executable": false,
+        "sha256": "f4b82dc1a3aca23b6296978499ab66c59ff592eb59f61c9bb871aa11e46f425c"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/observer-artifact.json": {
+        "bytes": 8673,
+        "executable": false,
+        "sha256": "9d9133c1159eeaccd19328e3bf6ba1e042138b526589e88d517402acdb105109"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/observer_client.py": {
+        "bytes": 4282,
+        "executable": false,
+        "sha256": "8d7cae81fba70f4d18208decff2048913c6e999050fcfdcfd17cb7c93ed9e2d6"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/owned_process.py": {
+        "bytes": 424,
+        "executable": false,
+        "sha256": "098c392e19695ded5d6282a707bad8c4c5deed9c58a71812874e2053fafd363e"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_model.py": {
+        "bytes": 237,
+        "executable": false,
+        "sha256": "641be13a83bedb34ccc985c7d27fa2310dec39826d827483c7cd3febce50115c"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_notify.py": {
+        "bytes": 1512,
+        "executable": false,
+        "sha256": "4de518e14fe47b76201e2a0d091e857a54a03fbb17ffbbcf02cd029ecf1376d2"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_runtime.py": {
+        "bytes": 2377,
+        "executable": false,
+        "sha256": "8ada11a364a9f8e790a324140dd4d5f446fa0a938b104a1bfa621cbc7dfd2c70"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_watch.py": {
+        "bytes": 10701,
+        "executable": false,
+        "sha256": "f30a93e55ea8ffac2286c5dddaf67150c8fd0bf1006fd979b908fcd77032ac5a"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/prepared_model.py": {
+        "bytes": 16839,
+        "executable": false,
+        "sha256": "36455e0e98400cd7d8f456fb7ecce61c3d7d61772fdbd57bb3a5066d96dd0d0b"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/presentation_cache.py": {
+        "bytes": 10285,
+        "executable": false,
+        "sha256": "6fa9c30618f7d9282837c3cee66d9657df3deb2c5d88dfd4c02f5ef548885827"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/rofi.py": {
+        "bytes": 92692,
+        "executable": false,
+        "sha256": "b05eed05eb242f1ccb53cd5baf098c518d25c290daea4af63830fe9da878f9b4"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/view_preferences.py": {
+        "bytes": 6657,
+        "executable": false,
+        "sha256": "436bf761455b7713536962f2514a7ba933f133b625842cd22a70bcb2dba8de87"
+      },
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/wire.py": {
+        "bytes": 4186,
+        "executable": false,
+        "sha256": "ba0dfd679bc9070560c93a57e0337f9a00fb5ad4a182a390e36df957ddd9b6bd"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/METADATA": {
+        "bytes": 9781,
+        "executable": false,
+        "sha256": "53a785047be4476a40e0caaabb9219b1116916ec6a9045ece2f9ffe990ba4de7"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/RECORD": {
+        "bytes": 4148,
+        "executable": false,
+        "sha256": "8f139a43a53ed757faeccea2098f12b40c8858c2d56cd26989e8a6796fa73b37"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/WHEEL": {
+        "bytes": 101,
+        "executable": false,
+        "sha256": "f9970092cb1a69a202beb028db087f3a8bc09e2245034f5a6e5311040f102750"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/entry_points.txt": {
+        "bytes": 110,
+        "executable": false,
+        "sha256": "a1313d66df267fd5a8dc814aad1892bb3eab970aab18972ed902ac7aad50e1d0"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/licenses/LICENSE": {
+        "bytes": 1066,
+        "executable": false,
+        "sha256": "09f9adb67e3a6659b19893fbfc583eb5dfc605fea5b8e64202d20c41bdac9fb0"
+      },
+      "rofi_tmux_plus-0.10.0a1.dist-info/top_level.txt": {
+        "bytes": 15,
+        "executable": false,
+        "sha256": "03ca2c60104c8da4735549b93eae2d548cfee2aafca34a9dd7b90df5e1208792"
+      }
+    },
+    "native": {
+      "acceptanceState": "built_unaccepted",
+      "architecture": "x86_64",
+      "buildVersions": {
+        "cairo": "1.18.6",
+        "glib-2.0": "2.90.1",
+        "gmodule-2.0": "2.90.1",
+        "pango": "1.58.2"
+      },
+      "compiler": "cc (GCC) 16.2.1 20260810",
+      "files": {
+        "rofi-tmux-plus-mode": "4f819c35ce932cf906bebfd0a55f15c3d242ae8ef5eed8580320e38f9791601b",
+        "tmux-plus-notify.c": "6237ce56b82a502a5de1afcc232ccd551637c4539ab3ad94d4442d6c4461c0dc",
+        "tmux-plus.so": "77c7402faed64e1175afc13b3134fd657a93611c0273d2182f1fc0c6fca793d8"
+      },
+      "flags": [
+        "-shared",
+        "-fPIC",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I/usr/include/pango-1.0",
+        "-I/usr/include/harfbuzz",
+        "-I/usr/include/libmount",
+        "-I/usr/include/blkid",
+        "-I/usr/include/fribidi",
+        "-I/usr/include/glib-2.0",
+        "-I/usr/lib/glib-2.0/include",
+        "-I/usr/include/sysprof-6",
+        "-pthread",
+        "-I/usr/include/cairo",
+        "-I/usr/include/freetype2",
+        "-I/usr/include/libpng16",
+        "-I/usr/include/pixman-1",
+        "-lpango-1.0",
+        "-lharfbuzz",
+        "-lgobject-2.0",
+        "-Wl,--export-dynamic",
+        "-lgmodule-2.0",
+        "-pthread",
+        "-lglib-2.0",
+        "-lcairo",
+        "-ldl"
+      ],
+      "headers": {
+        "mode-private.h": "9b4b0148c1feae2bae7e4afc30e848fa5ee11d56d9eecdffecad4c00eadee55b",
+        "mode.h": "292355951931209c898ee31c33d9a76ea8d0e8a104e0cad88bd5201c5dd2ef48"
+      },
+      "modeAbi": 7,
+      "requiredPrivateSymbols": [
+        "script_mode_parse_setup",
+        "rofi_view_get_active",
+        "rofi_view_get_mode",
+        "rofi_view_get_completed",
+        "rofi_view_maybe_update",
+        "rofi_view_trigger_action",
+        "key_binding_get_action_from_name"
+      ],
+      "rofiSha256": "4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca",
+      "rofiVersion": "Version: 2.0.0-dirty",
+      "schemaVersion": 1,
+      "sourceCommit": "69209e374fb30bfeb85ab135b092b104d20ad4f0",
+      "sourceTreeDirty": false
+    },
+    "observer": {
+      "modules": {
+        "tmux_observer/__init__.py": "b32bd0de3588c8cc01517f8f8dcb1eef59d6e4df443cefa601a279da338ef482",
+        "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+        "tmux_observer/_attachment_state.py": "8103965c24877ef5073c5648c28b2890b6d79644dbd8e7ed5073654022e4a8ef",
+        "tmux_observer/_clock.py": "ba64e80360cab121704ab0918b9f03fc2537de3cf6bf31d21a3f5a62b1739d80",
+        "tmux_observer/_delivery_validation.py": "a3d7e0fd5ac62578cd67351124e7f60998a05bb5622a907d76b562ccf8446c99",
+        "tmux_observer/_hub.py": "1783e54d411fa7d8d1a05b4b018024b79e18a4a32eb8b5a8b240912b4a9b0a58",
+        "tmux_observer/_ipc.py": "ebe7fb35f8091ec7daafbe1ef5d624c141f27c837e1ff6b2de635937899530f0",
+        "tmux_observer/_models.py": "f2eddb94d3202264ce77d03790905e2a9cbef9ad3df14ce61887e87ed05dc3bd",
+        "tmux_observer/_native_validation.py": "4e40a087e58205f3cd2b786014ae579515b8d7ff1a2f01beb7b5ee9a98510640",
+        "tmux_observer/_owner_state.py": "bcbed868f3e10b66739cfbe331d8dad695151ca696e534c2c75ba84390c101ff",
+        "tmux_observer/_process.py": "01328d4ad72f8d460e513ea6b4f360448ed8c5a5b90f752c8301a620e3cf6575",
+        "tmux_observer/_request_validation.py": "5eb978288c734d7ced1333c678a650f4d9d3fb31dd35210e9ac154313bb4be9b",
+        "tmux_observer/_stream.py": "86c56f9acd04207a5a50cc0676344e2852377ea1d307fd467b5c1dda098baade",
+        "tmux_observer/_tickets.py": "88f2b5747fbb4db8ce341a18e3b967320f932fb93dfbffeed47884f379e66c76",
+        "tmux_observer/_tmux_wire.py": "4bf673d6952ace4d9e5520cd74695a8133703bd91c10ebb9e87274c1d64a4ec4",
+        "tmux_observer/_validation.py": "92d6340cacc8f31ba60b606fb853f16bf67647722629bed0b6d8c39460894584",
+        "tmux_observer/_validation_common.py": "fcf0a77924e35b4c924e7cfc6d52806dcb53e0e4f1f124963734af369df93019",
+        "tmux_observer/_wire.py": "e0c31ba96b158b2d95e6e39f43fc767fe915a9ed1aceb37ba96e59292164835e",
+        "tmux_observer/annotations.py": "70e9260bb0dfd0c16408bf9a4f6b259d351235b754f0880e3f9a09c7eba6d226",
+        "tmux_observer/attachment_collector.py": "60cda9b59483cd47bcd7f08ac7da9bc701830fc3bb18b686b99713ab5f2ce841",
+        "tmux_observer/attachments.py": "1a8b55a18c0497c1d4e9384ebb64f4a5c9c11e844bf91a60fbc92a00135628b4",
+        "tmux_observer/cli.py": "d0853a273b6073eac8a62a881d7a4641c1fc74c495dd4625d70dbff390d41cff",
+        "tmux_observer/collector.py": "b3840897512d5fa895df381dfa7bb54716538695a37bafe4e71f332dd4860ed9",
+        "tmux_observer/delivery.py": "c2973812beec07377e10e7b6a342a97d9149ad718ff828841e1ae8a29b67b8ff",
+        "tmux_observer/native.py": "2e9fb95f21c2e386049393342834ca29f5ea63dc09efa42829c3e96ed15a6286",
+        "tmux_observer/owner.py": "1494c0a0929a6fff019d83ef0ae361710ca423f8184c06af357b0a4d891cd5fd",
+        "tmux_observer/public.py": "a2b5002e830ef95b1c31f9f8d959149b43cd58153f0c5e1db72bdb1ca427a19e",
+        "tmux_observer_actions/__init__.py": "1f0d1601f5dd594bf6b1ca172f92cfc4158fa999f2a7e952ec33703816a0b69d",
+        "tmux_observer_actions/_legacy_validation.py": "64fc9654fa431fec07346dbbe6f29032828beac1db62b34a9c1fda569baf5b76",
+        "tmux_observer_actions/_legacy_wire.py": "8ed0a761ad4e5bc13367cac76cf277963d8d10b29b91a1703c3de8c709c80134",
+        "tmux_observer_actions/_native_inputs.py": "a46c9d35015da570da386b334a2d922ea549fa88812ad68795fa227b68c8ce98",
+        "tmux_observer_actions/_progress.py": "5f42c77b2d2a47080d1182c88942b8fcaedf17028763a96aad2e4fbc7a45b3b4",
+        "tmux_observer_actions/_remote_framing.py": "eb9c64dd2982c805974d4a284f26b2d7e37f8553b826284527fbfef5913d6af0",
+        "tmux_observer_actions/config.py": "627e4490eb88974bdb370f08584e1372801ec52b8f5de869a34895dd6c335bf3",
+        "tmux_observer_actions/contract.py": "62de2531ce903d77b9b1fda655306672749089518f5c4dceb1cf1f27b8d5df78",
+        "tmux_observer_actions/desktop_action.py": "9e2e188a3fefd69c8fadf6b8b11fb27e366721bf547d896a0b08cee9d9fb11ae",
+        "tmux_observer_actions/errors.py": "6c75de7773855dfa910f6476d6277ab403159568930cfe6f724617f324507af7",
+        "tmux_observer_actions/host.py": "5ed2522dd55d971248ee75f05e0e49307df75964e67358ee6b160d0644198549",
+        "tmux_observer_actions/lifecycle.py": "b17e126d5f8607a21f68aae068acc5a7b0631882e9f205843e1d728aae07ea2e",
+        "tmux_observer_actions/lifecycle_service.py": "17ef53f634f73e360f2bff910199e5fffac4dabe8623f242afc8b072ca00a8dc",
+        "tmux_observer_actions/model.py": "c64798b6f6e17729f328bb54ac5a2282671ba57d129dd371e6ab8ccc7c7d299c",
+        "tmux_observer_actions/public.py": "c82ec6bfb904a95cc5d605decf289d63f5da686bcd9807dff3c3eb05f758435a",
+        "tmux_observer_actions/remote_lifecycle.py": "d97b6c285059a45971a08a960c79d34d48671e261d29f547a42fb71b2714e882",
+        "tmux_observer_actions/terminal.py": "6e4996f780d6b5d0fa486983977eb951f09d9b471041c938ea3f0651078af1c9",
+        "tmux_observer_actions/tmux.py": "4dc7e2c666ebda93244f92097d4ef508d562d2efa67285fc2e049698c6240c93",
+        "tmux_observer_actions/viewer_service.py": "a4e2367cc5acc8d71abcd54ebe4bc8c1a48079312eff4f4b94c930b0df66faeb",
+        "tmux_observer_client/__init__.py": "14ab80d96104b342ef7c016526f413f896b2c43a5d3309162aad0451275bbaa0",
+        "tmux_observer_client/_binding_projection.py": "3a6281bb84f3c7fb06baa8cbdd728fd1fc0cc737f986dba2020b812e2518f6aa",
+        "tmux_observer_client/_command.py": "d747531e5b09ce15d7cb616ad86078d6f20a2043d7208668a72d0f5ff81856f7",
+        "tmux_observer_client/_context.py": "954673fda3a9addb7cd8c690c234c292ccbb80c06adc7479f97fd5f489965b1e",
+        "tmux_observer_client/_contract_validation.py": "1f89cf45e288694956976a4526c08c9e9cd51d80e87f27708075db85fb4aa7ec",
+        "tmux_observer_client/_desktop_context.py": "b4c7fc71089dc8e93976e86c9f18ac2b5d7bb8413aca5cf4c1d8462671926c88",
+        "tmux_observer_client/_desktop_input.py": "742d68717b456f395da355ccff2d15620b085fc7cf1b87cd886795b59c9af988",
+        "tmux_observer_client/_desktop_matching.py": "f53a32670592fdac274c0e28f76d4312864874d7f1d0afeb41b2e51e6e21051c",
+        "tmux_observer_client/_desktop_scan.py": "aecf56f094bef0235112ef554ac4d1a8b09a9258dc62b80dad2aacb19d79c77b",
+        "tmux_observer_client/_desktop_types.py": "c9dc984d6652d04f6c06e29d6e7f2f005500e22626867da4adbe425ea7bb4060",
+        "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
+        "tmux_observer_client/_fleet_state.py": "98f36d4d5972c65cbf9e7aa03b6e15e6a0d702934d1de416c640058992b6ed2b",
+        "tmux_observer_client/_fleet_tickets.py": "c9c781a0e69ad84d079b31e38e955f4a8473d66f4882f719cce2c3917df13a7b",
+        "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
+        "tmux_observer_client/_local_bindings.py": "5a51bee86bef5efa62447e3945799aa17a9d922eb26cda794601b76cade41531",
+        "tmux_observer_client/_local_stream.py": "e3b2cfbe9ed18a68a4f7ddfc0961be9c027087176323ce74c7d36c4016d9a2f3",
+        "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
+        "tmux_observer_client/_owner_document.py": "02cfcce5a628ddb2c708171f5d72a9dee7e22c6517c3262cdbda4dbcba424e22",
+        "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
+        "tmux_observer_client/_remote_state.py": "413e89b17935f6975374efe345ecd37ca7c63321e7a40c514405ab5135fbeee2",
+        "tmux_observer_client/_watch.py": "017d1c467696de8038d8e4a26940f1b23a87c3796c2834b62f35c9f3cf55d3cd",
+        "tmux_observer_client/attachments.py": "585b362181c37a75f6289ccfb85b6ab218ae59cfee9b0ae28652a470b1265448",
+        "tmux_observer_client/bindings_contract.py": "eed9d91d97834bced7f0838c8733745f20ce985ca4d89de5edcae9a240356044",
+        "tmux_observer_client/cli.py": "7fab9a80927551b7f5dbf423e9ae2919dc0b00135cebb175282f7fd40cbd6dae",
+        "tmux_observer_client/contract.py": "c26cd3b598b8ed1815523efd79360817220c6c619614f526a002006850c4ed85",
+        "tmux_observer_client/desktop.py": "f33fa86827c38cf296750b0cf359762d3bd984517c867c6d0f2ea63d05d2faf5",
+        "tmux_observer_client/desktop_contract.py": "8b156a921a89d254c634ac3e89fb3d8ed5747a8207720b0e5e41078f00f21f4c",
+        "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
+        "tmux_observer_client/fleet.py": "b6228d228de22d938c7768902b2dc5c70fc3ff6ae6f64b0eae24231a7f445d18",
+        "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
+        "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
+        "tmux_observer_client/ssh.py": "01610d8c54caea4dc92596fa2f565415ade461a3202a77fbbe755bbcce425ba4"
+      },
+      "schemaVersion": 1,
+      "sourceCommit": "ad6073953c3e1f4237950fffc53b8e0a111120fa",
+      "version": "0.4.0a1",
+      "wheelSha256": "efb1e7b72e0128bf45c10803d366304f7b108aec5ac5aaf2fffafa4efb23d880"
+    },
+    "package": {
+      "generator": "setuptools (84.0.0)",
+      "name": "rofi-tmux-plus",
+      "requiresPython": ">=3.11",
+      "version": "0.10.0a1"
+    },
+    "schemaVersion": 1,
+    "source": {
+      "commit": "69209e374fb30bfeb85ab135b092b104d20ad4f0",
+      "epoch": 1791529795,
+      "tree": "15a8d6ace25fb8e75f922495b552515969b50e88"
+    },
+    "sourceFiles": {
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/__init__.py": "rofi_tmux_plus/__init__.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/__main__.py": "rofi_tmux_plus/__main__.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/cli.py": "rofi_tmux_plus/cli.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/config.py": "rofi_tmux_plus/config.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/diagnostics.py": "rofi_tmux_plus/diagnostics.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/errors.py": "rofi_tmux_plus/errors.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/host.py": "rofi_tmux_plus/host.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/inputs.py": "rofi_tmux_plus/inputs.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/inventory_service.py": "rofi_tmux_plus/inventory_service.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/launcher.py": "rofi_tmux_plus/launcher.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/lifecycle_service.py": "rofi_tmux_plus/lifecycle_service.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/model.py": "rofi_tmux_plus/model.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/native-artifact.json": "rofi_tmux_plus/native/native-artifact.json",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/rofi-tmux-plus-mode": "rofi_tmux_plus/native/rofi-tmux-plus-mode",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus-notify.c": "rofi_tmux_plus/native/tmux-plus-notify.c",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native/tmux-plus.so": "rofi_tmux_plus/native/tmux-plus.so",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/native_mode.py": "rofi_tmux_plus/native_mode.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/observer-artifact.json": "rofi_tmux_plus/observer-artifact.json",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/observer_client.py": "rofi_tmux_plus/observer_client.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/owned_process.py": "rofi_tmux_plus/owned_process.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_model.py": "rofi_tmux_plus/picker_model.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_notify.py": "rofi_tmux_plus/picker_notify.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_runtime.py": "rofi_tmux_plus/picker_runtime.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/picker_watch.py": "rofi_tmux_plus/picker_watch.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/prepared_model.py": "rofi_tmux_plus/prepared_model.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/presentation_cache.py": "rofi_tmux_plus/presentation_cache.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/rofi.py": "rofi_tmux_plus/rofi.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/view_preferences.py": "rofi_tmux_plus/view_preferences.py",
+      "rofi_tmux_plus-0.10.0a1.data/purelib/rofi_tmux_plus/wire.py": "rofi_tmux_plus/wire.py",
+      "rofi_tmux_plus-0.10.0a1.dist-info/licenses/LICENSE": "LICENSE"
+    },
+    "state": "built_unaccepted",
+    "wheel": {
+      "bytes": 80854,
+      "file": "rofi_tmux_plus-0.10.0a1-py3-none-linux_x86_64.whl",
+      "sha256": "58572788a6ec476b9181fced1a85a32671ecedb39e90d5859c264692efeacac3"
+    }
+  },
+  "hostId": "snap",
+  "harnessSha256": "d206c845b4159247d5ec5382690cff38d4e9063a051f36869c67f2a71444b654",
+  "timingSkipped": false,
+  "installation": "wheel",
+  "managedBindingSha256": null,
+  "cases": [
+    {
+      "name": "actual_owner_and_fleet_ready_with_disposable_native_sessions",
+      "result": "passed"
+    },
+    {
+      "name": "100_warm_installed_frames_without_foreground_native_or_ssh",
+      "result": "passed",
+      "p95Ms": 88.462306
+    },
+    {
+      "name": "fixed_installed_native_mode_adopts_actual_prepared_service",
+      "result": "passed",
+      "screenshot": "tmux-fleet-fp3-picker-snap-ready.png"
+    },
+    {
+      "name": "browse_cycles_after_original_lease_expiry_keep_current_rows",
+      "result": "passed",
+      "originalExpiry": 569985492,
+      "events": [
+        {
+          "startedAt": 569985619.339862,
+          "finishedAt": 569985629.624783,
+          "retv": 11,
+          "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+          "argv": [
+            "azlalpha"
+          ],
+          "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"42aebad6ca9795cce5fbc3393a7a6ccd45b1249e45f6faad8c732acc3e81dcb1\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "headers": {
+            "prompt": "Tmux \u203a Open",
+            "use-hot-keys": "true",
+            "markup-rows": "true",
+            "no-custom": "false",
+            "keep-selection": "true",
+            "keep-filter": "true",
+            "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+            "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1da08d7dcbc407b0fce513c40b61799df2cdd307ab960d4488ddbbe3ea86bc93\"}",
+            "new-selection": "0"
+          },
+          "rows": [
+            {
+              "label": "azlalpha",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            }
+          ]
+        },
+        {
+          "startedAt": 569985742.757159,
+          "finishedAt": 569985756.05444,
+          "retv": 11,
+          "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+          "argv": [
+            "azlalpha"
+          ],
+          "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1da08d7dcbc407b0fce513c40b61799df2cdd307ab960d4488ddbbe3ea86bc93\"}",
+          "headers": {
+            "prompt": "Tmux \u203a Attached",
+            "use-hot-keys": "true",
+            "markup-rows": "true",
+            "no-custom": "false",
+            "keep-selection": "true",
+            "keep-filter": "true",
+            "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+            "data": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"a1bcb86a1cb3b0958df4a2e9f58ba39428bb5d02430895cdf93c697da3fdc514\"}",
+            "new-selection": "0"
+          },
+          "rows": [
+            {
+              "label": "azlalpha",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            }
+          ]
+        },
+        {
+          "startedAt": 569985871.550768,
+          "finishedAt": 569985882.376338,
+          "retv": 11,
+          "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+          "argv": [
+            "azlalpha"
+          ],
+          "before": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"a1bcb86a1cb3b0958df4a2e9f58ba39428bb5d02430895cdf93c697da3fdc514\"}",
+          "headers": {
+            "prompt": "Tmux \u203a Local",
+            "use-hot-keys": "true",
+            "markup-rows": "true",
+            "no-custom": "false",
+            "keep-selection": "true",
+            "keep-filter": "true",
+            "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+            "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b03fd7c1fe467e2f963ca4f63817237cb99eb8d72672f97dd8568c524d84cf06\"}",
+            "new-selection": "0"
+          },
+          "rows": [
+            {
+              "label": "azlalpha",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlbeta",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlgamma",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            }
+          ]
+        },
+        {
+          "startedAt": 569986008.177816,
+          "finishedAt": 569986018.841352,
+          "retv": 16,
+          "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+          "argv": [
+            "azlalpha"
+          ],
+          "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b03fd7c1fe467e2f963ca4f63817237cb99eb8d72672f97dd8568c524d84cf06\"}",
+          "headers": {
+            "prompt": "Tmux \u203a Local",
+            "use-hot-keys": "true",
+            "markup-rows": "true",
+            "no-custom": "false",
+            "keep-selection": "true",
+            "keep-filter": "true",
+            "message": "Enter: Open \u00b7 <span foreground=\"#ef5350\" weight=\"bold\">[Kill]</span>  \u2502  Tab: Cycle actions",
+            "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"d788014791bbf0d2925a418f8c993cb5f28e277475552fc14522667cc6434466\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+            "new-selection": "0"
+          },
+          "rows": [
+            {
+              "label": "azlalpha",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlbeta",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlgamma",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            }
+          ]
+        },
+        {
+          "startedAt": 569986144.223117,
+          "finishedAt": 569986154.744344,
+          "retv": 16,
+          "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+          "argv": [
+            "azlalpha"
+          ],
+          "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"d788014791bbf0d2925a418f8c993cb5f28e277475552fc14522667cc6434466\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "headers": {
+            "prompt": "Tmux \u203a Local",
+            "use-hot-keys": "true",
+            "markup-rows": "true",
+            "no-custom": "false",
+            "keep-selection": "true",
+            "keep-filter": "true",
+            "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+            "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"03f707040bddf2bf6e4fb367fa10cfcda5e8246bb093863843fe25bf9cc3a6e5\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+            "new-selection": "0"
+          },
+          "rows": [
+            {
+              "label": "azlalpha",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlbeta",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            },
+            {
+              "label": "azlgamma",
+              "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+            }
+          ]
+        }
+      ],
+      "screenshot": "tmux-fleet-fp3-picker-snap-renewed-views.png"
+    },
+    {
+      "name": "retained_open_is_qualified_after_original_native_lease_renewal",
+      "result": "passed",
+      "screenshot": "tmux-fleet-fp3-picker-snap-retained-open.png",
+      "event": {
+        "startedAt": 569986331.700988,
+        "finishedAt": 569986341.800432,
+        "retv": 11,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"03f707040bddf2bf6e4fb367fa10cfcda5e8246bb093863843fe25bf9cc3a6e5\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a Open",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"52a511aed69c617f9b0a4bf82622c2fd0a5a18fb357563607edaf38b49b676b1\"}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "kitty_close_removes_open_row_through_native_attachment_update",
+      "result": "passed",
+      "event": {
+        "startedAt": 569987773.250005,
+        "finishedAt": 569987782.497748,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"52a511aed69c617f9b0a4bf82622c2fd0a5a18fb357563607edaf38b49b676b1\"}",
+        "headers": {
+          "prompt": "Tmux \u203a Open",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Viewer presence unknown; check Local",
+          "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"f1a2c147482d0b5ebf496ec9a3761fc60d1b828fb42b46804db52deebc359b7f\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": []
+      }
+    },
+    {
+      "name": "explicit_refresh_equal_rows_clears_notice_and_retains_reference",
+      "result": "passed",
+      "requested": {
+        "startedAt": 569989215.787703,
+        "finishedAt": 569989227.842469,
+        "retv": 10,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9111b194ce9c1204ac2d60eeca9d9a701f705229bba09b74fe3164a0e94c28a6\"}",
+        "headers": {
+          "prompt": "Tmux \u203a Local",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refreshing",
+          "theme": "configuration { timeout { delay: 1; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"13c9a1bdd5e66637166c88dac17b184ec236109e511b782368151c2137d1ed1c\",\"refreshDeadline\":1791530144,\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlbeta",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlgamma",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      },
+      "adopted": {
+        "startedAt": 569989305.524907,
+        "finishedAt": 569989319.453269,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"13c9a1bdd5e66637166c88dac17b184ec236109e511b782368151c2137d1ed1c\",\"refreshDeadline\":1791530144,\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a Local",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+          "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b7be146735b65d25f1a64bfb049bddcaff75ed49cfa5c13f2c433b3e99b2032c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlbeta",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlgamma",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      },
+      "screenshot": "tmux-fleet-fp3-picker-snap-refresh-complete.png",
+      "serviceTerminal": {
+        "at": 569989353.258958,
+        "ticket": {
+          "id": "e356c303-b8e8-42e0-80e5-30bdc1e1f986",
+          "publisherId": "fd8789c2-6950-4949-a3b7-130d69361063",
+          "state": "complete",
+          "requestedAt": 569989223,
+          "deadlineAt": 570004223,
+          "sources": [
+            {
+              "hostId": "snap",
+              "source": "owner",
+              "state": "complete",
+              "attempt": 14,
+              "error": null
+            },
+            {
+              "hostId": "snap",
+              "source": "desktop",
+              "state": "complete",
+              "attempt": 1,
+              "error": null
+            }
+          ]
+        }
+      },
+      "noticeCallbackDelayMs": 103.66556596755981,
+      "serviceToNoticeCallbackMs": -33.805688977241516
+    },
+    {
+      "name": "native_rename_adopted_during_active_input",
+      "result": "passed",
+      "callbackDelayMs": 1929.0426160097122,
+      "event": {
+        "startedAt": 569991441.157921,
+        "finishedAt": 569991452.561781,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d03a1549e4a243f57010479d39413af722f60d4f50b178b164149f18bd06c659\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a Local",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+          "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"2b72202f16bd82db1577197357faf386d8863cb949e268ff4edf4a21b9e73236\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlbeta-v2",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlgamma",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      },
+      "screenshot": "tmux-fleet-fp3-picker-snap-typing.png"
+    },
+    {
+      "name": "native_view_arrows_expose_four_scopes",
+      "result": "passed",
+      "prompts": [
+        "Tmux \u203a Open",
+        "Tmux \u203a Attached",
+        "Tmux \u203a Local",
+        "Tmux \u203a Open"
+      ],
+      "screenshot": "tmux-fleet-fp3-picker-snap-views.png"
+    },
+    {
+      "name": "automatic_updates_and_views_preserve_filter_and_caret",
+      "result": "passed",
+      "finalInput": "azl"
+    },
+    {
+      "name": "relaunch_restores_the_remembered_empty_open_view",
+      "result": "passed"
+    },
+    {
+      "name": "prepared_changes_preserve_exact_native_pending_confirmation",
+      "result": "passed",
+      "selection": {
+        "type": "session",
+        "meshRevision": null,
+        "hostId": "snap",
+        "serverGeneration": "tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default",
+        "sessionId": "$0",
+        "createdAt": 1791530088,
+        "name": "azlalpha",
+        "attachedClients": 0
+      },
+      "screenshot": "tmux-fleet-fp3-picker-snap-confirmation.png"
+    },
+    {
+      "name": "native_confirmation_cancel_returns_to_browse_without_mutation",
+      "result": "passed"
+    },
+    {
+      "name": "native_stalled_delivery_expires_and_revokes_cached_positives",
+      "result": "passed",
+      "event": {
+        "startedAt": 570003786.158762,
+        "finishedAt": 570003796.606422,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"260b327d196de6edd27f4c635bc0d8cbeeb9eb0927015e1b7c8f97d5210171ae\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a Local",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh errors: snap: picker updates unavailable",
+          "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e85cbb60ffac78eef41b55533474da6916d2e659766ae8c5d97ffef1df146065\",\"errorDeadline\":1791530132,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlbeta-v2",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlgamma-v2",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "malformed_owned_notification_has_bounded_native_failure",
+      "result": "passed"
+    },
+    {
+      "name": "native_watch_recovers_without_retaining_observation_error",
+      "result": "passed",
+      "event": {
+        "startedAt": 570005857.258627,
+        "finishedAt": 570005867.842257,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9ac9024effb661a686d31d1e73c65b05d8c0f5de2cc594accb60c9a96ee25016\",\"errorDeadline\":1791530133,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a Local",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+          "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"38b774d0aa345c0b4fe34e0245d9de2067ef07a3f51c3e429f31d4c20cae47ed\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": [
+          {
+            "label": "azlalpha",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlbeta-v2",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          },
+          {
+            "label": "azlgamma-v2",
+            "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "native_mode_switch_and_reentry_keep_owned_process_alive",
+      "result": "passed"
+    },
+    {
+      "name": "fleet_loss_visible_without_direct_fallback",
+      "result": "passed",
+      "event": {
+        "startedAt": 570008592.375059,
+        "finishedAt": 570008599.415184,
+        "retv": 28,
+        "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+        "argv": [
+          "azlalpha"
+        ],
+        "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "headers": {
+          "prompt": "Tmux \u203a All",
+          "use-hot-keys": "true",
+          "markup-rows": "true",
+          "no-custom": "false",
+          "keep-selection": "true",
+          "keep-filter": "true",
+          "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable",
+          "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+          "data": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"errorDeadline\":1791530137,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"callback:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+          "new-selection": "0"
+        },
+        "rows": []
+      },
+      "screenshot": "tmux-fleet-fp3-picker-snap-reader-lost.png"
+    },
+    {
+      "name": "new_reader_recovers_by_read_only_watch_reconnect",
+      "result": "passed"
+    },
+    {
+      "name": "launcher_term_removes_owned_rofi_watch_and_runtime",
+      "result": "passed"
+    },
+    {
+      "name": "owned_roster_attachments_and_windows_preserved",
+      "result": "passed"
+    },
+    {
+      "name": "absent_prepared_reader_has_visible_bounded_native_outcome",
+      "result": "passed",
+      "screenshot": "tmux-fleet-fp3-picker-snap-absent.png"
+    },
+    {
+      "name": "native_cancel_removes_owned_rofi_watch_and_runtime",
+      "result": "passed"
+    }
+  ],
+  "limits": [
+    "Only the named desktop is exercised; other hosts receive no graphical input",
+    "Read-only recorder wraps the installed renderer; warm frame timings exclude it",
+    "Visible screenshots are separate checkpoints; callback finish is not compositor presentation"
+  ],
+  "warmFrameMs": {
+    "samples": [
+      89.689601,
+      85.432658,
+      83.606285,
+      88.953144,
+      84.598036,
+      84.556073,
+      88.462306,
+      83.939672,
+      83.385932,
+      88.280012,
+      86.823231,
+      90.632437,
+      85.649835,
+      80.97462,
+      82.318222,
+      77.241618,
+      80.097819,
+      77.537082,
+      76.831898,
+      80.397238,
+      85.05626,
+      84.207997,
+      79.906577,
+      79.524746,
+      80.158515,
+      80.717085,
+      81.420076,
+      78.691905,
+      80.294118,
+      78.266595,
+      84.534647,
+      80.472971,
+      81.609028,
+      79.18281,
+      80.389731,
+      78.315892,
+      80.098838,
+      78.055855,
+      79.603452,
+      81.748007,
+      81.996253,
+      83.442784,
+      82.003513,
+      79.926048,
+      80.769782,
+      84.269862,
+      84.210181,
+      91.239723,
+      85.628342,
+      82.70729,
+      81.967579,
+      79.678918,
+      84.575157,
+      80.231949,
+      81.151562,
+      85.873514,
+      79.585817,
+      88.746768,
+      81.484802,
+      83.061647,
+      82.093399,
+      81.387368,
+      81.375604,
+      82.516321,
+      80.331355,
+      80.06582,
+      82.51828,
+      81.412105,
+      81.400677,
+      86.3765,
+      79.476449,
+      80.956826,
+      83.011278,
+      84.79265,
+      80.362297,
+      78.895126,
+      81.918004,
+      83.920542,
+      82.927419,
+      80.437268,
+      81.198159,
+      83.202189,
+      82.447301,
+      82.927372,
+      78.456964,
+      83.946311,
+      80.089449,
+      80.627535,
+      84.486882,
+      80.223969,
+      82.654251,
+      87.946994,
+      79.889215,
+      80.698267,
+      80.590529,
+      82.669732,
+      82.213722,
+      81.121617,
+      81.854791,
+      81.839885
+    ],
+    "p95": 88.462306,
+    "target": 150,
+    "passed": true
+  },
+  "graphicalCheckpointsMs": [
+    {
+      "name": "picker",
+      "surfaceObserved": 157.3639690876007,
+      "firstNativeCallbackFinished": 361.26019299030304,
+      "limit": "surface polling is a bound, not a compositor presentation timestamp"
+    },
+    {
+      "name": "lifetime",
+      "surfaceObserved": 157.5145559310913,
+      "firstNativeCallbackFinished": 366.08353292942047,
+      "limit": "surface polling is a bound, not a compositor presentation timestamp"
+    },
+    {
+      "name": "absent",
+      "surfaceObserved": 177.2455540895462,
+      "firstNativeCallbackFinished": 365.6984350681305,
+      "limit": "surface polling is a bound, not a compositor presentation timestamp"
+    }
+  ],
+  "result": "passed_native_checkpoint",
+  "callbacks": [
+    {
+      "startedAt": 569975822.328088,
+      "finishedAt": 569975826.67483,
+      "retv": 0,
+      "selected": null,
+      "argv": [
+        "-no-config",
+        "-normal-window",
+        "-show",
+        "tmux-plus",
+        "-modes",
+        "tmux-plus,keys",
+        "-theme-str",
+        "window { width: 900px; } listview { lines: 6; }",
+        "-kb-custom-1",
+        "Alt+r",
+        "-kb-custom-2",
+        "Right",
+        "-kb-custom-3",
+        "Left",
+        "-kb-custom-7",
+        "Tab",
+        "-kb-custom-8",
+        "ISO_Left_Tab",
+        "-kb-custom-19",
+        "",
+        "-kb-element-next",
+        "",
+        "-kb-element-prev",
+        "",
+        "-kb-row-tab",
+        "",
+        "-kb-mode-next",
+        "Control+Tab",
+        "-kb-mode-previous",
+        "Control+ISO_Left_Tab",
+        "-kb-move-char-back",
+        "Control+b",
+        "-kb-move-char-forward",
+        "Control+f",
+        "-kb-accept-custom",
+        "Control+Return",
+        "-kb-screenshot",
+        "F12"
+      ],
+      "before": null,
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh errors: snap: picker updates unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"8c69ed1ca1131bf2de62da9d469ea4d7d26eae441fa5d059adcd78a09db4d691\",\"errorDeadline\":1791530104,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\"}",
+        "new-selection": "0",
+        "delim": "\\x1e"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569976105.12843,
+      "finishedAt": 569976115.491805,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"8c69ed1ca1131bf2de62da9d469ea4d7d26eae441fa5d059adcd78a09db4d691\",\"errorDeadline\":1791530104,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"ac0b4ec6c2641cd0b5d191607ae7d6dbaaf276f1b54b9d8c6894eb6ea252ba59\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569978643.118217,
+      "finishedAt": 569978654.288645,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"ac0b4ec6c2641cd0b5d191607ae7d6dbaaf276f1b54b9d8c6894eb6ea252ba59\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"42aebad6ca9795cce5fbc3393a7a6ccd45b1249e45f6faad8c732acc3e81dcb1\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569985619.339862,
+      "finishedAt": 569985629.624783,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"42aebad6ca9795cce5fbc3393a7a6ccd45b1249e45f6faad8c732acc3e81dcb1\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1da08d7dcbc407b0fce513c40b61799df2cdd307ab960d4488ddbbe3ea86bc93\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569985742.757159,
+      "finishedAt": 569985756.05444,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1da08d7dcbc407b0fce513c40b61799df2cdd307ab960d4488ddbbe3ea86bc93\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Attached",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"a1bcb86a1cb3b0958df4a2e9f58ba39428bb5d02430895cdf93c697da3fdc514\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569985871.550768,
+      "finishedAt": 569985882.376338,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"a1bcb86a1cb3b0958df4a2e9f58ba39428bb5d02430895cdf93c697da3fdc514\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b03fd7c1fe467e2f963ca4f63817237cb99eb8d72672f97dd8568c524d84cf06\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569986008.177816,
+      "finishedAt": 569986018.841352,
+      "retv": 16,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b03fd7c1fe467e2f963ca4f63817237cb99eb8d72672f97dd8568c524d84cf06\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: Open \u00b7 <span foreground=\"#ef5350\" weight=\"bold\">[Kill]</span>  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"d788014791bbf0d2925a418f8c993cb5f28e277475552fc14522667cc6434466\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569986144.223117,
+      "finishedAt": 569986154.744344,
+      "retv": 16,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"d788014791bbf0d2925a418f8c993cb5f28e277475552fc14522667cc6434466\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"03f707040bddf2bf6e4fb367fa10cfcda5e8246bb093863843fe25bf9cc3a6e5\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569986331.700988,
+      "finishedAt": 569986341.800432,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"03f707040bddf2bf6e4fb367fa10cfcda5e8246bb093863843fe25bf9cc3a6e5\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"52a511aed69c617f9b0a4bf82622c2fd0a5a18fb357563607edaf38b49b676b1\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569987773.250005,
+      "finishedAt": 569987782.497748,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":1,\"windowCount\":1,\"status\":\"open here? \\u00b7 attached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"52a511aed69c617f9b0a4bf82622c2fd0a5a18fb357563607edaf38b49b676b1\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Viewer presence unknown; check Local",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"f1a2c147482d0b5ebf496ec9a3761fc60d1b828fb42b46804db52deebc359b7f\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569988861.190949,
+      "finishedAt": 569988870.956789,
+      "retv": 28,
+      "selected": null,
+      "argv": [
+        "Viewer presence unknown"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"f1a2c147482d0b5ebf496ec9a3761fc60d1b828fb42b46804db52deebc359b7f\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"b914b18f334a2c64b4cc6f454481881d1aa23133caa2cd0f2f6bb58055b6a069\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569988942.169345,
+      "finishedAt": 569988951.835791,
+      "retv": 11,
+      "selected": null,
+      "argv": [
+        "No open viewers here"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"b914b18f334a2c64b4cc6f454481881d1aa23133caa2cd0f2f6bb58055b6a069\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Attached",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"97fd9dde7758654a7130fbc2445f15cbf7acef029a344f72e62d14b4b5e2a918\"}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569989081.646645,
+      "finishedAt": 569989091.903552,
+      "retv": 11,
+      "selected": null,
+      "argv": [
+        "No attached sessions"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"97fd9dde7758654a7130fbc2445f15cbf7acef029a344f72e62d14b4b5e2a918\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9111b194ce9c1204ac2d60eeca9d9a701f705229bba09b74fe3164a0e94c28a6\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569989215.787703,
+      "finishedAt": 569989227.842469,
+      "retv": 10,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9111b194ce9c1204ac2d60eeca9d9a701f705229bba09b74fe3164a0e94c28a6\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refreshing",
+        "theme": "configuration { timeout { delay: 1; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"13c9a1bdd5e66637166c88dac17b184ec236109e511b782368151c2137d1ed1c\",\"refreshDeadline\":1791530144,\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569989305.524907,
+      "finishedAt": 569989319.453269,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"13c9a1bdd5e66637166c88dac17b184ec236109e511b782368151c2137d1ed1c\",\"refreshDeadline\":1791530144,\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b7be146735b65d25f1a64bfb049bddcaff75ed49cfa5c13f2c433b3e99b2032c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569989443.489836,
+      "finishedAt": 569989453.82916,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b7be146735b65d25f1a64bfb049bddcaff75ed49cfa5c13f2c433b3e99b2032c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d03a1549e4a243f57010479d39413af722f60d4f50b178b164149f18bd06c659\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569991441.157921,
+      "finishedAt": 569991452.561781,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d03a1549e4a243f57010479d39413af722f60d4f50b178b164149f18bd06c659\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"2b72202f16bd82db1577197357faf386d8863cb949e268ff4edf4a21b9e73236\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569992068.732673,
+      "finishedAt": 569992079.057511,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"2b72202f16bd82db1577197357faf386d8863cb949e268ff4edf4a21b9e73236\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"e8896a4ce4569a9babaf1eb209372c26f5305eb8d0d0eb8b110bae673ff972a0\"}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569992203.232843,
+      "finishedAt": 569992213.615021,
+      "retv": 11,
+      "selected": null,
+      "argv": [
+        "al"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"e8896a4ce4569a9babaf1eb209372c26f5305eb8d0d0eb8b110bae673ff972a0\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Attached",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"5e92af281fb1fd98bdfd522b4829feeac1d51864f3945e71246face528976d29\"}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569992338.297592,
+      "finishedAt": 569992352.325558,
+      "retv": 11,
+      "selected": null,
+      "argv": [
+        "al"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"attached\"},\"action\":\"open\",\"snapshotKey\":\"5e92af281fb1fd98bdfd522b4829feeac1d51864f3945e71246face528976d29\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"5bc27345b8a2ee35dabaa395680ad6a88fd8e29106e3578320125f72bc70b063\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569992486.936494,
+      "finishedAt": 569992497.366982,
+      "retv": 11,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"5bc27345b8a2ee35dabaa395680ad6a88fd8e29106e3578320125f72bc70b063\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"9a3f9f851e814aac88f2f7a90ed2a708844c7c4c4ae031b1948e5a8d1e0b5723\"}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569992748.113659,
+      "finishedAt": 569992748.124325,
+      "retv": 2,
+      "selected": null,
+      "argv": [
+        "azl"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"9a3f9f851e814aac88f2f7a90ed2a708844c7c4c4ae031b1948e5a8d1e0b5723\"}",
+      "headers": {},
+      "rows": []
+    },
+    {
+      "startedAt": 569992944.165874,
+      "finishedAt": 569992948.4284,
+      "retv": 0,
+      "selected": null,
+      "argv": [
+        "-no-config",
+        "-normal-window",
+        "-show",
+        "tmux-plus",
+        "-modes",
+        "tmux-plus,keys",
+        "-theme-str",
+        "window { width: 900px; } listview { lines: 6; }",
+        "-kb-custom-1",
+        "Alt+r",
+        "-kb-custom-2",
+        "Right",
+        "-kb-custom-3",
+        "Left",
+        "-kb-custom-7",
+        "Tab",
+        "-kb-custom-8",
+        "ISO_Left_Tab",
+        "-kb-custom-19",
+        "",
+        "-kb-element-next",
+        "",
+        "-kb-element-prev",
+        "",
+        "-kb-row-tab",
+        "",
+        "-kb-mode-next",
+        "Control+Tab",
+        "-kb-mode-previous",
+        "Control+ISO_Left_Tab",
+        "-kb-move-char-back",
+        "Control+b",
+        "-kb-move-char-forward",
+        "Control+f",
+        "-kb-accept-custom",
+        "Control+Return",
+        "-kb-screenshot",
+        "F12"
+      ],
+      "before": null,
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh errors: snap: picker updates unavailable \u00b7 Viewer presence unknown; check Local",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"acfa6087d7af684cd2e060a7afb432afaed497f86561681bdb25735d8892c9c0\",\"errorDeadline\":1791530121,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\"}",
+        "new-selection": "0",
+        "delim": "\\x1e"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569993228.634314,
+      "finishedAt": 569993238.785211,
+      "retv": 28,
+      "selected": null,
+      "argv": [
+        "Viewer presence unknown"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"acfa6087d7af684cd2e060a7afb432afaed497f86561681bdb25735d8892c9c0\",\"errorDeadline\":1791530121,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Open",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1cc3c5b446bf88250043288d46a55fb6eefb1e202a638069d60958ba3a99f719\"}"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 569993369.16302,
+      "finishedAt": 569993379.723408,
+      "retv": 12,
+      "selected": null,
+      "argv": [
+        "No open viewers here"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"open\"},\"action\":\"open\",\"snapshotKey\":\"1cc3c5b446bf88250043288d46a55fb6eefb1e202a638069d60958ba3a99f719\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"6e73b5f2bba4443a94cb5a2095393a7922cc650d999607173dd2df4e066127b3\"}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569993506.05681,
+      "finishedAt": 569993517.645171,
+      "retv": 16,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"6e73b5f2bba4443a94cb5a2095393a7922cc650d999607173dd2df4e066127b3\"}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: Open \u00b7 <span foreground=\"#ef5350\" weight=\"bold\">[Kill]</span>  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"a487a8ec0882ebefb5e2a088b6de9b03befa8d5f0e7d8f0e52f73bf35c056fb2\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569993639.325784,
+      "finishedAt": 569993649.992328,
+      "retv": 1,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"a487a8ec0882ebefb5e2a088b6de9b03befa8d5f0e7d8f0e52f73bf35c056fb2\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Confirm kill",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Choose Kill or Cancel",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"e5dcca57e6bc0f68cc9c453fb85b29bd5dd5fa2e131a259c1e4ba256b6c24909\",\"pendingAction\":{\"kind\":\"confirm-kill\",\"origin\":{\"view\":\"local\",\"hostId\":\"snap\"},\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}},\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "Cancel",
+          "info": "{\"type\":\"cancel\"}"
+        },
+        {
+          "label": "Kill azlalpha",
+          "info": "{\"type\":\"kill\",\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569993775.748898,
+      "finishedAt": 569993786.175406,
+      "retv": 28,
+      "selected": "{\"type\":\"cancel\"}",
+      "argv": [
+        "Cancel"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"e5dcca57e6bc0f68cc9c453fb85b29bd5dd5fa2e131a259c1e4ba256b6c24909\",\"pendingAction\":{\"kind\":\"confirm-kill\",\"origin\":{\"view\":\"local\",\"hostId\":\"snap\"},\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}},\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Confirm kill",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Choose Kill or Cancel",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"ceac860825a8dbedd106a760b76d8032d4b192b21243d246e71806f62403b5ad\",\"pendingAction\":{\"kind\":\"confirm-kill\",\"origin\":{\"view\":\"local\",\"hostId\":\"snap\"},\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}},\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "Cancel",
+          "info": "{\"type\":\"cancel\"}"
+        },
+        {
+          "label": "Kill azlalpha",
+          "info": "{\"type\":\"kill\",\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}}"
+        }
+      ]
+    },
+    {
+      "startedAt": 569993982.820912,
+      "finishedAt": 569993994.348319,
+      "retv": 1,
+      "selected": "{\"type\":\"cancel\"}",
+      "argv": [
+        "Cancel"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"kill\",\"snapshotKey\":\"ceac860825a8dbedd106a760b76d8032d4b192b21243d246e71806f62403b5ad\",\"pendingAction\":{\"kind\":\"confirm-kill\",\"origin\":{\"view\":\"local\",\"hostId\":\"snap\"},\"selection\":{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0}},\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b7801fdfadc331d89ddd5fecb36671d83072ad3280f13874f6f6a38813400eb6\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570001343.226108,
+      "finishedAt": 570001355.073148,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"b7801fdfadc331d89ddd5fecb36671d83072ad3280f13874f6f6a38813400eb6\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"260b327d196de6edd27f4c635bc0d8cbeeb9eb0927015e1b7c8f97d5210171ae\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570003786.158762,
+      "finishedAt": 570003796.606422,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"260b327d196de6edd27f4c635bc0d8cbeeb9eb0927015e1b7c8f97d5210171ae\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh errors: snap: picker updates unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e85cbb60ffac78eef41b55533474da6916d2e659766ae8c5d97ffef1df146065\",\"errorDeadline\":1791530132,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570004221.455937,
+      "finishedAt": 570004232.01237,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e85cbb60ffac78eef41b55533474da6916d2e659766ae8c5d97ffef1df146065\",\"errorDeadline\":1791530132,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d94390808120ea893b2b125f30a9069a90e51285344038918ed5d53920b6014f\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570005265.549878,
+      "finishedAt": 570005276.231423,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d94390808120ea893b2b125f30a9069a90e51285344038918ed5d53920b6014f\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh errors: snap: picker updates unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9ac9024effb661a686d31d1e73c65b05d8c0f5de2cc594accb60c9a96ee25016\",\"errorDeadline\":1791530133,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570005857.258627,
+      "finishedAt": 570005867.842257,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"unavailable\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"9ac9024effb661a686d31d1e73c65b05d8c0f5de2cc594accb60c9a96ee25016\",\"errorDeadline\":1791530133,\"errorMessage\":\"Refresh errors: snap: picker updates unavailable\",\"noticeKey\":\"payload:Refresh errors: snap: picker updates unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"38b774d0aa345c0b4fe34e0245d9de2067ef07a3f51c3e429f31d4c20cae47ed\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570007550.554663,
+      "finishedAt": 570007561.345478,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"38b774d0aa345c0b4fe34e0245d9de2067ef07a3f51c3e429f31d4c20cae47ed\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v3",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v3\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570008592.375059,
+      "finishedAt": 570008599.415184,
+      "retv": 28,
+      "selected": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}",
+      "argv": [
+        "azlalpha"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a All",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"errorDeadline\":1791530137,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"callback:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 570009276.317705,
+      "finishedAt": 570009287.449573,
+      "retv": 28,
+      "selected": null,
+      "argv": [
+        "No tmux sessions"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"snapshotKey\":\"e0e2d68d38f7e32432344b5009085bba029a364e723dab3725cd5909e849514c\",\"errorDeadline\":1791530137,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"callback:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+      "headers": {
+        "prompt": "Tmux \u203a Local",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions",
+        "theme": "configuration { timeout { delay: 0; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"local\",\"hostId\":\"snap\"},\"action\":\"open\",\"snapshotKey\":\"d0d3c86d69afc9eab533d9f3793b3f0d8044913b1f60212294b8e7eeaad410ec\",\"highlighted\":{\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088}}",
+        "new-selection": "0"
+      },
+      "rows": [
+        {
+          "label": "azlalpha",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$0\",\"createdAt\":1791530088,\"name\":\"azlalpha\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlbeta-v2",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$1\",\"createdAt\":1791530088,\"name\":\"azlbeta-v2\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        },
+        {
+          "label": "azlgamma-v3",
+          "info": "{\"type\":\"session\",\"meshRevision\":null,\"hostId\":\"snap\",\"serverGeneration\":\"tmux-v1:1791530088:1868891:/tmp/tp-gui-q49sfwzv/native/tmux-1000/default\",\"sessionId\":\"$2\",\"createdAt\":1791530088,\"name\":\"azlgamma-v3\",\"attachedClients\":0,\"windowCount\":1,\"status\":\"no viewer here \\u00b7 detached\",\"display\":\"snap\",\"sessionPath\":\"/home/bryan/code/rofi-tmux-plus\",\"currentWindow\":\"tmux\",\"currentPath\":\"/home/bryan/code/rofi-tmux-plus\"}"
+        }
+      ]
+    },
+    {
+      "startedAt": 570009837.220064,
+      "finishedAt": 570009838.015286,
+      "retv": 0,
+      "selected": null,
+      "argv": [
+        "-no-config",
+        "-normal-window",
+        "-show",
+        "tmux-plus",
+        "-modes",
+        "tmux-plus,keys",
+        "-theme-str",
+        "window { width: 900px; } listview { lines: 6; }",
+        "-kb-custom-1",
+        "Alt+r",
+        "-kb-custom-2",
+        "Right",
+        "-kb-custom-3",
+        "Left",
+        "-kb-custom-7",
+        "Tab",
+        "-kb-custom-8",
+        "ISO_Left_Tab",
+        "-kb-custom-19",
+        "",
+        "-kb-element-next",
+        "",
+        "-kb-element-prev",
+        "",
+        "-kb-row-tab",
+        "",
+        "-kb-mode-next",
+        "Control+Tab",
+        "-kb-mode-previous",
+        "Control+ISO_Left_Tab",
+        "-kb-move-char-back",
+        "Control+b",
+        "-kb-move-char-forward",
+        "Control+f",
+        "-kb-accept-custom",
+        "Control+Return",
+        "-kb-screenshot",
+        "F12"
+      ],
+      "before": null,
+      "headers": {
+        "prompt": "Tmux \u203a All",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"errorDeadline\":1791530138,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"refresh:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\"}",
+        "new-selection": "0",
+        "delim": "\\x1e"
+      },
+      "rows": []
+    },
+    {
+      "startedAt": 570010108.180049,
+      "finishedAt": 570010115.143267,
+      "retv": 28,
+      "selected": null,
+      "argv": [
+        "No tmux sessions"
+      ],
+      "before": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"errorDeadline\":1791530138,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"refresh:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\"}",
+      "headers": {
+        "prompt": "Tmux \u203a All",
+        "use-hot-keys": "true",
+        "markup-rows": "true",
+        "no-custom": "false",
+        "keep-selection": "true",
+        "keep-filter": "true",
+        "message": "Enter: <span foreground=\"#42a5f5\" weight=\"bold\">[Open]</span> \u00b7 Kill  \u2502  Tab: Cycle actions\u2028\u2028Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable",
+        "theme": "configuration { timeout { delay: 3; action: \"kb-custom-19\"; } }",
+        "data": "{\"version\":1,\"navigation\":{\"view\":\"all\"},\"action\":\"open\",\"errorDeadline\":1791530138,\"errorMessage\":\"Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\",\"noticeKey\":\"callback:Refresh failed: Prepared Tmux Observer unavailable: owner publisher is unavailable\"}"
+      },
+      "rows": []
+    }
+  ],
+  "ownedCleanup": "fixture processes, default server, preferences and runtime removed; prior focus restored"
+}

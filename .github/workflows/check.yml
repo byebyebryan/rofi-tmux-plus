@@ -28,7 +28,7 @@ jobs:
             "$shellcheck_tmpdir/shellcheck-v0.11.0/shellcheck" /usr/local/bin/shellcheck
       - name: Run repository gate
         env:
-          TMUX_OBSERVER_WHEEL: ${{ runner.temp }}/tmux_observer-0.3.0a1-py3-none-any.whl
+          TMUX_OBSERVER_WHEEL: ${{ runner.temp }}/tmux_observer-0.4.0a1-py3-none-any.whl
         run: |
           python - <<'PY'
           import hashlib, json, os, urllib.request
