@@ -9,6 +9,9 @@ The picker consumes Tmux Observer's prepared local views and watch updates. The
 reviewed [component boundary note](docs/observer-boundaries.md) defines ownership:
 native observation, networking, desktop association and action clients retain their
 own contracts; Tmux Plus retains presentation and user intent. The
+[0.10.0a2 fleet performance acceptance](docs/fleet-performance.md) records the
+current Observer 0.4.0a1 pair, Snap graphical checks and scoped managed deployment
+on Snap and Starship. The
 [0.8.0a1 release candidate](docs/tmux-plus-0.8.0a1.md) delegates actions as well
 as reads to the pinned Observer package. Its exact installed/native, Snap picker,
 resource, publication and managed recovery/paired rollback gates pass in their
