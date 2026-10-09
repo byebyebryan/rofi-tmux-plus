@@ -1,10 +1,10 @@
 {
   "modules": {
-    "tmux_observer/__init__.py": "af2a97b72f6b69f73a240c7f34dbe62a9421b2a19808ec91ee7b41aa3341346a",
+    "tmux_observer/__init__.py": "b32bd0de3588c8cc01517f8f8dcb1eef59d6e4df443cefa601a279da338ef482",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
     "tmux_observer/_attachment_state.py": "8103965c24877ef5073c5648c28b2890b6d79644dbd8e7ed5073654022e4a8ef",
     "tmux_observer/_clock.py": "ba64e80360cab121704ab0918b9f03fc2537de3cf6bf31d21a3f5a62b1739d80",
-    "tmux_observer/_delivery_validation.py": "e5b2924ae643b0b437730fb5966108deee230b56cd968f46ca0ba03d42e4307c",
+    "tmux_observer/_delivery_validation.py": "a3d7e0fd5ac62578cd67351124e7f60998a05bb5622a907d76b562ccf8446c99",
     "tmux_observer/_hub.py": "1783e54d411fa7d8d1a05b4b018024b79e18a4a32eb8b5a8b240912b4a9b0a58",
     "tmux_observer/_ipc.py": "ebe7fb35f8091ec7daafbe1ef5d624c141f27c837e1ff6b2de635937899530f0",
     "tmux_observer/_models.py": "f2eddb94d3202264ce77d03790905e2a9cbef9ad3df14ce61887e87ed05dc3bd",
@@ -57,14 +57,15 @@
     "tmux_observer_client/_desktop_scan.py": "aecf56f094bef0235112ef554ac4d1a8b09a9258dc62b80dad2aacb19d79c77b",
     "tmux_observer_client/_desktop_types.py": "c9dc984d6652d04f6c06e29d6e7f2f005500e22626867da4adbe425ea7bb4060",
     "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
-    "tmux_observer_client/_fleet_state.py": "081907dc03f37351066889fe80a00e8349c0bf44c1c3880192d5c3f5db1c7f66",
+    "tmux_observer_client/_fleet_state.py": "98f36d4d5972c65cbf9e7aa03b6e15e6a0d702934d1de416c640058992b6ed2b",
     "tmux_observer_client/_fleet_tickets.py": "c9c781a0e69ad84d079b31e38e955f4a8473d66f4882f719cce2c3917df13a7b",
     "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
     "tmux_observer_client/_local_bindings.py": "5a51bee86bef5efa62447e3945799aa17a9d922eb26cda794601b76cade41531",
-    "tmux_observer_client/_local_stream.py": "cc6d57a6f3dabd37d57659c4e9fcf1192b3a200dce68048fadd76a9550c24398",
+    "tmux_observer_client/_local_stream.py": "e3b2cfbe9ed18a68a4f7ddfc0961be9c027087176323ce74c7d36c4016d9a2f3",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
+    "tmux_observer_client/_owner_document.py": "02cfcce5a628ddb2c708171f5d72a9dee7e22c6517c3262cdbda4dbcba424e22",
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
-    "tmux_observer_client/_remote_state.py": "6bc478adb67294fedb7cac7755410abf43e977ff09dceee95bb912fff489f7dd",
+    "tmux_observer_client/_remote_state.py": "413e89b17935f6975374efe345ecd37ca7c63321e7a40c514405ab5135fbeee2",
     "tmux_observer_client/_watch.py": "017d1c467696de8038d8e4a26940f1b23a87c3796c2834b62f35c9f3cf55d3cd",
     "tmux_observer_client/attachments.py": "585b362181c37a75f6289ccfb85b6ab218ae59cfee9b0ae28652a470b1265448",
     "tmux_observer_client/bindings_contract.py": "eed9d91d97834bced7f0838c8733745f20ce985ca4d89de5edcae9a240356044",
@@ -73,13 +74,13 @@
     "tmux_observer_client/desktop.py": "f33fa86827c38cf296750b0cf359762d3bd984517c867c6d0f2ea63d05d2faf5",
     "tmux_observer_client/desktop_contract.py": "8b156a921a89d254c634ac3e89fb3d8ed5747a8207720b0e5e41078f00f21f4c",
     "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
-    "tmux_observer_client/fleet.py": "1bc2a2b7feee9816f870074c25174bfe6cb9484ba1030efb21cf1918452709f3",
+    "tmux_observer_client/fleet.py": "b6228d228de22d938c7768902b2dc5c70fc3ff6ae6f64b0eae24231a7f445d18",
     "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
     "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
-    "tmux_observer_client/ssh.py": "03c463bf14ec72766aed52dbe36268f57d382c2ff5fe986d5e8900bc8929556e"
+    "tmux_observer_client/ssh.py": "01610d8c54caea4dc92596fa2f565415ade461a3202a77fbbe755bbcce425ba4"
   },
   "schemaVersion": 1,
-  "sourceCommit": "5a4aec9c7f4208d47dd35816c1350a61538d0076",
-  "version": "0.3.0a1",
-  "wheelSha256": "e98051a8f93373790082df8aeae462c63498b2bc9c7454eca62aec146c5b6945"
+  "sourceCommit": "ad6073953c3e1f4237950fffc53b8e0a111120fa",
+  "version": "0.4.0a1",
+  "wheelSha256": "efb1e7b72e0128bf45c10803d366304f7b108aec5ac5aaf2fffafa4efb23d880"
 }
