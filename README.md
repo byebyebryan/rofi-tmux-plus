@@ -8,9 +8,10 @@ for `rofi-agent-plus`.
 The picker consumes Tmux Observer's prepared local views and watch updates. The
 reviewed [component boundary note](docs/observer-boundaries.md) defines ownership:
 native observation, networking, desktop association and action clients retain their
-own contracts; Tmux Plus retains presentation and user intent. The 0.8.0a1 source
-candidate delegates actions as well as reads to the pinned Observer package.
-Installed native, graphical, resource and managed-selection gates remain separate.
+own contracts; Tmux Plus retains presentation and user intent. The
+[0.8.0a1 release candidate](docs/tmux-plus-0.8.0a1.md) delegates actions as well
+as reads to the pinned Observer package. Its exact installed/native, Snap picker
+and resource gates pass; publication and managed selection remain separate.
 
 Tmux Session Contract v1 provides strict versioned JSON inventory across the
 local default server and compatible Host Mesh remotes, plus safe `open`,
