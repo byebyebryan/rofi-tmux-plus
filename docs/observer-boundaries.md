@@ -1,8 +1,8 @@
 # Tmux Plus as an observation and action client
 
-Reviewed: 2026-10-08. Design-only follow-up to the accepted Observer read
+Reviewed: 2026-10-08. B4 source implementation follows the accepted Observer read
 migration and the [0.7.0a2 browse renewal repair](tmux-plus-0.7.0a2.md).
-No runtime behavior or public CLI contract changes in this documentation pass.
+Source candidate 0.8.0a1 remains unselected until its independent runtime gates pass.
 
 The authoritative cross-component design is Observer's
 [component boundaries](https://github.com/byebyebryan/tmux-observer/blob/main/docs/component-boundaries.md),
@@ -64,17 +64,38 @@ be treated as authorization to repeat the previous action automatically.
 
 ## Current implementation and extraction work
 
-Prepared browsing and the default fresh inventory facade already delegate to the
-accepted Observer artifact. [Observer imports](../rofi_tmux_plus/observer_client.py)
-still load prepared, direct and Mesh modules together; future client facades should
-separate those entry paths while preserving accepted artifact/contract validation.
+Prepared browsing and the default fresh inventory facade delegate to the pinned
+Observer artifact. [Observer imports](../rofi_tmux_plus/observer_client.py) verify
+all three package payloads, then load prepared, direct, Mesh, pure contracts and
+actions independently on demand. Importing/constructing browse clients and lazy
+action objects works with collectors, network loops, desktop scans and action
+implementations blocked.
 
-[LifecycleService](../rofi_tmux_plus/lifecycle_service.py),
-[local lifecycle](../rofi_tmux_plus/lifecycle.py),
-[remote lifecycle](../rofi_tmux_plus/remote_lifecycle.py) and
-[viewer inspection/close](../rofi_tmux_plus/viewer_service.py) still own actions
-here. Mixed old observation/cache modules also remain. Trace active CLI/test seams
-before removal; their presence alone does not establish that browse executes them.
+[LifecycleService](../rofi_tmux_plus/lifecycle_service.py) now lazily delegates the
+published CLI's old methods and argv to Observer's legacy action facade. Its
+separate `ActionService` maps the picker Open/Kill intent into closed C5 requests
+and independently binds replies to the exact request/reference. Frozen names
+remain Kill guards. Uncertain actions are surfaced once and never redispatched.
+The legacy CLI is not reencoded into the new C5 request size/argv limits.
+
+[Fresh inventory](../rofi_tmux_plus/inventory_service.py) delegates the optional
+viewer profile and matching to Observer's explicit direct job. The caller endpoint
+timestamp retains wall-clock milliseconds; prepared leases retain their own boot
+clock. Optional desktop failure yields unknown presence without replacing healthy
+native inventory. It does not activate an owner or prepared service.
+
+Superseded native readers, SSH/process discovery, desktop inspection, lifecycle
+implementations and old finite-refresh caches are excluded from the product
+package. A [frozen test baseline](../tests/reference_frontend/README.md) keeps their
+historical regressions available. Those cases validate the baseline, not the
+replacement. Active consumer/C5/import cases, unchanged public fixtures, producer
+tests and installed native/graphical evidence supply the replacement gates.
+
+Private `_picker-model`, `_refresh` and `_refresh-status` now use the prepared
+reader. `_refresh` requests grouped reconciliation; its old detached native/SSH
+worker and cache marker are retired. Private measurement of the historical
+finite-refresh path explicitly imports the test baseline. These are private
+interfaces, outside the seven-command Tmux Session v1 public contract.
 
 The producer sequence is B0 contract freeze, B1 native client-association profile,
 B2 desktop matching and B3 action client. B4 then migrates this repository:
@@ -92,4 +113,7 @@ B2 desktop matching and B3 action client. B4 then migrates this repository:
 Source/import checks do not establish graphical or installed acceptance. Native
 GUI checks use Starship; Snap remains in active use. Exact artifacts, managed
 selection, rollback and installed checks are a later independent B5 gate.
-No new package names, commands, schema versions or deployment are selected here.
+No managed selection is implied by this source checkpoint. Public CLI flags,
+schemas, output bounds, clean JSON errors and exits remain unchanged. Ordinary
+Open's fresh unique focus/ambiguity tightening is the documented B3 delta;
+verified-viewer/close guards remain owned by the separate action client.

@@ -9,11 +9,12 @@ from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
+from reference_frontend.bounded_process import BoundedCompleted
+from reference_frontend.mesh_adapter import HostMeshAdapter, _parse_snapshot
+
 from rofi_tmux_plus import cli
-from rofi_tmux_plus.bounded_process import BoundedCompleted
 from rofi_tmux_plus.errors import ContractError
 from rofi_tmux_plus.host import local_host
-from rofi_tmux_plus.mesh_adapter import HostMeshAdapter, _parse_snapshot
 from rofi_tmux_plus.wire import WireError, decode_document
 
 BUNDLE = Path(__file__).parents[1] / "contracts" / "tmux-session-v1"

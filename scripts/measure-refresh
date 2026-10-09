@@ -55,17 +55,20 @@ def main() -> int:
         parser.error("sample counts must be bounded and positive")
     root = args.source_root.resolve()
     sys.path.insert(0, str(root))
+    sys.path.insert(0, str(root / "tests"))
+    from reference_frontend.mesh_adapter import HostMeshAdapter
+    from reference_frontend.picker_model import PickerModelService, RemoteRefresh
+
     from rofi_tmux_plus.config import load_config
-    from rofi_tmux_plus.mesh_adapter import HostMeshAdapter
-    from rofi_tmux_plus.picker_model import PickerModelService, RemoteRefresh
 
     try:
-        from rofi_tmux_plus.picker_model import ViewerRefresh
+        from reference_frontend.picker_model import ViewerRefresh
     except ImportError:
         ViewerRefresh = None
-    from rofi_tmux_plus.remote_cache import RemoteCache
+    from reference_frontend.remote_cache import RemoteCache
+    from reference_frontend.viewer_cache import LOCAL_ONLY_REVISION
+
     from rofi_tmux_plus.rofi import run_rofi
-    from rofi_tmux_plus.viewer_cache import LOCAL_ONLY_REVISION
 
     class PassiveModel(PickerModelService):
         def load(self, *, start_refresh: bool = True):

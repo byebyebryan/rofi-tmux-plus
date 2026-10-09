@@ -20,13 +20,14 @@ from html import escape
 from .config import Config, has_control, load_config
 from .diagnostics import timed
 from .errors import ContractError, clean_message
-from .lifecycle_service import LifecycleService
-from .picker_model import PickerModelService
+from .inputs import validate_session_id
+from .lifecycle_service import ActionService as LifecycleService
 from .prepared_model import PreparedModelService, apply_expiry, boottime_ms
+from .prepared_model import PreparedModelService as PickerModelService
 from .presentation_cache import SNAPSHOT_KEY_LENGTH, PresentationSnapshotCache, valid_snapshot_key
-from .tmux import validate_session_id
 from .view_preferences import ViewPreferenceStore
-from .viewer_cache import VIEWER_FRESHNESS_SECONDS
+
+VIEWER_FRESHNESS_SECONDS = 10
 
 ROFI_RETV_SELECTED = 1
 ROFI_RETV_CUSTOM_INPUT = 2  # Ctrl+Enter / accept-custom

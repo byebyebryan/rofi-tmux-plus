@@ -12,14 +12,15 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from reference_frontend.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
+from reference_frontend.tmux import Completed, TmuxClient, _FastPathUnavailable
+from reference_frontend.tmux_wire import TmuxWireError, decode_tmux_argument, split_tmux_arguments
+
 from rofi_tmux_plus import cli
 from rofi_tmux_plus.config import Config, load_config
 from rofi_tmux_plus.errors import ContractError, NoServer
 from rofi_tmux_plus.host import LocalHost, local_host
-from rofi_tmux_plus.lifecycle import LocalLifecycle, _terminal_argv, _wrapper_command
 from rofi_tmux_plus.model import Session, SessionReference
-from rofi_tmux_plus.tmux import Completed, TmuxClient, _FastPathUnavailable
-from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument, split_tmux_arguments
 
 
 class IsolatedServer(unittest.TestCase):
@@ -670,9 +671,9 @@ class FocusAndCliTests(unittest.TestCase):
         windows = json.dumps([{"id": 42, "title": "agent:0 workspace @ LOCAL"}])
         with (
             patch.dict(os.environ, {"NIRI_SOCKET": "/tmp/niri-test"}),
-            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value="/usr/bin/niri"),
+            patch("reference_frontend.lifecycle.shutil.which", return_value="/usr/bin/niri"),
             patch(
-                "rofi_tmux_plus.lifecycle.subprocess.run",
+                "reference_frontend.lifecycle.subprocess.run",
                 side_effect=[
                     subprocess.CompletedProcess(["niri"], 0, windows, ""),
                     subprocess.CompletedProcess(["niri"], 0, "", ""),
@@ -686,17 +687,17 @@ class FocusAndCliTests(unittest.TestCase):
         other_host = json.dumps([{"id": 42, "title": "agent:0 workspace @ OTHER"}])
         with (
             patch.dict(os.environ, {"NIRI_SOCKET": "/tmp/niri-test"}),
-            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value="/usr/bin/niri"),
+            patch("reference_frontend.lifecycle.shutil.which", return_value="/usr/bin/niri"),
             patch(
-                "rofi_tmux_plus.lifecycle.subprocess.run",
+                "reference_frontend.lifecycle.subprocess.run",
                 return_value=subprocess.CompletedProcess(["niri"], 0, other_host, ""),
             ) as run,
         ):
             self.assertFalse(self.lifecycle._focus_matching_window(self.session))
         self.assertEqual(run.call_count, 1)
         with (
-            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value="/usr/bin/systemd-run"),
-            patch("rofi_tmux_plus.lifecycle.subprocess.Popen") as spawn,
+            patch("reference_frontend.lifecycle.shutil.which", return_value="/usr/bin/systemd-run"),
+            patch("reference_frontend.lifecycle.subprocess.Popen") as spawn,
         ):
             self.lifecycle._spawn_terminal("$0")
         self.assertEqual(
@@ -719,8 +720,8 @@ class FocusAndCliTests(unittest.TestCase):
             ],
         )
         with (
-            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value=None),
-            patch("rofi_tmux_plus.lifecycle.subprocess.Popen") as spawn,
+            patch("reference_frontend.lifecycle.shutil.which", return_value=None),
+            patch("reference_frontend.lifecycle.subprocess.Popen") as spawn,
         ):
             self.lifecycle._spawn_terminal("$1")
         self.assertEqual(
@@ -755,9 +756,9 @@ class FocusAndCliTests(unittest.TestCase):
         windows = json.dumps([{"id": 42, "title": "agent:0 workspace @ 80H1VV3"}])
         with (
             patch.dict(os.environ, {"NIRI_SOCKET": "/tmp/niri-test"}),
-            patch("rofi_tmux_plus.lifecycle.shutil.which", return_value="/usr/bin/niri"),
+            patch("reference_frontend.lifecycle.shutil.which", return_value="/usr/bin/niri"),
             patch(
-                "rofi_tmux_plus.lifecycle.subprocess.run",
+                "reference_frontend.lifecycle.subprocess.run",
                 side_effect=[
                     subprocess.CompletedProcess(["niri"], 0, windows, ""),
                     subprocess.CompletedProcess(["niri"], 0, "", ""),

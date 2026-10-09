@@ -11,11 +11,10 @@ from collections.abc import Sequence
 
 from .config import load_config
 from .errors import ContractError, clean_message
+from .inputs import validate_required_options, validate_user_option
 from .inventory_service import InventoryService
 from .lifecycle_service import LifecycleService
-from .picker_model import PickerModelService, RemoteRefresh, ViewerRefresh
-from .remote_cache import RemoteCache
-from .tmux import validate_required_options, validate_user_option
+from .prepared_model import PreparedModelService
 from .wire import WireError, validate_string_bounds, write_document
 
 _PUBLIC_JSON_COMMANDS = {
@@ -190,18 +189,21 @@ def _inventory_service() -> InventoryService:
     return InventoryService(load_config())
 
 
-def _picker_model() -> PickerModelService:
-    return PickerModelService(load_config())
+def _picker_model() -> PreparedModelService:
+    return PreparedModelService(load_config())
 
 
-def _refresh(kind: str = "owner") -> RemoteRefresh:
-    selected = ViewerRefresh if kind == "viewer" else RemoteRefresh
-    return selected(load_config(), RemoteCache())
+def _refresh(kind: str = "owner") -> PreparedModelService:
+    return _picker_model()
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
     if args.command == "_refresh":
-        _refresh(args.kind).run(args.mesh_revision)
+        model = _refresh(args.kind)
+        payload = model.load().payload
+        if payload["meshRevision"] != args.mesh_revision:
+            raise ContractError("stale_mesh", "the Host Mesh changed; refresh and try again")
+        model.refresh_now()
         return None
     _require_json(args)
     if args.command == "_picker-model":
@@ -210,7 +212,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, object] | None:
         return {
             "schemaVersion": 1,
             "meshRevision": args.mesh_revision,
-            "refresh": _refresh().status(args.mesh_revision),
+            "refresh": _refresh().load().payload.get("refresh"),
         }
     if args.command == "inventory":
         options = [validate_user_option(option) for option in args.session_option]

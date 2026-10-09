@@ -12,27 +12,28 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from rofi_tmux_plus import cli
-from rofi_tmux_plus.config import Config
-from rofi_tmux_plus.errors import ContractError
-from rofi_tmux_plus.host import LocalHost
-from rofi_tmux_plus.mesh_adapter import (
+from reference_frontend.mesh_adapter import (
     MeshHost,
     MeshPolicy,
     MeshRoute,
     MeshSnapshot,
     MeshStaleError,
 )
-from rofi_tmux_plus.model import Session, SessionReference
-from rofi_tmux_plus.picker_model import (
+from reference_frontend.picker_model import (
     _REFRESH_HARD_DEADLINE_SECONDS,
     _REFRESH_STALL_SECONDS,
     PickerModelService,
     RemoteRefresh,
     detached_refresh_command,
 )
-from rofi_tmux_plus.remote_cache import RemoteCache
-from rofi_tmux_plus.viewer_cache import ViewerObservationCache
+from reference_frontend.remote_cache import RemoteCache
+from reference_frontend.viewer_cache import ViewerObservationCache
+
+from rofi_tmux_plus import cli
+from rofi_tmux_plus.config import Config
+from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.host import LocalHost
+from rofi_tmux_plus.model import Session, SessionReference
 
 
 def _snapshot(
@@ -383,7 +384,7 @@ class PickerModelTests(unittest.TestCase):
             context_id=lambda: "local-desktop",
         )
         with patch(
-            "rofi_tmux_plus.picker_model.local_host",
+            "reference_frontend.picker_model.local_host",
             return_value=LocalHost(
                 host_id, "Local Fixture", "local-fixture.example", frozenset({host_id})
             ),
@@ -727,7 +728,7 @@ class RemoteRefreshTests(unittest.TestCase):
             inventory_factory=factory,  # type: ignore[arg-type]
         )
         with patch(
-            "rofi_tmux_plus.picker_model.time.monotonic",
+            "reference_frontend.picker_model.time.monotonic",
             side_effect=(100.0, 100.0, 104.0, 104.0, 104.0, 104.0),
         ):
             self.assertTrue(refresh.run(self.snapshot.revision))
@@ -775,12 +776,12 @@ class RemoteRefreshTests(unittest.TestCase):
 class PrivateCliTests(unittest.TestCase):
     def test_private_refresh_is_silent_and_private_json_entries_are_clean(self) -> None:
         refresh = MagicMock()
-        refresh.run.return_value = True
+        refresh.load.return_value.payload = {"meshRevision": "sha256:fixture"}
         output = StringIO()
         with patch("rofi_tmux_plus.cli._refresh", return_value=refresh), redirect_stdout(output):
             self.assertEqual(cli.main(["_refresh", "--mesh-revision", "sha256:fixture"]), 0)
         self.assertEqual(output.getvalue(), "")
-        refresh.run.assert_called_once_with("sha256:fixture")
+        refresh.refresh_now.assert_called_once_with()
         model = MagicMock()
         model.load.return_value.payload = {"schemaVersion": 1, "hosts": []}
         output = StringIO()
@@ -788,7 +789,9 @@ class PrivateCliTests(unittest.TestCase):
             self.assertEqual(cli.main(["_picker-model", "--json", "--no-refresh"]), 0)
         self.assertEqual(json.loads(output.getvalue()), {"schemaVersion": 1, "hosts": []})
         refresh = MagicMock()
-        refresh.status.return_value = {"state": "complete", "meshRevision": "sha256:fixture"}
+        refresh.load.return_value.payload = {
+            "refresh": {"state": "complete", "meshRevision": "sha256:fixture"}
+        }
         output = StringIO()
         with patch("rofi_tmux_plus.cli._refresh", return_value=refresh), redirect_stdout(output):
             self.assertEqual(
@@ -803,4 +806,4 @@ class PrivateCliTests(unittest.TestCase):
                 "refresh": {"state": "complete", "meshRevision": "sha256:fixture"},
             },
         )
-        refresh.status.assert_called_once_with("sha256:fixture")
+        refresh.load.assert_called_once_with()

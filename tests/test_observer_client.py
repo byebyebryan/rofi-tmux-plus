@@ -26,13 +26,15 @@ class ObserverClientTests(unittest.TestCase):
         direct = Mock()
         direct.inventory.return_value = copy.deepcopy(self.payload)
         service = InventoryService(Config(), direct_inventory=direct)
-        with patch("rofi_tmux_plus.inventory_service.LocalLifecycle", side_effect=AssertionError):
-            response = service.inventory(
-                requested_hosts=["starship", "STARSHIP"],
-                mesh_revision="sha256:" + "a" * 64,
-                panes=True,
-                option_names=["@agent", "@agent"],
-            )
+        import rofi_tmux_plus.inventory_service as facade
+
+        self.assertFalse(hasattr(facade, "LocalLifecycle"))
+        response = service.inventory(
+            requested_hosts=["starship", "STARSHIP"],
+            mesh_revision="sha256:" + "a" * 64,
+            panes=True,
+            option_names=["@agent", "@agent"],
+        )
         self.assertEqual(response, self.payload)
         direct.inventory.assert_called_once_with(
             requested_hosts=["starship", "STARSHIP"],
@@ -87,24 +89,26 @@ class ObserverClientTests(unittest.TestCase):
         )
         adapter = Mock()
         adapter.load.return_value = snapshot
+        seen = []
 
         class Direct:
             def __init__(inner, *, mesh):
                 inner.mesh = mesh
 
-            def inventory(inner, **_kwargs):
+            def inventory(inner, **kwargs):
                 inner.mesh.load(timeout_seconds=5)
+                seen.append(kwargs)
                 return copy.deepcopy(self.payload)
 
         api = SimpleNamespace(
             mesh=SimpleNamespace(HostMeshAdapter=lambda: adapter),
             direct=SimpleNamespace(DirectInventory=Direct),
+            desktop_config=SimpleNamespace(DesktopConfig=Mock(return_value="owned-config")),
         )
         with (
             patch("rofi_tmux_plus.inventory_service.observer_api", return_value=api),
-            patch.object(InventoryService, "_enrich_local_viewers") as viewers,
         ):
-            result = InventoryService(Config()).inventory(
+            result = InventoryService(Config(), mesh_adapter=adapter).inventory(
                 requested_hosts=[],
                 mesh_revision=None,
                 panes=False,
@@ -113,8 +117,8 @@ class ObserverClientTests(unittest.TestCase):
             )
         self.assertEqual(result, self.payload)
         adapter.load.assert_called_once_with(timeout_seconds=5)
-        self.assertEqual(viewers.call_count, 1)
-        self.assertEqual(viewers.call_args.args[1:3], ("snap", "ssh"))
+        self.assertTrue(seen[0]["with_viewers"])
+        self.assertEqual(seen[0]["desktop_config"], "owned-config")
 
     def test_accepted_installed_api_imports_execute_no_native_command(self):
         with patch("subprocess.Popen", side_effect=AssertionError("native process on import")):
@@ -131,7 +135,6 @@ class ObserverClientTests(unittest.TestCase):
             patch(
                 "rofi_tmux_plus.inventory_service.observer_api", side_effect=ImportError("missing")
             ),
-            patch("rofi_tmux_plus.inventory_service.LocalLifecycle", side_effect=AssertionError),
             self.assertRaises(ContractError),
         ):
             InventoryService(Config()).inventory(

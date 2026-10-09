@@ -9,24 +9,25 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from rofi_tmux_plus.config import Config
-from rofi_tmux_plus.errors import ContractError
-from rofi_tmux_plus.lifecycle_service import LifecycleService
-from rofi_tmux_plus.mesh_adapter import (
+from reference_frontend.lifecycle_service import LifecycleService
+from reference_frontend.mesh_adapter import (
     MeshHost,
     MeshPolicy,
     MeshRoute,
     MeshSnapshot,
     MeshStaleError,
 )
-from rofi_tmux_plus.remote_lifecycle import (
+from reference_frontend.remote_lifecycle import (
     _HOLDER,
     _REMOTE_PROGRAM,
     RemoteLifecycle,
     _parse_action,
     build_remote_lifecycle_argv,
 )
-from rofi_tmux_plus.viewer_service import ViewerInspection
+from reference_frontend.viewer_service import ViewerInspection
+
+from rofi_tmux_plus.config import Config
+from rofi_tmux_plus.errors import ContractError
 
 
 def _done(stdout: str, stderr: str = "", code: int = 0) -> subprocess.CompletedProcess[str]:
@@ -174,10 +175,10 @@ class RemoteLifecycleTests(unittest.TestCase):
         )
         with (
             patch(
-                "rofi_tmux_plus.remote_lifecycle.inspect_viewers",
+                "reference_frontend.remote_lifecycle.inspect_viewers",
                 return_value=ViewerInspection("none", (), True),
             ),
-            patch("rofi_tmux_plus.lifecycle.spawn_terminal_command") as spawn,
+            patch("reference_frontend.lifecycle.spawn_terminal_command") as spawn,
         ):
             result = lifecycle.open(
                 self.host,

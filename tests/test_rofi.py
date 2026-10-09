@@ -358,7 +358,7 @@ class RofiRenderTests(unittest.TestCase):
             **payload(hosts=[host("alpha", "Alpha", local=True, sessions=[item])]),
             "viewerEndpoint": {"hostId": "alpha", "observedAt": 189_000},
         }
-        with patch("rofi_tmux_plus.viewer_service._niri_windows") as scan:
+        with patch("tmux_observer_client._desktop_scan._niri_windows") as scan:
             rendered = rofi.render_snapshot(value, now=200)
         options = row_options(rendered_records(rendered)[1][0])
         self.assertEqual("local viewer unknown · attached", json.loads(options["info"])["status"])

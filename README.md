@@ -6,10 +6,11 @@ logical hosts and SSH routes, and exposes generic tmux lifecycle operations
 for `rofi-agent-plus`.
 
 The picker consumes Tmux Observer's prepared local views and watch updates. The
-reviewed [component boundary note](docs/observer-boundaries.md) defines the next
-extraction: native observation, networking, desktop association and action clients
-retain their own contracts; Tmux Plus retains presentation and user intent.
-Action implementation still lives here today. These docs do not change the API.
+reviewed [component boundary note](docs/observer-boundaries.md) defines ownership:
+native observation, networking, desktop association and action clients retain their
+own contracts; Tmux Plus retains presentation and user intent. The 0.8.0a1 source
+candidate delegates actions as well as reads to the pinned Observer package.
+Installed native, graphical, resource and managed-selection gates remain separate.
 
 Tmux Session Contract v1 provides strict versioned JSON inventory across the
 local default server and compatible Host Mesh remotes, plus safe `open`,
@@ -119,7 +120,7 @@ alone never creates one.
 - [Tmux Session Contract v1](docs/TMUX_SESSION_V1.md)
 - [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md)
 
-The current read ownership and remaining action extraction are:
+The component ownership is:
 
 ```text
 rofi-ssh-plus ──> Observer fleet/desktop reader ──> Tmux Plus UI
@@ -127,7 +128,8 @@ rofi-ssh-plus ──> Observer fleet/desktop reader ──> Tmux Plus UI
                       tmux-observer
                      native owner facts
 
-Tmux Plus public CLI ──> lifecycle implementation (separate client planned)
+Tmux Plus UI ──> C5 action client ──> guarded native / terminal / window adapters
+Tmux Plus public CLI ──> Observer legacy action facade
                               ^
                         Agent Plus consumer
 ```

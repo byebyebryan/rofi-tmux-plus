@@ -8,13 +8,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from reference_frontend.inventory_service import InventoryService
+from reference_frontend.picker_model import PickerModelService, RemoteRefresh, ViewerRefresh
+from reference_frontend.remote_cache import RemoteCache
+from reference_frontend.viewer_cache import ViewerObservationCache
 from test_remote_cache import _Adapter, _LocalTmux, _row, _snapshot
 
 from rofi_tmux_plus.config import Config
-from rofi_tmux_plus.inventory_service import InventoryService
-from rofi_tmux_plus.picker_model import PickerModelService, RemoteRefresh, ViewerRefresh
-from rofi_tmux_plus.remote_cache import RemoteCache
-from rofi_tmux_plus.viewer_cache import ViewerObservationCache
 
 
 class RefreshRefinementTests(unittest.TestCase):
@@ -114,7 +114,7 @@ class RefreshRefinementTests(unittest.TestCase):
             mesh_adapter=self.adapter,
             inventory_factory=lambda *_args, **_kwargs: ObservationOnly(),
         )
-        with patch("rofi_tmux_plus.picker_model.TmuxClient", return_value=_LocalTmux()):
+        with patch("reference_frontend.picker_model.TmuxClient", return_value=_LocalTmux()):
             self.assertTrue(refresh.run(self.mesh.revision))
         self.assertEqual(scans, [["alpha", "beta", "gamma"]])
         self.assertEqual(refresh.status(self.mesh.revision)["state"], "complete")

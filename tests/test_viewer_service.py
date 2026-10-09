@@ -9,12 +9,8 @@ from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from rofi_tmux_plus.config import Config
-from rofi_tmux_plus.errors import ContractError
-from rofi_tmux_plus.host import local_host
-from rofi_tmux_plus.lifecycle import LocalLifecycle
-from rofi_tmux_plus.model import Session, SessionReference
-from rofi_tmux_plus.viewer_service import (
+from reference_frontend.lifecycle import LocalLifecycle
+from reference_frontend.viewer_service import (
     Viewer,
     ViewerInspection,
     ViewerTarget,
@@ -27,6 +23,11 @@ from rofi_tmux_plus.viewer_service import (
     inspect_viewers,
     observe_local_viewers,
 )
+
+from rofi_tmux_plus.config import Config
+from rofi_tmux_plus.errors import ContractError
+from rofi_tmux_plus.host import local_host
+from rofi_tmux_plus.model import Session, SessionReference
 
 
 def _session(host_id: str = "local") -> Session:
@@ -119,7 +120,7 @@ class LaunchMetadataTests(unittest.TestCase):
     def test_local_attachment_spawn_inherits_full_reference_and_launch_id(self) -> None:
         session = _session()
         lifecycle = LocalLifecycle(Mock(), Config(terminal=("kitty",)), host=local_host())
-        with patch("rofi_tmux_plus.lifecycle.spawn_terminal_command") as spawn:
+        with patch("reference_frontend.lifecycle.spawn_terminal_command") as spawn:
             launch_id = lifecycle._spawn_terminal(session)
         spawn.assert_called_once()
         command = spawn.call_args.args[1]
@@ -155,18 +156,18 @@ class ViewerInspectionTests(unittest.TestCase):
             )
 
         with (
-            patch("rofi_tmux_plus.viewer_service._niri_windows", return_value=windows),
-            patch("rofi_tmux_plus.viewer_service._proc", side_effect=process),
+            patch("reference_frontend.viewer_service._niri_windows", return_value=windows),
+            patch("reference_frontend.viewer_service._proc", side_effect=process),
             patch(
-                "rofi_tmux_plus.viewer_service._direct_children",
+                "reference_frontend.viewer_service._direct_children",
                 side_effect=lambda pid: direct.get(pid, []),
             ),
             patch(
-                "rofi_tmux_plus.viewer_service._process_tree",
+                "reference_frontend.viewer_service._process_tree",
                 side_effect=lambda pid: (trees.get(pid, []), True),
             ),
             patch(
-                "rofi_tmux_plus.viewer_service._read_metadata",
+                "reference_frontend.viewer_service._read_metadata",
                 side_effect=lambda pid: metadata.get(pid, (None, False)),
             ),
         ):
@@ -463,15 +464,15 @@ class LocalViewerObservationTests(unittest.TestCase):
             return child_rows.get(pid, b"")
 
         with (
-            patch("rofi_tmux_plus.viewer_service._niri_windows", return_value=windows) as niri,
-            patch("rofi_tmux_plus.viewer_service._proc", side_effect=read_process),
+            patch("reference_frontend.viewer_service._niri_windows", return_value=windows) as niri,
+            patch("reference_frontend.viewer_service._proc", side_effect=read_process),
             patch(
-                "rofi_tmux_plus.viewer_service.Path.read_bytes",
+                "reference_frontend.viewer_service.Path.read_bytes",
                 autospec=True,
                 side_effect=read_children,
             ),
             patch(
-                "rofi_tmux_plus.viewer_service._read_metadata_detailed",
+                "reference_frontend.viewer_service._read_metadata_detailed",
                 side_effect=lambda pid: metadata_rows.get(pid, (None, False, True)),
             ),
         ):
@@ -806,9 +807,9 @@ class LocalViewerObservationTests(unittest.TestCase):
     def test_boolean_launch_schema_version_is_rejected(self) -> None:
         raw = b'ROFI_TMUX_PLUS_VIEWER_V1={"schemaVersion":true}\0'
         with (
-            patch("rofi_tmux_plus.viewer_service.os.open", return_value=55),
-            patch("rofi_tmux_plus.viewer_service.os.read", return_value=raw),
-            patch("rofi_tmux_plus.viewer_service.os.close"),
+            patch("reference_frontend.viewer_service.os.open", return_value=55),
+            patch("reference_frontend.viewer_service.os.read", return_value=raw),
+            patch("reference_frontend.viewer_service.os.close"),
         ):
             value, present, readable = _read_metadata_detailed(123)
         self.assertIsNone(value)
@@ -816,7 +817,7 @@ class LocalViewerObservationTests(unittest.TestCase):
         self.assertTrue(readable)
 
     def test_budget_is_shared_and_never_caches_past_cap_or_deadline(self) -> None:
-        with patch("rofi_tmux_plus.viewer_service._proc", return_value=None) as read_proc:
+        with patch("reference_frontend.viewer_service._proc", return_value=None) as read_proc:
             capped = _ObservationProcessIndex(process_limit=2)
             self.assertIsNone(capped.proc(10))
             self.assertIsNone(capped.proc(11))
@@ -828,9 +829,10 @@ class LocalViewerObservationTests(unittest.TestCase):
         shared = _ObservationProcessIndex(process_limit=1)
         with (
             patch(
-                "rofi_tmux_plus.viewer_service._proc", return_value=_proc(10, 1, 100, 0, ("kitty",))
+                "reference_frontend.viewer_service._proc",
+                return_value=_proc(10, 1, 100, 0, ("kitty",)),
             ),
-            patch("rofi_tmux_plus.viewer_service._read_metadata_detailed") as read_metadata,
+            patch("reference_frontend.viewer_service._read_metadata_detailed") as read_metadata,
         ):
             shared.proc(10)
             result = shared.metadata_state(10)
@@ -839,7 +841,7 @@ class LocalViewerObservationTests(unittest.TestCase):
         read_metadata.assert_not_called()
 
         expired = _ObservationProcessIndex(deadline=0)
-        with patch("rofi_tmux_plus.viewer_service._proc") as read_expired:
+        with patch("reference_frontend.viewer_service._proc") as read_expired:
             self.assertIsNone(expired.proc(10))
             self.assertIsNone(expired.proc(11))
         self.assertFalse(expired.processes)
@@ -848,6 +850,15 @@ class LocalViewerObservationTests(unittest.TestCase):
 
 class ExactCloseTests(unittest.TestCase):
     def setUp(self) -> None:
+        # Synthetic baseline policy tests also run on builds without pidfd.
+        # Installed native close acceptance uses Starship's actual bindings.
+        for name in (
+            "reference_frontend.viewer_service.os.pidfd_open",
+            "reference_frontend.viewer_service.signal.pidfd_send_signal",
+        ):
+            capability = patch(name, create=True)
+            capability.start()
+            self.addCleanup(capability.stop)
         self.viewer = _viewer()
         self.window = _kitty_window(101, 10)
         self.processes = {
@@ -858,12 +869,12 @@ class ExactCloseTests(unittest.TestCase):
     def test_pidfd_signals_only_exact_attachment_and_verifies_exit(self) -> None:
         verified = ViewerInspection("verified", (self.viewer,), True)
         with (
-            patch("rofi_tmux_plus.viewer_service.os.pidfd_open", return_value=90) as open_pidfd,
-            patch("rofi_tmux_plus.viewer_service.os.close"),
-            patch("rofi_tmux_plus.viewer_service.signal.pidfd_send_signal") as send_signal,
-            patch("rofi_tmux_plus.viewer_service._proc", side_effect=self.processes.get),
+            patch("reference_frontend.viewer_service.os.pidfd_open", return_value=90) as open_pidfd,
+            patch("reference_frontend.viewer_service.os.close"),
+            patch("reference_frontend.viewer_service.signal.pidfd_send_signal") as send_signal,
+            patch("reference_frontend.viewer_service._proc", side_effect=self.processes.get),
             patch(
-                "rofi_tmux_plus.viewer_service._niri_windows",
+                "reference_frontend.viewer_service._niri_windows",
                 side_effect=[[self.window], []],
             ),
         ):
@@ -877,7 +888,7 @@ class ExactCloseTests(unittest.TestCase):
         send_signal.assert_called_once_with(90, signal.SIGTERM, None, 0)
 
     def test_absent_handle_is_idempotent_and_never_opens_pidfd(self) -> None:
-        with patch("rofi_tmux_plus.viewer_service.os.pidfd_open") as open_pidfd:
+        with patch("reference_frontend.viewer_service.os.pidfd_open") as open_pidfd:
             result = close_viewer(
                 self.viewer,
                 revalidate=lambda: ViewerInspection("none", (), True),
@@ -899,7 +910,7 @@ class ExactCloseTests(unittest.TestCase):
             self.viewer.attachment_argv,
             self.viewer.tty_nr,
         )
-        with patch("rofi_tmux_plus.viewer_service.os.pidfd_open") as open_pidfd:
+        with patch("reference_frontend.viewer_service.os.pidfd_open") as open_pidfd:
             result = close_viewer(
                 self.viewer,
                 revalidate=lambda: ViewerInspection("verified", (later,), True),
@@ -939,7 +950,7 @@ class ExactCloseTests(unittest.TestCase):
     def test_pidfd_permission_failure_is_not_reported_as_already_closed(self) -> None:
         with (
             patch(
-                "rofi_tmux_plus.viewer_service.os.pidfd_open",
+                "reference_frontend.viewer_service.os.pidfd_open",
                 side_effect=OSError(errno.EPERM, "permission denied"),
             ),
             self.assertRaises(ContractError) as raised,
@@ -999,12 +1010,12 @@ class StrictOpenTests(unittest.TestCase):
     def test_strict_open_focuses_verified_existing_window_without_launch(self) -> None:
         viewer = _viewer()
         with (
-            patch("rofi_tmux_plus.lifecycle.local_mutation_lock", return_value=nullcontext()),
+            patch("reference_frontend.lifecycle.local_mutation_lock", return_value=nullcontext()),
             patch(
-                "rofi_tmux_plus.lifecycle.inspect_viewers",
+                "reference_frontend.lifecycle.inspect_viewers",
                 return_value=ViewerInspection("verified", (viewer,), True),
             ),
-            patch("rofi_tmux_plus.lifecycle.focus_window", return_value=True) as focus,
+            patch("reference_frontend.lifecycle.focus_window", return_value=True) as focus,
         ):
             response = self._open()
         focus.assert_called_once_with(viewer.window_id, niri_command=("niri",))
@@ -1032,13 +1043,13 @@ class StrictOpenTests(unittest.TestCase):
             ViewerInspection("verified", (viewer,), True),
         ]
         with (
-            patch("rofi_tmux_plus.lifecycle.local_mutation_lock", return_value=nullcontext()),
+            patch("reference_frontend.lifecycle.local_mutation_lock", return_value=nullcontext()),
             patch(
-                "rofi_tmux_plus.lifecycle.launch_metadata",
+                "reference_frontend.lifecycle.launch_metadata",
                 return_value=("expected-launch", {"ROFI_TMUX_PLUS_VIEWER_V1": "{}"}),
             ),
-            patch("rofi_tmux_plus.lifecycle.inspect_viewers", side_effect=states),
-            patch("rofi_tmux_plus.lifecycle.time.sleep"),
+            patch("reference_frontend.lifecycle.inspect_viewers", side_effect=states),
+            patch("reference_frontend.lifecycle.time.sleep"),
         ):
             response = self._open()
         self.assertEqual(self.launched, ["$7"])
@@ -1053,9 +1064,11 @@ class StrictOpenTests(unittest.TestCase):
         ):
             self.launched.clear()
             with (
-                patch("rofi_tmux_plus.lifecycle.local_mutation_lock", return_value=nullcontext()),
                 patch(
-                    "rofi_tmux_plus.lifecycle.inspect_viewers",
+                    "reference_frontend.lifecycle.local_mutation_lock", return_value=nullcontext()
+                ),
+                patch(
+                    "reference_frontend.lifecycle.inspect_viewers",
                     return_value=ViewerInspection(status, (), True),
                 ),
                 self.assertRaises(ContractError) as raised,
@@ -1071,7 +1084,7 @@ class StrictOpenTests(unittest.TestCase):
             terminal_spawner=self.launched.append,
         )
         with (
-            patch("rofi_tmux_plus.lifecycle.local_mutation_lock", return_value=nullcontext()),
+            patch("reference_frontend.lifecycle.local_mutation_lock", return_value=nullcontext()),
             self.assertRaises(ContractError) as raised,
         ):
             unsupported.open(
@@ -1089,7 +1102,7 @@ class StrictOpenTests(unittest.TestCase):
     def test_full_reference_and_required_option_guards_precede_launch(self) -> None:
         self.options["@provider"] = "expected"
         with (
-            patch("rofi_tmux_plus.lifecycle.local_mutation_lock", return_value=nullcontext()),
+            patch("reference_frontend.lifecycle.local_mutation_lock", return_value=nullcontext()),
             self.assertRaises(ContractError) as raised,
         ):
             self._open((("@provider", "wrong"),))

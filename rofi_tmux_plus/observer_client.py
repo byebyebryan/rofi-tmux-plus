@@ -9,13 +9,13 @@ import re
 import sys
 from functools import lru_cache
 from pathlib import Path
-from types import SimpleNamespace
+from typing import ClassVar
 
 from .errors import ContractError, clean_message
 
 
 @lru_cache(maxsize=1)
-def observer_api() -> SimpleNamespace:
+def observer_api():
     """Require the accepted runtime bytes; never substitute a native read path."""
     try:
         pin = json.loads(Path(__file__).with_name("observer-artifact.json").read_text())
@@ -29,11 +29,13 @@ def observer_api() -> SimpleNamespace:
             sys.path.insert(0, str(root))
             owner = importlib.import_module("tmux_observer")
         client = importlib.import_module("tmux_observer_client")
+        actions = importlib.import_module("tmux_observer_actions")
         if owner.__version__ != pin["version"]:
             raise ValueError("Observer version differs from the accepted client artifact")
         roots = {
             "tmux_observer": Path(owner.__file__).resolve().parent,
             "tmux_observer_client": Path(client.__file__).resolve().parent,
+            "tmux_observer_actions": Path(actions.__file__).resolve().parent,
         }
         if len({root.parent for root in roots.values()}) != 1:
             raise ValueError("Observer packages have different installation roots")
@@ -48,12 +50,7 @@ def observer_api() -> SimpleNamespace:
             package, relative = name.split("/", 1)
             if hashlib.sha256((roots[package] / relative).read_bytes()).hexdigest() != digest:
                 raise ValueError("Observer runtime bytes differ from the accepted artifact")
-        return SimpleNamespace(
-            protocol=importlib.import_module("tmux_observer.public"),
-            prepared=importlib.import_module("tmux_observer_client.public"),
-            direct=importlib.import_module("tmux_observer_client.direct"),
-            mesh=importlib.import_module("tmux_observer_client.mesh"),
-        )
+        return ObserverAPI()
     except (ImportError, OSError, ValueError, AttributeError) as error:
         raise ContractError(
             "operation_failed", "Accepted Tmux Observer is unavailable: " + clean_message(error)
@@ -89,3 +86,22 @@ class MeshCapture:
 
     def report_route(self, **kwargs):
         return self.adapter.report_route(**kwargs)
+
+
+class ObserverAPI:
+    """Pinned payload with independent lazy prepared, direct and action entry paths."""
+
+    _modules: ClassVar[dict[str, str]] = {
+        "protocol": "tmux_observer.public",
+        "prepared": "tmux_observer_client.public",
+        "direct": "tmux_observer_client.direct",
+        "mesh": "tmux_observer_client.mesh",
+        "actions": "tmux_observer_actions.public",
+        "action_contract": "tmux_observer_actions.contract",
+        "desktop_config": "tmux_observer_client._desktop_types",
+    }
+
+    def __getattr__(self, name):
+        if name not in self._modules:
+            raise AttributeError(name)
+        return importlib.import_module(self._modules[name])

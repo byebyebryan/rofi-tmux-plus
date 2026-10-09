@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from rofi_tmux_plus.viewer_cache import ViewerObservationCache, _observation
+from reference_frontend.viewer_cache import ViewerObservationCache, _observation
 
 
 def _reference(
@@ -152,7 +152,7 @@ class ViewerObservationCacheTests(unittest.TestCase):
             [_host("beta", [_row(reference, {"state": "open", "confidence": "confirmed"})])],
         )
         self.assertTrue(self._merge(response))
-        with patch("rofi_tmux_plus.viewer_cache.os.getuid", return_value=os.getuid() + 1):
+        with patch("reference_frontend.viewer_cache.os.getuid", return_value=os.getuid() + 1):
             self.assertIsNone(self.cache._read(self.revision, self.context))
         value = json.loads(self.cache._path.read_text())
         value["schemaVersion"] = True
@@ -276,7 +276,7 @@ class ViewerObservationCacheTests(unittest.TestCase):
         cache_path.unlink()
 
         cache_path.write_bytes(b"x" * (4 * 1024 * 1024 + 1))
-        with patch("rofi_tmux_plus.viewer_cache.os.read") as read:
+        with patch("reference_frontend.viewer_cache.os.read") as read:
             self.assertIsNone(self.cache._read(self.revision, self.context))
         read.assert_not_called()
 

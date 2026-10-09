@@ -12,11 +12,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from rofi_tmux_plus.bounded_process import run_bounded
-from rofi_tmux_plus.config import Config
-from rofi_tmux_plus.errors import ContractError
-from rofi_tmux_plus.inventory_service import InventoryService
-from rofi_tmux_plus.mesh_adapter import (
+from reference_frontend.bounded_process import run_bounded
+from reference_frontend.inventory_service import InventoryService
+from reference_frontend.mesh_adapter import (
     HostMeshAdapter,
     MeshHost,
     MeshPolicy,
@@ -24,7 +22,7 @@ from rofi_tmux_plus.mesh_adapter import (
     MeshSnapshot,
     MeshStaleError,
 )
-from rofi_tmux_plus.remote_inventory import (
+from reference_frontend.remote_inventory import (
     _REMOTE_FAST_PROGRAM,
     _REMOTE_PROGRAM,
     RemoteInventory,
@@ -33,8 +31,11 @@ from rofi_tmux_plus.remote_inventory import (
     parse_reached_marker,
     parse_remote_inventory,
 )
-from rofi_tmux_plus.tmux_wire import TmuxWireError, decode_tmux_argument
-from rofi_tmux_plus.viewer_service import LocalViewerObservation, ViewerObservationBatch
+from reference_frontend.tmux_wire import TmuxWireError, decode_tmux_argument
+from reference_frontend.viewer_service import LocalViewerObservation, ViewerObservationBatch
+
+from rofi_tmux_plus.config import Config
+from rofi_tmux_plus.errors import ContractError
 
 
 def _completed(stdout: str, stderr: str = "", code: int = 0) -> subprocess.CompletedProcess[str]:
@@ -1220,7 +1221,7 @@ class InventoryServiceTests(unittest.TestCase):
             return ViewerObservationBatch(12, observations)
 
         with patch(
-            "rofi_tmux_plus.inventory_service.observe_local_viewers", side_effect=one_scan
+            "reference_frontend.inventory_service.observe_local_viewers", side_effect=one_scan
         ) as scan:
             enriched = service.inventory(
                 requested_hosts=["gamma", "beta"],
@@ -1288,7 +1289,7 @@ class InventoryServiceTests(unittest.TestCase):
         )
         self.assertNotIn("viewerEndpoint", plain)
         with patch(
-            "rofi_tmux_plus.inventory_service.observe_local_viewers",
+            "reference_frontend.inventory_service.observe_local_viewers",
             side_effect=OSError("fixture Niri read failure"),
         ):
             enriched = service.inventory(

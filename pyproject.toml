@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rofi-tmux-plus"
-version = "0.7.0a2"
+version = "0.8.0a1"
 description = "Versioned local and remote tmux lifecycle foundation for the Rofi Plus suite"
 requires-python = ">=3.11"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Bryan"}]
-dependencies = ["tmux-observer==0.1.0a1"]
+dependencies = ["tmux-observer==0.2.0a1"]
 
 [project.optional-dependencies]
 dev = ["ruff==0.16.6"]
@@ -30,4 +30,4 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint.per-file-ignores]
-"rofi_tmux_plus/lifecycle.py" = ["FLY002"]
+"tests/reference_frontend/lifecycle.py" = ["FLY002"]
