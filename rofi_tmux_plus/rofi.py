@@ -729,7 +729,7 @@ def _view_member(
     viewer = session.get("localViewer")
     return (
         session.get("pending") is False
-        and _viewer_observation_fresh(payload, now)
+        and _viewer_observation_fresh(payload, now, host)
         and isinstance(viewer, Mapping)
         and viewer.get("state") == "open"
         and viewer.get("confidence") in {"confirmed", "matched"}
@@ -752,7 +752,7 @@ def _view_uncertain(payload: Mapping[str, object] | None, view: str, now: float)
         ):
             return True
         if view == VIEW_OPEN and host.get("sessions"):
-            if not _viewer_observation_fresh(payload, now):
+            if not _viewer_observation_fresh(payload, now, host):
                 return True
             if any(
                 not isinstance(row.get("localViewer"), Mapping)
@@ -882,16 +882,23 @@ def _session_status(
     return f"{viewer_status} · {client_status}"
 
 
-def _viewer_observation_fresh(payload: Mapping[str, object] | None, now: float) -> bool:
+def _viewer_observation_fresh(
+    payload: Mapping[str, object] | None, now: float, host: Mapping[str, object] | None = None
+) -> bool:
     if not isinstance(payload, Mapping):
         return False
     if isinstance(payload.get("prepared"), Mapping):
-        expiry = payload["prepared"].get("desktopExpiry")
-        return (
-            payload.get("viewerFactsCurrent") is True
-            and type(expiry) is int
-            and expiry > boottime_ms()
+        expiry = (
+            host.get("viewerExpiry")
+            if isinstance(host, Mapping) and "viewerExpiry" in host
+            else payload["prepared"].get("desktopExpiry")
         )
+        current = (
+            host.get("viewerFactsCurrent")
+            if isinstance(host, Mapping) and "viewerFactsCurrent" in host
+            else payload.get("viewerFactsCurrent")
+        )
+        return current is True and type(expiry) is int and expiry > boottime_ms()
     observed_at = payload.get("viewerObservedAt")
     endpoint = payload.get("viewerEndpoint")
     if observed_at is None and isinstance(endpoint, Mapping):
@@ -1099,7 +1106,6 @@ def _session_rows_render(
     catalog = _host_catalog(payload)
     candidate_revision = payload.get("meshRevision") if isinstance(payload, Mapping) else None
     mesh_revision = candidate_revision if isinstance(candidate_revision, str) else None
-    viewer_fresh = _viewer_observation_fresh(payload, now)
     order = {str(host["hostId"]).casefold(): index for index, host in enumerate(catalog)}
     sessions = _session_rows(payload, host_id=_scope_host_id(payload, navigation))
     sessions.sort(key=lambda item: _session_sort_key(item, order))
@@ -1111,7 +1117,9 @@ def _session_rows_render(
         if not isinstance(host, Mapping):
             continue
         scoped_host = {**dict(host), "_scope": navigation.concrete}
-        status = _session_status(session, scoped_host, viewer_fresh=viewer_fresh)
+        status = _session_status(
+            session, scoped_host, viewer_fresh=_viewer_observation_fresh(payload, now, host)
+        )
         info = selection_payload(session, status=status, mesh_revision=mesh_revision)
         metadata = " ".join(
             sanitize(value)

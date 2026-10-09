@@ -35,6 +35,31 @@ requires fresh positive native attachment counts. Confidence and uncertainty
 come from contracts; formatting and membership projection belong here.
 Activity age formats native timestamps; it is not source-health age or agent state.
 
+## Attachment-driven local display candidate
+
+The next local-performance pass consumes Observer's separately versioned
+`bindings-v1` extension. Local retained matches have a current native attachment
+lease and their original discovery time; they are not renewed desktop captures.
+Tmux Plus validates the enclosing host, publisher, complete reference coverage,
+counts, clock and context through the pure producer contract. A retained match
+projects as qualified `open here?`, never `confirmed`. It carries no process,
+window or action handle. Open/close independently resolve current action targets.
+
+Viewer expiry is per host: local native-binding expiry and remote C3 desktop
+expiry remain independent. Expired native inputs, picker watch loss, context
+replacement and invalid extensions revoke retained display evidence. Receipt-only
+renewals keep discovery time and produce no material-change notification. The
+native Attached view remains independent. Kitty tab/internal-window relocation
+without a native client change is an accepted limitation; explicit Refresh can
+request rediscovery. Normal browsing schedules no collection.
+
+Five focused consumer cases cover qualified display without C3 readiness,
+independent local/remote expiry, context/watch loss, invalid-extension rejection
+without fallback, and quiet renewal with unchanged discovery time. Source
+acceptance does not select a new producer pin or establish packaged/native/GUI
+acceptance. The active cross-repository checkpoint ledger is Observer's
+[local performance implementation](https://github.com/byebyebryan/tmux-observer/blob/main/docs/local-performance-implementation.md).
+
 Preserve the last view and last successfully opened complete reference. Failed
 actions, cursor movement and Cancel do not change that bookmark. View/action
 cycling reads current prepared facts without native collection or action-client

@@ -75,10 +75,24 @@ def apply_expiry(payload: Mapping, *, now=None, scope=None) -> dict:
                 "code": "owner_expired" if current_scope else "stale_scope",
                 "message": "owner facts expired" if current_scope else "picker context changed",
             }
-    expiry = lease.get("desktopExpiry")
-    if not current_scope or not watch_current or type(expiry) is not int or expiry <= now:
+    desktop_expiry = lease.get("desktopExpiry")
+    if (
+        not current_scope
+        or not watch_current
+        or type(desktop_expiry) is not int
+        or desktop_expiry <= now
+    ):
         value["viewerFactsCurrent"] = False
-        for host in value.get("hosts", []):
+    for host in value.get("hosts", []):
+        expiry = host.get("viewerExpiry", desktop_expiry)
+        if (
+            not current_scope
+            or not watch_current
+            or type(expiry) is not int
+            or expiry <= now
+            or host.get("viewerFactsCurrent", value.get("viewerFactsCurrent")) is not True
+        ):
+            host["viewerFactsCurrent"] = False
             for session in host.get("sessions", []):
                 session["localViewer"] = {"state": "unknown", "reason": "desktop_expired"}
     return value
@@ -128,8 +142,54 @@ def project_frame(frame: dict, *, now: int, scope) -> dict:
             "nativeHostname": source["nativeHostname"] if source is not None else None,
             "serverGeneration": owner["serverGeneration"],
             "ownerExpiry": owner["localExpiry"] if current else None,
+            "viewerFactsCurrent": desktop["state"] == "ready",
+            "viewerExpiry": desktop["expiresAt"] if desktop["state"] == "ready" else None,
             "sessions": copy.deepcopy(host["sessions"]),
         }
+        bindings = host.get("localBindings")
+        if bindings is not None:
+            try:
+                observer_api().bindings_contract.validate_fleet_bindings(
+                    bindings,
+                    host,
+                    context_id=view["contextId"],
+                    clock_value=view["clock"],
+                    now=now,
+                )
+            except (ImportError, ValueError, TypeError, KeyError) as error:
+                raise ContractError(
+                    "operation_failed", "Prepared local bindings are invalid"
+                ) from error
+            binding_current = current and bindings["receipt"]["state"] == "ready"
+            row["viewerFactsCurrent"] = binding_current
+            row["viewerExpiry"] = bindings["receipt"]["expiresAt"] if binding_current else None
+            by_ref = {
+                tuple(
+                    item["sessionRef"][key]
+                    for key in ("hostId", "serverGeneration", "sessionId", "createdAt")
+                ): item["association"]
+                for item in bindings["rows"]
+            }
+            for session in row["sessions"]:
+                association = by_ref[
+                    tuple(
+                        session[key]
+                        for key in ("hostId", "serverGeneration", "sessionId", "createdAt")
+                    )
+                ]
+                presence = {
+                    "state": association["state"],
+                    "reason": None
+                    if association["state"] in {"open", "none"}
+                    else association["reason"],
+                }
+                if association["state"] == "open":
+                    presence.update(
+                        confidence="matched",
+                        evidence="retained_native_association",
+                        resolvedAt=association["resolvedAt"],
+                    )
+                session["localViewer"] = presence
         if not current:
             row["error"] = copy.deepcopy(
                 owner["error"]

@@ -99,6 +99,7 @@ class ObserverAPI:
         "actions": "tmux_observer_actions.public",
         "action_contract": "tmux_observer_actions.contract",
         "desktop_config": "tmux_observer_client._desktop_types",
+        "bindings_contract": "tmux_observer_client.bindings_contract",
     }
 
     def __getattr__(self, name):

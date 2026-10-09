@@ -62,6 +62,22 @@ def notification_material(frame, now):
                 "current": current,
             }
         )
+        bindings = host.get("localBindings")
+        if bindings is not None:
+            ready = (
+                current
+                and bindings["receipt"]["state"] == "ready"
+                and bindings["receipt"]["expiresAt"] > now
+            )
+            if ready:
+                expiries.append(bindings["receipt"]["expiresAt"])
+            owners[-1]["localBindings"] = {
+                "epoch": bindings["epoch"],
+                "rows": bindings["rows"],
+                "current": ready,
+                "state": bindings["receipt"]["state"],
+                "error": bindings["receipt"]["error"],
+            }
     desktop = view["desktop"]
     desktop_current = (
         desktop["state"] == "ready"
