@@ -1,0 +1,24 @@
+# CPU performance consumer
+
+2026-10-09. Tmux Plus 0.11.0a1 pins the CPU performance candidate Observer
+0.5.0a1. Picker behavior, preference state, watches, action guards and the native
+mode remain unchanged. The producer groups structural traversal, combines fresh
+decoding with immediate semantic admission and reuses plain session references.
+It keeps all seven wire contracts and native/freshness timing unchanged.
+
+The exact producer is `42e9ebf2121280fd00b135e855cf2569f9791c94`, wheel SHA-256
+`ae5cb6ec2310a0eb6901f39d5c405b4858d717f07883e024628cdd80587eab9e`.
+The consumer pin checks the complete 78-module runtime. The independent source
+gate passes all 293 tests and contract/style checks against that installed wheel.
+Native collector/owner acceptance passes independently; two-host resources,
+capacity, graphical and managed rollout gates remain open at this checkpoint.
+
+The first producer freeze had matching wheel metadata but a stale Python version
+constant. The consumer exact-pin guard refused it. The corrected producer and
+repeated immutable builds supersede that candidate, and the producer source gate
+now checks version parity. Earlier evidence is retained with its original scope.
+
+Producer decisions, measured pipeline limits and remaining gates are captured in
+[the CPU design](https://github.com/byebyebryan/tmux-observer/blob/main/docs/cpu-performance-design.md).
+Source acceptance alone does not establish ordinary CPU savings or deployment.
+Only Snap receives foreground tests; physical suspend remains optional.
