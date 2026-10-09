@@ -10,8 +10,8 @@ The exact producer is `42e9ebf2121280fd00b135e855cf2569f9791c94`, wheel SHA-256
 `ae5cb6ec2310a0eb6901f39d5c405b4858d717f07883e024628cdd80587eab9e`.
 The consumer pin checks the complete 78-module runtime. The independent source
 gate passes all 293 tests and contract/style checks against that installed wheel.
-Native collector/owner acceptance passes independently; two-host resources,
-capacity, graphical and managed rollout gates remain open at this checkpoint.
+Native producer/resources/capacity acceptance now passes independently. Managed
+rollout remains a separate gate.
 
 The first producer freeze had matching wheel metadata but a stale Python version
 constant. The consumer exact-pin guard refused it. The corrected producer and
@@ -22,3 +22,17 @@ Producer decisions, measured pipeline limits and remaining gates are captured in
 [the CPU design](https://github.com/byebyebryan/tmux-observer/blob/main/docs/cpu-performance-design.md).
 Source acceptance alone does not establish ordinary CPU savings or deployment.
 Only Snap receives foreground tests; physical suspend remains optional.
+
+The frozen frontend is `cd4db5ce0ff9d6fe09dfa393d88a3479adc8a09a`, wheel SHA-256
+`9382ebb3a6f107e49e565b90226dd91b017b7d0508d2dd1568ff43cef4837368`.
+Repeated wheels and managed bundles match. The bundle has 321 files plus its
+manifest, SHA-256
+`cfda29d759fc6009c4dd8b9d9632069882fda7bae6099797faa44d2581027455`.
+The [exact-wheel picker](evidence/2026-10-09-cpu-performance/picker-snap.json)
+passes all 23 Snap cases, including view cycling beyond the original lease,
+native attach/detach, retained qualified Open, completed refresh notice,
+typing/selection, confirmation, reader replacement and owned cleanup.
+The [renewed-view screenshot](evidence/2026-10-09-cpu-performance/tmux-cpu-cp3-picker-snap-renewed-views.png)
+and [completed refresh](evidence/2026-10-09-cpu-performance/tmux-cpu-cp3-picker-snap-refresh-complete.png)
+have been visually checked. These gates preserve ordinary sessions/preferences
+and provide no Starship foreground or physical-suspend acceptance.
