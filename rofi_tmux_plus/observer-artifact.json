@@ -65,7 +65,7 @@
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
     "tmux_observer_client/_mesh_control.py": "8910709bdf92205d291781ee0352bb2037f25a12780782f4b4d800f969083063",
     "tmux_observer_client/_mesh_projection.py": "dc0479477f555e9e6af3a095d11fdd52513c067620c5d7a350475c3d01199922",
-    "tmux_observer_client/_mesh_worker.py": "930cf03671a3755d6613f3665959380870d471a99837429d363492f1912798de",
+    "tmux_observer_client/_mesh_worker.py": "ee5dac89f46462692d3c0a214444ef7f0039087ba9a26983557b7b261bbad041",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
     "tmux_observer_client/_owner_document.py": "d509f2db8d2c75f15a003354987c8b7fbb287e6769cb18c8239b8dd387cff520",
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
@@ -80,12 +80,12 @@
     "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
     "tmux_observer_client/fleet.py": "073ee59800d960d027a4a09677ea6ce018fe95f1843de2237a132d58eebff802",
     "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
-    "tmux_observer_client/mesh_fleet.py": "f5cfa131fdc6e9e066d4c5089eae448a9a6dc161928e614f8c0d1d0e4ac03e4f",
+    "tmux_observer_client/mesh_fleet.py": "cdf04f8e58767b18fae79e3c60878c22fe07cf3e837a41307109e9c728eee13e",
     "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "9e5a8752b6f4715969ab4fd669951cbdf6a87219",
+  "sourceCommit": "d1fbf1ecdad622489743b7ec3e0bfafd30b2b09a",
   "version": "0.6.0a1",
-  "wheelSha256": "faccbe94e35b464403744211032c579a6bcbce09aa83adc6396279dd85cb06fe"
+  "wheelSha256": "d6233edb99f9095b4cdf9c7c82af301ebff8e9b3b2ffb1b31fe6dcf7437c88b4"
 }

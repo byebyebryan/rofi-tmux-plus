@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+"""Installed prepared frames and callbacks; no compositor or graphical input."""
+
+import argparse
+import hashlib
+import importlib.machinery
+import importlib.util
+import json
+import os
+import shlex
+import subprocess
+import tempfile
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def helper():
+    loader = importlib.machinery.SourceFileLoader(
+        "headless_picker_helpers", str(ROOT / "scripts/accept-native-picker")
+    )
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def headers(frame):
+    return dict(
+        line[1:].split("\x1f", 1)
+        for line in frame.replace("\x1e", "\n").splitlines()
+        if line.startswith("\0") and "\x1f" in line
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--python", type=Path, required=True)
+    parser.add_argument("--artifact", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--host-id", choices=("snap", "starship"), required=True)
+    parser.add_argument("--transport", choices=("legacy", "mesh"), required=True)
+    args = parser.parse_args()
+    probe = helper()
+    artifact, _wheel = probe.builder().verify(args.artifact)
+    python = args.python.absolute()
+    bins = python.parent
+    package = probe.command(
+        [
+            str(python),
+            "-I",
+            "-B",
+            "-c",
+            "import rofi_tmux_plus; from rofi_tmux_plus.observer_client import observer_api; observer_api(); print(rofi_tmux_plus.__file__)",
+        ]
+    ).strip()
+    parent = Path(package).parent.parent
+    for member, source in artifact["sourceFiles"].items():
+        path = parent / (source if source.startswith("rofi_tmux_plus/") else member)
+        assert (
+            hashlib.sha256(path.read_bytes()).hexdigest() == artifact["members"][member]["sha256"]
+        )
+    record = {
+        "gate": "mesh-installed-headless-picker",
+        "artifact": artifact,
+        "transport": args.transport,
+        "hostId": args.host_id,
+        "harnessSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "cases": [],
+        "state": "running",
+        "cleanup": False,
+        "limits": [
+            "Disposable default server, isolated preferences and local-only catalog",
+            "Actual installed frame commands and callbacks; no Rofi window, compositor, input or visible-presentation claim",
+        ],
+    }
+
+    def passed(name):
+        record["cases"].append(name)
+        print("passed " + name, flush=True)
+
+    with tempfile.TemporaryDirectory(prefix="tp-headless-") as temporary:
+        root = Path(temporary)
+        for name in ("runtime", "native", "config", "state", "cache", "bin"):
+            (root / name).mkdir(mode=0o700)
+        env = dict(os.environ)
+        for key in (
+            "TMUX",
+            "TMUX_PANE",
+            "PYTHONPATH",
+            "PYTHONHOME",
+            "NIRI_SOCKET",
+            "WAYLAND_DISPLAY",
+            "DISPLAY",
+        ):
+            env.pop(key, None)
+        env.update(
+            PATH=str(root / "bin") + ":" + str(bins) + ":/usr/bin:/bin",
+            TMUX_TMPDIR=str(root / "native"),
+            XDG_RUNTIME_DIR=str(root / "runtime"),
+            XDG_CONFIG_HOME=str(root / "config"),
+            XDG_STATE_HOME=str(root / "state"),
+            XDG_CACHE_HOME=str(root / "cache"),
+            PYTHONDONTWRITEBYTECODE="1",
+        )
+        catalog = {
+            "schemaVersion": 1,
+            "generatedAt": 1,
+            "meshRevision": "sha256:" + "a" * 64,
+            "localHostId": args.host_id,
+            "sshPolicy": {
+                "executable": "ssh",
+                "connectTimeoutSeconds": 2,
+                "connectionAttempts": 1,
+                "routeHealthTtlSeconds": 300,
+            },
+            "hosts": [
+                {
+                    "id": args.host_id,
+                    "display": args.host_id,
+                    "local": True,
+                    "aliases": [],
+                    "routes": [],
+                }
+            ],
+        }
+        text = (
+            "#!"
+            + str(python)
+            + "\nimport json,sys\nassert sys.argv[1:] == ['mesh','list','--json']\nprint(json.dumps("
+            + repr(catalog)
+            + "))\n"
+        )
+        for name in ("mesh-plus", "rofi-ssh-plus"):
+            (root / "bin" / name).write_text(text)
+            (root / "bin" / name).chmod(0o700)
+        (root / "bin/tmux").write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"$PPID\" >> "
+            + shlex.quote(str(root / "native-parents"))
+            + '\nexec /usr/bin/tmux "$@"\n'
+        )
+        (root / "bin/tmux").chmod(0o700)
+        (root / "bin/ssh").write_text(
+            "#!/bin/sh\necho unexpected >> " + shlex.quote(str(root / "ssh-starts")) + "\nexit 1\n"
+        )
+        (root / "bin/ssh").chmod(0o700)
+        processes = []
+
+        def native(*arguments):
+            return probe.command(
+                ["/usr/bin/tmux", "-f", "/dev/null", "-L", "default", *arguments], env=env
+            ).strip()
+
+        def start(arguments, name):
+            with (root / (name + ".log")).open("w") as log:
+                process = subprocess.Popen(
+                    arguments, env=env, stdout=log, stderr=log, start_new_session=True
+                )
+            processes.append(process)
+            return process
+
+        def stop(process):
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=3)
+
+        def snapshot():
+            raw = probe.command(
+                [str(bins / "tmux-observer-client"), "snapshot", "--access", "cached", "--json"],
+                env=env,
+                check=False,
+            )
+            return json.loads(raw) if raw else {}
+
+        def ready():
+            value = snapshot()
+            hosts = (value.get("snapshot") or {}).get("hosts", [])
+            return (
+                value
+                if hosts
+                and hosts[0]["owner"]["receipt"]
+                and hosts[0]["owner"]["receipt"]["state"] == "ready"
+                and hosts[0]["owner"]["localExpiry"] > value["encodedAt"]
+                else None
+            )
+
+        def render(retv="0", data=None):
+            context = dict(env, ROFI_RETV=retv)
+            if data is not None:
+                context["ROFI_DATA"] = data
+            return probe.command([str(bins / "rofi-tmux-plus")], env=context)
+
+        baseline = None
+        try:
+            for name in ("azlalpha", "azlbeta", "azlgamma"):
+                native("new-session", "-d", "-s", name, "sleep 3600")
+            native_format = "#{session_id}|#{session_created}|#{session_name}|#{session_attached}|#{session_windows}"
+            baseline = native("list-sessions", "-F", native_format)
+            hooks = native("show-hooks")
+            owner = start(
+                [
+                    str(bins / "tmux-observer"),
+                    "owner",
+                    "--host-id",
+                    args.host_id,
+                    "--local-attachments",
+                ],
+                "owner",
+            )
+            fleet = start(
+                [
+                    str(bins / "tmux-observer-client"),
+                    "fleet",
+                    "--host-id",
+                    args.host_id,
+                    "--transport",
+                    args.transport,
+                ],
+                "fleet",
+            )
+            probe.until(ready, seconds=15)
+            passed("installed_owner_and_selected_fleet_ready")
+            # A warm frame includes normal interpreter bytecode caches. The
+            # graphical probe's no-write environment otherwise recompiles every
+            # module on every invocation in a fresh uncompiled installation.
+            warm_env = dict(env, ROFI_RETV="0")
+            warm_env.pop("PYTHONDONTWRITEBYTECODE", None)
+            at = time.perf_counter_ns()
+            warm = probe.command([str(bins / "rofi-tmux-plus")], env=warm_env)
+            assert "azlalpha" in warm
+            record["warmupFrameMs"] = (time.perf_counter_ns() - at) / 1000000
+            record["bytecodeCachePolicy"] = (
+                "One untimed normal installed invocation may prepare bytecode before the 100 warm samples; source-byte verification remains unchanged"
+            )
+            durations, pids = [], []
+            for _ in range(100):
+                at = time.perf_counter_ns()
+                process = subprocess.Popen(
+                    [str(bins / "rofi-tmux-plus")],
+                    env=dict(env, ROFI_RETV="0"),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                raw, error = process.communicate(timeout=2)
+                assert process.returncode == 0 and all(
+                    name.encode() in raw for name in ("azlalpha", "azlbeta", "azlgamma")
+                ), error[:1024]
+                pids.append(str(process.pid))
+                durations.append((time.perf_counter_ns() - at) / 1000000)
+            assert not set(pids).intersection((root / "native-parents").read_text().split())
+            assert not (root / "ssh-starts").exists()
+            p95 = sorted(durations)[94]
+            record["warmFrameMs"] = {
+                "samples": durations,
+                "p95": p95,
+                "target": 150,
+                "passed": p95 <= 150,
+            }
+            passed("hundred_installed_frames_preserve_rows_without_foreground_collection_or_ssh")
+            state = headers(render())["data"]
+            action = render("16", state)
+            assert headers(action)["keep-filter"] == "true"
+            previous = render("17", headers(action)["data"])
+            assert all(name in previous for name in ("azlalpha", "azlbeta", "azlgamma"))
+            passed("read_only_action_callbacks_preserve_prepared_rows_and_filter")
+            refreshing = render("10", headers(previous)["data"])
+            state = headers(refreshing)["data"]
+
+            def settled():
+                nonlocal state
+                value = render("28", state)
+                state = headers(value)["data"]
+                parsed = json.loads(state)
+                return (
+                    value
+                    if not parsed.get("refreshDeadline")
+                    and not parsed.get("refreshTicket")
+                    and "Refreshing" not in value
+                    else None
+                )
+
+            probe.until(settled, seconds=12)
+            passed("explicit_refresh_callback_reaches_terminal_feedback")
+            stop(owner)
+            probe.until(lambda: not ready(), seconds=15)
+            native_before = (root / "native-parents").read_bytes()
+            outage = render()
+            assert "Refreshing" not in outage
+            assert (root / "native-parents").read_bytes() == native_before
+            assert not (root / "ssh-starts").exists()
+            passed("owner_outage_has_bounded_prepared_feedback_without_fallback")
+            stop(fleet)
+            assert native("list-sessions", "-F", native_format) == baseline
+            assert native("show-hooks") == hooks
+            passed("full_native_references_attachment_counts_and_hooks_preserved")
+            assert p95 <= 150, record["warmFrameMs"]
+            record["state"] = "passed"
+        except Exception as error:  # noqa: BLE001 - preserve exact acceptance failure
+            record.update(state="failed", failure=type(error).__name__, message=str(error)[:2048])
+            record["logs"] = {path.name: path.read_text()[-4096:] for path in root.glob("*.log")}
+        finally:
+            for process in reversed(processes):
+                stop(process)
+            if baseline is not None:
+                native("kill-server")
+    record["cleanup"] = not root.exists() and all(
+        process.poll() is not None for process in processes
+    )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(record, indent=2) + "\n")
+    print(
+        json.dumps(
+            {"state": record["state"], "output": str(args.output), "cleanup": record["cleanup"]}
+        ),
+        flush=True,
+    )
+    return 0 if record["state"] == "passed" and record["cleanup"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
