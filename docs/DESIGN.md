@@ -3,7 +3,7 @@
 Current behavior for Tmux Plus **0.12.0a2**, Observer **0.6.0a2** and Mesh
 **0.1.0a7**, recorded 2026-10-10. This guide describes presentation and user intent.
 [Mesh selection](mesh-integration.md) and
-[managed operations](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+[managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
 own exact installed selection. [Product design history](design-history.md)
 preserves the earlier P6–P11 implementation milestones and retired cache model.
 

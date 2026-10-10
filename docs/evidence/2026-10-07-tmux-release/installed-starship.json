@@ -1,0 +1,20 @@
+{
+  "host": "starship",
+  "sourceRevision": "407ae58ba422ba88fed7da2f9d845ff274830f0e",
+  "version": "0.6.0",
+  "archiveSha256": "fd448eb2202de9708976b52290510770638eba2f8847dacc185730650ffcc470",
+  "trackedFilesVerified": 172,
+  "executableModesVerified": true,
+  "tmuxLinksVerified": true,
+  "managedBindingVerified": true,
+  "pilotLinks": {
+    ".local/bin/agent-observer": "/home/bryan/.local/share/agent-observer/0.2.0a11-999d45171adfc4c4/bin/agent-observer",
+    ".local/bin/agent-observer-write": "/home/bryan/.local/share/agent-observer/0.2.0a11-999d45171adfc4c4/bin/agent-observer-write",
+    ".local/bin/rofi-agent-plus": "/home/bryan/.local/share/rofi-agent-plus/0.14.0a1-8ba19a0eba87944a/bin/rofi-agent-plus",
+    ".local/bin/rofi-agent-plus-rofi": "/home/bryan/.local/share/rofi-agent-plus/0.14.0a1-8ba19a0eba87944a/bin/rofi-agent-plus-rofi",
+    ".config/rofi/scripts/agent-plus": "/home/bryan/.local/share/rofi-agent-plus/0.14.0a1-8ba19a0eba87944a/bin/rofi-agent-plus"
+  },
+  "ordinaryPreferencesPreserved": true,
+  "dirtyCheckoutPreserved": true,
+  "durableTmuxSourceInputsUpdated": true
+}

@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "selectionCommit": "4cb2865",
+  "sourceCommit": "388ee6e466ef5321797f495792dac52ab83d230d",
+  "reviewCommit": "36e014851c84f5b72d6b454a3e994828e492eea0",
+  "release": "0.7.0a2",
+  "reports": [
+    {
+      "host": "snap",
+      "installed": {
+        "schemaVersion": 1,
+        "host": "snap",
+        "operation": "verify",
+        "selectionSha256": "48e00facaf7caafc334992916b619c684ff2c9607bff37ee75781723c53f632a",
+        "installedPayloads": {
+          "core": 69,
+          "frontend": 210
+        },
+        "prepared": {
+          "readerId": "68c54d73-0cc0-4393-a660-030257f8cb88",
+          "contextId": "45803d3a0aa1c400d7602f29eecd73a2",
+          "meshState": "ready",
+          "hosts": [
+            {
+              "hostId": "snap",
+              "local": true,
+              "sessions": 8,
+              "publisherId": "9a4ec3d8-1abd-444a-86d8-dc994ee6599e",
+              "transport": "local"
+            },
+            {
+              "hostId": "starship",
+              "local": false,
+              "sessions": 7,
+              "publisherId": "7d3d8d47-be97-4ddc-b067-7324479b3425",
+              "transport": "ready"
+            }
+          ],
+          "desktopState": "ready"
+        },
+        "freshHosts": [
+          {
+            "hostId": "snap",
+            "sessions": 8
+          },
+          {
+            "hostId": "starship",
+            "sessions": 7
+          }
+        ],
+        "preparedFrameBytes": 11952,
+        "preexistingReferencesSurvive": true,
+        "result": "passed"
+      },
+      "browseAfter12Seconds": {
+        "hostId": "snap",
+        "initial": {
+          "statuses": [
+            "ok",
+            "ok"
+          ],
+          "expiryOffsetsMs": [
+            9149,
+            7976
+          ],
+          "watchSequence": 1
+        },
+        "currentServiceStatuses": [
+          "ok",
+          "ok"
+        ],
+        "currentExpiryOffsetsMs": [
+          9151,
+          8029
+        ],
+        "watchHealthy": true,
+        "watchSequence": 3,
+        "cycledPages": [
+          {
+            "view": "local",
+            "rows": 8,
+            "urgentRows": 0
+          },
+          {
+            "view": "host",
+            "rows": 7,
+            "urgentRows": 0
+          },
+          {
+            "view": "open",
+            "rows": 10,
+            "urgentRows": 0
+          },
+          {
+            "view": "attached",
+            "rows": 12,
+            "urgentRows": 0
+          },
+          {
+            "view": "all",
+            "rows": 15,
+            "urgentRows": 0
+          }
+        ],
+        "scope": "owned read-only watch, isolated preferences/cache; no GUI, refresh admission or tmux actions"
+      },
+      "nativePreservationAcrossDeployment": {
+        "host": "snap",
+        "before": 8,
+        "after": 8,
+        "preexistingReferencesSurvive": true
+      }
+    },
+    {
+      "host": "starship",
+      "installed": {
+        "schemaVersion": 1,
+        "host": "starship",
+        "operation": "verify",
+        "selectionSha256": "48e00facaf7caafc334992916b619c684ff2c9607bff37ee75781723c53f632a",
+        "installedPayloads": {
+          "core": 69,
+          "frontend": 210
+        },
+        "prepared": {
+          "readerId": "34dc869f-b654-48b8-bf9a-e5402ee0d7aa",
+          "contextId": "13debc1a8b7b99705fb17616ae09a886",
+          "meshState": "ready",
+          "hosts": [
+            {
+              "hostId": "starship",
+              "local": true,
+              "sessions": 7,
+              "publisherId": "7d3d8d47-be97-4ddc-b067-7324479b3425",
+              "transport": "local"
+            },
+            {
+              "hostId": "snap",
+              "local": false,
+              "sessions": 8,
+              "publisherId": "9a4ec3d8-1abd-444a-86d8-dc994ee6599e",
+              "transport": "ready"
+            }
+          ],
+          "desktopState": "ready"
+        },
+        "freshHosts": [
+          {
+            "hostId": "starship",
+            "sessions": 7
+          },
+          {
+            "hostId": "snap",
+            "sessions": 8
+          }
+        ],
+        "preparedFrameBytes": 11969,
+        "preexistingReferencesSurvive": true,
+        "result": "passed"
+      },
+      "browseAfter12Seconds": {
+        "initial": {
+          "statuses": [
+            "ok",
+            "ok"
+          ],
+          "expiryOffsetsMs": [
+            9615,
+            8460
+          ],
+          "watchSequence": 1
+        },
+        "currentServiceStatuses": [
+          "ok",
+          "ok"
+        ],
+        "currentExpiryOffsetsMs": [
+          9710,
+          8597
+        ],
+        "watchHealthy": true,
+        "watchSequence": 4,
+        "cycledPages": [
+          {
+            "view": "local",
+            "rows": 7,
+            "urgentRows": 0
+          },
+          {
+            "view": "host",
+            "rows": 8,
+            "urgentRows": 0
+          },
+          {
+            "view": "open",
+            "rows": 4,
+            "urgentRows": 0
+          },
+          {
+            "view": "attached",
+            "rows": 12,
+            "urgentRows": 0
+          },
+          {
+            "view": "all",
+            "rows": 15,
+            "urgentRows": 0
+          }
+        ],
+        "scope": "owned read-only watch, isolated preferences/cache; no GUI, refresh admission or tmux actions"
+      },
+      "nativePreservationAcrossDeployment": {
+        "host": "starship",
+        "before": 7,
+        "after": 7,
+        "preexistingReferencesSurvive": true
+      }
+    }
+  ],
+  "result": "passed",
+  "limits": [
+    "Passive headless browse/render checks; no new graphical acceptance",
+    "No owner/fleet restart, host suspend, Snap graphical launch or test input",
+    "Only frontend external tree applied; unrelated drift preserved"
+  ]
+}

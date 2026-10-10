@@ -45,4 +45,4 @@ screenshots have been visually checked. Both endpoints pass exact installed
 bytes, serial recovery, actual matching rollback/reselection and disposable
 CLI lifecycle gates. Native/prepared/fresh references agree for nine Snap and
 ten Starship sessions. Provider selection and source reconciliation have their
-separate [managed record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-cpu-performance-operations.md).
+separate [managed record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/cpu-performance-design.md).

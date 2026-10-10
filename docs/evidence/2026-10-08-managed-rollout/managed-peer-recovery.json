@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "result": "passed",
+  "readerHost": "snap",
+  "peerHost": "starship",
+  "selectionSha256": "37a08893f783ab6331b9031e249414b6ebb6146068167ed038b9757db8ee1bfd",
+  "unavailable": {
+    "transport": "failed",
+    "receiptState": "ready",
+    "ownerCurrent": false,
+    "observedAfterStopMs": 558.445118018426
+  },
+  "recovered": {
+    "readerId": "68c54d73-0cc0-4393-a660-030257f8cb88",
+    "contextId": "45803d3a0aa1c400d7602f29eecd73a2",
+    "meshState": "ready",
+    "hosts": [
+      {
+        "hostId": "snap",
+        "local": true,
+        "sessions": 8,
+        "publisherId": "9a4ec3d8-1abd-444a-86d8-dc994ee6599e",
+        "transport": "local"
+      },
+      {
+        "hostId": "starship",
+        "local": false,
+        "sessions": 7,
+        "publisherId": "7d3d8d47-be97-4ddc-b067-7324479b3425",
+        "transport": "ready"
+      }
+    ],
+    "desktopState": "ready"
+  },
+  "newPeerPublisher": true,
+  "bothHostsPreexistingReferencesSurvive": true,
+  "scope": "Observer unit stop/start only; no host sleep or network disruption"
+}

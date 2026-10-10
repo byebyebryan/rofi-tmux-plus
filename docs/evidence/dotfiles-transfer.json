@@ -1,0 +1,160 @@
+{
+  "sourceRepository": "https://github.com/byebyebryan/dotfiles",
+  "sourceCommit": "5ff8b412a45b69cac64b8eb356444e6cf0705012",
+  "records": [
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/README.md",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/README.md",
+      "sha256": "07c67313210702d32dcf9d7298641fb981a39257f20b9b778e85c3414ccc3286",
+      "bytes": 2174
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/check-tmux-live.py",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/check-tmux-live.py",
+      "sha256": "b4906739da804a3024eece030057cdf3f92458b502ef696d45d85f25d076053a",
+      "bytes": 3793
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/installed-snap.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/installed-snap.json",
+      "sha256": "baa248ef017603104c88a3bb35ba302bb50eea78ddb15ba5a0f5667ad234c687",
+      "bytes": 1104
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/installed-starship.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/installed-starship.json",
+      "sha256": "c956877fc6a8a499530d757033169a34c2cdcf20243d4cbef237f479af93808f",
+      "bytes": 1106
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/live-snap.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/live-snap.json",
+      "sha256": "7f7f69922d012d1fa1574b570e462d107db8808602a8bd265d7a8ab983154310",
+      "bytes": 475
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/live-starship.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/live-starship.json",
+      "sha256": "2dfc2cbd4f9fe5e78eddeb68e019d88b8f10ea5411b08056b694d5f3121d408e",
+      "bytes": 479
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/native-snap.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/native-snap.json",
+      "sha256": "4025d643d99dd2828afeeeb2941b2633d383b037afff9714c55cb6408c5d9f6e",
+      "bytes": 279
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/release-manifest.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/release-manifest.json",
+      "sha256": "a7497740682213c2e855f1bfd6b88265e2cfd30cf07e55c0e414f44dec9bc3a3",
+      "bytes": 26271
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/release.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/release.json",
+      "sha256": "a20ce5c0be6fbc1a6954d16949047fa581b302ab69094c005902ecb063135be1",
+      "bytes": 1329
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-07-tmux-release/verify-installed.py",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-07-tmux-release/verify-installed.py",
+      "sha256": "8c2f63ce927c3b77d05c287dbbe37526c1891f4792efc50363ceeb9bda783d59",
+      "bytes": 5949
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-browse-renewal/managed.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-browse-renewal/managed.json",
+      "sha256": "01eb2301bc409fd0fc3f314c2da0cc43ceaa2892284d9dfcfec19c589e54622d",
+      "bytes": 5830
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/cross-tool-compatibility.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/cross-tool-compatibility.json",
+      "sha256": "1e9c9cd184c05aa06c1480d356bdd0bafa5b178934597382337935ac61c3ff7a",
+      "bytes": 715
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/managed-operations.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/managed-operations.json",
+      "sha256": "4071f00a74458c6fa97baa89f3f33cc2f0d6eca40a0bb96392faf8b9ec92214a",
+      "bytes": 14567
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/managed-peer-recovery.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/managed-peer-recovery.json",
+      "sha256": "e7d9126f3533f6aa5b556b07e7bd12f24e7011b0895828ae86179a2db644ca86",
+      "bytes": 1068
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-absent.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-absent.png",
+      "sha256": "2ae7c0e80fbc19376757c3492538d084cbf21fe9cab147221a9bae654bf92c0d",
+      "bytes": 16800
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-confirmation.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-confirmation.png",
+      "sha256": "b2bab25fb16ae00140e8ae667b9e2c5410acdbda093fa3147e60be208e8c9f25",
+      "bytes": 16209
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-reader-lost.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-reader-lost.png",
+      "sha256": "75e693047415ce11ffa19e9ecf27adc37874e31bf750b4a1cdea029472e7b745",
+      "bytes": 16762
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-ready.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-ready.png",
+      "sha256": "34daab45cde92e56d95e590b257a39d73e50552f74ace6374af0c2d026e2cecf",
+      "bytes": 25138
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-refresh-complete.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-refresh-complete.png",
+      "sha256": "bed0d471c212506f170c555417d46f786f1b8a8f4e9026cd590b7075d99e24f8",
+      "bytes": 25463
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-typing.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-typing.png",
+      "sha256": "167679b4686da7e95d32bd4e47c790fa7a0322746b184c17b6a0940f5787f209",
+      "bytes": 25688
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-views.png",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker-views.png",
+      "sha256": "fa302507e681918cfbfebff005eb9e8804bdab83c0fe43ebc24a2975b2ceeb71",
+      "bytes": 7336
+    },
+    {
+      "oldPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker.json",
+      "owner": "rofi-tmux-plus",
+      "destinationPath": "docs/evidence/2026-10-08-managed-rollout/starship-managed-picker.json",
+      "sha256": "e8cfd4ff57647bc027f3c8e19a1b6355fb2c5f187e69ea04cc38d281fd41d1e0",
+      "bytes": 139784
+    }
+  ]
+}

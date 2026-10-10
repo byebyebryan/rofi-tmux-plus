@@ -15,7 +15,7 @@ Current Observer-backed read behavior is recorded in
 [migration](observer-migration.md) and the [0.7.0a2 repair](tmux-plus-0.7.0a2.md).
 The next UI/action separation is defined by [observer boundaries](observer-boundaries.md).
 The selected Tmux tuple is owned by chezmoi's
-[`tmux-observer-operations.md`](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md);
+[`tmux-observer-operations.md`](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md);
 the older suite ledger referenced below retains its historical checkpoint.
 
 Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
@@ -26,8 +26,7 @@ revalidates the current Mesh and exact stable reference. The coordinated P8
 flat-scope navigation cutover and P9 producer/consumer implementation and
 canonical bundles are published in this repository. P11 adds caller-local
 viewer observations to bulk inventory and the Tmux picker; release and managed
-acceptance remain separate. Chezmoi's current `docs/rofi-plus-status.md` ledger
-is the authority for managed deployment and acceptance.
+acceptance remain separate. The [immutable suite ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md) preserves acceptance for that checkpoint. Current installed selections are configuration-owned; producer/consumer acceptance stays in the owner repositories.
 
 ## P9 locked CLI contracts
 
@@ -526,3 +525,25 @@ exit status is kept distinct from displayed diagnostics.
    `Mod+Shift+G`. P6 live focus, attach, and remote acceptance completed for
    the exercised local and remote paths; those remain host-specific rollout
    checks for later changes.
+
+## Managed picker release history
+
+The 0.5.0 viewer foundation supplied endpoint-local observations; 0.5.1 added
+qualified manual remote viewers without granting action handles. 0.6.0 retained
+remembered context and independent refresh. The original 0.7.0a1 native rollout
+has Starship graphical acceptance and Snap headless acceptance; 0.7.0a2 repaired
+browse renewal, with later graphical attempts blocked by the display-idle overlay.
+These statements apply only to their recorded artifacts.
+
+- [Original release captures](evidence/2026-10-07-tmux-release/README.md).
+- [Managed rollout captures](evidence/2026-10-08-managed-rollout/), including suite compatibility and distinct host screenshots.
+- [Browse renewal captures](evidence/2026-10-08-browse-renewal/managed.json).
+- [Original component ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md#tmux-plus-060-remembered-context-and-independent-refresh), for dated release identities, manual limits and prior selection history.
+
+The paired boundary, local, fleet and CPU resource records now live with
+[Tmux Observer](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md).
+They retain their own frozen frontend versions, resource budgets and acceptance
+limits. Current product behavior remains [DESIGN](DESIGN.md), while independent
+native release/hardening records certify only their stated artifacts. All seven
+transferred screenshots are retained: equal pixels with different host labels do
+not establish equal host acceptance.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "result": "passed",
+  "gate": "exact released P9 compatibility",
+  "checkouts": {
+    "ssh": "f3e62a5d195e9359a35f832010f3a016d8038b6b",
+    "tmux": "277127328b1c7295f7bc90a23fb20cca3b344c7e",
+    "agent": "6d30f8c71a9e44ba1da19f4102292f6811df50d8"
+  },
+  "sourceTestCounts": {
+    "ssh": 74,
+    "tmux": 278,
+    "agent": 320
+  },
+  "agentSkipped": 4,
+  "contractSync": "passed",
+  "publicPathProbes": "passed; synthetic authority and no live sessions",
+  "logSha256": "94a821616233211c6def146fb67540583b3c5291c5a39e29a328851eb2dacbd4",
+  "scope": "native CPython 3.14.7 with exact accepted Core wheel and Ruff 0.16.6; clean detached released Agent worktree; active checkout preserved"
+}

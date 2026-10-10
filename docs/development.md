@@ -85,3 +85,24 @@ for the exact accepted tuple and [documentation index](README.md) for history.
 
 The frozen implementation under `tests/reference_frontend` is a historical
 regression baseline. Its tests do not establish acceptance of replacement code.
+
+## Owner conformance tooling
+
+`scripts/check` runs this project's source and synthetic guard checks.
+`scripts/check-public-contract` runs isolated public CLI probes: SSH owns Host
+Mesh; Tmux supplies `--ssh-checkout /absolute/ssh`; Agent supplies that argument
+and `--tmux-checkout /absolute/tmux`. Checkouts must be clean. Run with the
+project's selected Python environment and declared dependency versions. The
+probe uses a private HOME/XDG/PATH, synthetic local-only alpha authority, empty
+tmux state and provider stubs. It imports no sibling implementation and inspects
+no ordinary provider sessions. Consumer bundle-sync gates retain canonical
+producer ancestry, historical/current manifests and vendored provenance.
+
+`scripts/check-installed --self-test` proves owned callback and parser guards.
+Explicit `--live` checks installed public behavior with isolated UI state and
+semantic SSH history preservation. Tmux's separate `--lifecycle` option owns
+uniquely named disposable sessions, exact reference cleanup, stale-name and
+collision guards and baseline preservation. Run it only for authorized lifecycle
+acceptance; pure relocation does not need it. SSH probes no legacy custom-connect
+mutation. Source/synthetic, installed, provider actions, graphical/focus and
+physical acceptance remain separate.

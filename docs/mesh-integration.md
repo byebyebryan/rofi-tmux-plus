@@ -13,7 +13,7 @@ As of **2026-10-10**, Snap and Starship select:
 Documentation commits can advance after a runtime freeze. The Plus producer
 pin in [observer-artifact.json](../rofi_tmux_plus/observer-artifact.json) identifies
 the exact Observer wheel and all verified Python modules; the
-[managed operations ledger](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+[managed operations ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
 owns exact installed selection and controls.
 
 The [accepted catalog bound fix](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)

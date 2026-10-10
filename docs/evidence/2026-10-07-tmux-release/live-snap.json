@@ -1,0 +1,18 @@
+{
+  "host": "snap",
+  "meshRevision": "sha256:decab8fc6d7070b36736392e15feb5900732ce251f8b473fe08341139a6a995c",
+  "hosts": [
+    "snap",
+    "starship"
+  ],
+  "headlessNavigationActions": true,
+  "openAttachedViews": true,
+  "rememberedOpenView": true,
+  "configuredRouteLifecycle": true,
+  "exactDisposableCleanup": true,
+  "ownerJob": "complete",
+  "viewerJob": "complete",
+  "healthyInventory": true,
+  "privateCacheAndPreferences": true,
+  "sshHistoryPreserved": true
+}

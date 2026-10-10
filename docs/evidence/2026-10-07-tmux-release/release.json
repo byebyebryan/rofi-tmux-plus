@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-07",
+  "sourceRevision": "407ae58ba422ba88fed7da2f9d845ff274830f0e",
+  "managedRevision": "98a7ac5423f8220bedcf3d89d633722bdbee73db",
+  "version": "0.6.0",
+  "archiveSha256": "fd448eb2202de9708976b52290510770638eba2f8847dacc185730650ffcc470",
+  "sourceTests": 240,
+  "stableAgentTests": 320,
+  "sshTests": 74,
+  "exactReleasedTupleGate": "passed",
+  "contractBundlesUnchanged": true,
+  "managedGate": {
+    "snap": "passed",
+    "starship": "passed_on_published_checkout"
+  },
+  "scopedStatusDiffDryRunApplyVerify": {
+    "snap": "passed",
+    "starship": "passed"
+  },
+  "scopedEndpointDiffsIdentical": true,
+  "changedFiles": 46,
+  "changedDirectories": 2,
+  "tmuxTrackedFilesPerEndpoint": 172,
+  "starshipUsualSourceInputsMerged": [
+    ".chezmoiexternal.toml",
+    ".chezmoiignore",
+    "dot_config/niri/dms/binds.kdl",
+    "dot_local/bin/symlink_rofi-tmux-plus-rofi"
+  ],
+  "starshipUnrelatedWorkingContentPreserved": true,
+  "sourceCI": {
+    "conclusion": "success",
+    "url": "https://github.com/byebyebryan/rofi-tmux-plus/actions/runs/37657301763"
+  },
+  "observerPilotArtifactGate": {
+    "snap": "provider_fingerprint",
+    "starship": "provider_fingerprint",
+    "providerInstallationsChanged": false
+  },
+  "starshipGraphicalAcceptance": "unrun",
+  "operatorVisualFocusAcceptance": "pending"
+}

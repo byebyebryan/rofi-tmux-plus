@@ -71,5 +71,5 @@ are inspected. Warm frame p95 is 95.39 ms; one owned refresh notice clears in
 318.60 ms, 9.68 ms after the service terminal ticket. Cleanup restores prior
 focus. This retains the timing limits above and claims no Starship graphical run.
 The matching pair is now Observer 0.2.0a1 / Plus 0.8.0a1; the
-[managed operations record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-boundary-operations.md)
+[managed operations record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/boundary-implementation.md)
 owns deployed byte, service, rollback and session-preservation evidence.

@@ -257,4 +257,4 @@ artifact and launcher route for rollback.
 - [Current product and interaction design](DESIGN.md)
 - [Public Tmux Session v1 contract](TMUX_SESSION_V1.md)
 - [Agent Plus remembered context and initial selection design](../../rofi-agent-plus/docs/agent-plus-picker-navigation-plan.md)
-- [Managed Rofi Plus deployment ledger](../../../.local/share/chezmoi/docs/rofi-plus-status.md)
+- [Managed Rofi Plus deployment ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md)

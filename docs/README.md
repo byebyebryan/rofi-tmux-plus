@@ -1,8 +1,7 @@
 # Tmux Plus documentation
 
 Start with the [project overview](../README.md) and
-[current product/interaction design](DESIGN.md). Recorded current selection,
-2026-10-10: **Plus 0.12.0a2 / Observer 0.6.0a2 / Mesh 0.1.0a7** on Snap and Starship.
+[current product/interaction design](DESIGN.md). Current selections are owned by [dotfiles deployments/tmux-observer.json](https://github.com/byebyebryan/dotfiles/blob/main/deployments/tmux-observer.json); artifact and release evidence remain independent.
 
 ## Current guidance
 
@@ -15,7 +14,7 @@ Start with the [project overview](../README.md) and
 | [Observer boundaries](observer-boundaries.md) | Consumer responsibilities and extraction history |
 | [Observer runtime architecture](https://github.com/byebyebryan/tmux-observer/blob/main/docs/runtime-architecture.md) | Core, owner, Mesh, desktop, action and UI ownership |
 | [Host Mesh v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md) | Public fresh/lifecycle route contract |
-| [Managed operations](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md) | Installed tuple, source pins, scoped recovery and rollback |
+| [Managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md) | Installed tuple, source pins, scoped recovery and rollback |
 
 The [selected artifact evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)
 owns native, headless, resource/capacity and installed recovery/rollback acceptance.

@@ -60,5 +60,5 @@ Installed-byte, owner/reader restart, paired rollback/reselection and full
 reference action checks pass. Final native/fresh/prepared parity is nine Snap
 and ten Starship sessions from either endpoint. Ordinary references,
 generations, hooks and unrelated Agent/Kitty controls are preserved. The
-[managed operations record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-fleet-performance-operations.md)
+[managed operations record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/fleet-performance-design.md)
 retains the deployment evidence separately.

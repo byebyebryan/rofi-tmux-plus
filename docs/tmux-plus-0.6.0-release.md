@@ -29,7 +29,7 @@ dirty working checkout is preserved by using a separate published chezmoi
 checkout for scoped application.
 
 Exact source, managed, installed, CI, and desktop results are recorded in the
-[current deployment ledger](https://github.com/byebyebryan/dotfiles/blob/main/docs/rofi-plus-status.md).
+[current deployment ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md).
 The previous archive is source `5b02f84fc0e18215426c652acfa942cdbae4cbcb`
 (`0.5.1`), SHA-256
 `03b61a1ef4a948396520b81118e7121b452878a3405c2868fca2ad39df297f67`.

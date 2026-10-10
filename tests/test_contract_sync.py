@@ -108,7 +108,7 @@ class ContractSyncTests(unittest.TestCase):
                 text=True,
                 env=environment,
             ).stdout.strip()
-            self.git(source, "update-ref", "refs/heads/main", commit)
+            self.git(source, "update-ref", "HEAD", commit)
             result = self.run_sync(source, target)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("does not descend", result.stderr)

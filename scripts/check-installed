@@ -1,0 +1,2089 @@
+#!/usr/bin/env python3
+"""Owner-scoped installed contract checks for rofi-tmux-plus."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import secrets
+import shutil
+import subprocess
+import sys
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+COMMAND_NAMES = ("rofi-ssh-plus", "rofi-tmux-plus", "rofi-agent-plus")
+COMMAND_TIMEOUT_SECONDS = 10
+AGENT_REFRESH_TIMEOUT_SECONDS = 30
+AGENT_SNAPSHOT_VERSION = 4
+AGENT_CONTRACT_CAPABILITY = "host-mesh-v1+tmux-session-v1"
+AGENT_REFRESH_OUTCOMES = {"complete", "partial", "failed"}
+AGENT_OBSERVATION_STAGES = ("codex", "claude", "opencode", "activity", "tmux")
+AGENT_OBSERVATION_OUTCOMES = {"ok", "failed", "unknown"}
+AGENT_SOURCE_OBSERVATIONS = {"current", "retained", "activity-only"}
+HISTORY_MAX_BYTES = 1_000_000
+HOST_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
+SESSION_ID_RE = re.compile(r"\$[0-9]+\Z")
+MAX_DIAGNOSTIC_LENGTH = 400
+MAX_REFERENCE_TEXT_LENGTH = 1024
+SESSION_NAME_PREFIX = "rofi-plus-accept-"
+SESSION_NAME_MAX_LENGTH = 128
+ROFI_CALLBACK_VARS = ("ROFI_RETV", "ROFI_INFO", "ROFI_INPUT", "ROFI_DATA", "ROFI_OUTSIDE")
+COMMAND_EXTENSION_DIRS = {
+    "rofi-ssh-plus": "ssh-plus",
+    "rofi-tmux-plus": "tmux-plus",
+    "rofi-agent-plus": "agent-plus",
+}
+
+
+CommandRunner = Callable[[str, Sequence[str], Mapping[str, str]], subprocess.CompletedProcess[str]]
+
+
+OWNER_COMMAND = "rofi-tmux-plus"
+
+
+class CheckError(RuntimeError):
+    """A bounded, user-facing acceptance-gate failure."""
+
+
+class LifecycleSafetyError(CheckError):
+    """A lifecycle host may have been left in an uncertain state."""
+
+
+@dataclass(frozen=True)
+class SessionReference:
+    """The complete stable identity required by Tmux Session v1."""
+
+    host_id: str
+    server_generation: str
+    session_id: str
+    created_at: int
+
+
+@dataclass(frozen=True)
+class SessionRecord:
+    """A stable session identity together with its confirmed name."""
+
+    reference: SessionReference
+    name: str
+
+
+@dataclass(frozen=True)
+class HistorySnapshot:
+    """Semantic SSH usage history, with missing state kept distinct."""
+
+    present: bool
+    semantic: str | None
+
+
+def _compact(value: object) -> str:
+    text = " ".join(str(value).split())
+    return text[:MAX_DIAGNOSTIC_LENGTH] or "no diagnostic"
+
+
+def _safe_host_id(value: object) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) > SESSION_NAME_MAX_LENGTH
+        or not HOST_ID_RE.fullmatch(value)
+    ):
+        raise CheckError("Host Mesh contains an invalid host ID")
+    return value
+
+
+def _safe_token(value: object, label: str, *, maximum: int) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > maximum
+        or value.strip() != value
+        or any(not char.isprintable() or char.isspace() for char in value)
+    ):
+        raise CheckError(f"{label} is missing or contains unsafe text")
+    return value
+
+
+def _safe_name(value: object) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > SESSION_NAME_MAX_LENGTH
+        or any(not char.isprintable() for char in value)
+    ):
+        raise CheckError("Tmux session name is missing or contains unsafe text")
+    return value
+
+
+def _safe_revision(value: object) -> str:
+    try:
+        return _safe_token(value, "Host Mesh meshRevision", maximum=MAX_REFERENCE_TEXT_LENGTH)
+    except CheckError as error:
+        raise CheckError("Host Mesh has no safe nonempty meshRevision") from error
+
+
+def _history_path() -> Path:
+    state_home = os.environ.get("XDG_STATE_HOME") or "~/.local/state"
+    return Path(state_home).expanduser() / "rofi-ssh-plus" / "history.json"
+
+
+def _validate_history_payload(payload: object) -> None:
+    if not isinstance(payload, Mapping) or payload.get("version") != 1:
+        raise CheckError("SSH usage history is not version 1 JSON")
+    hosts = payload.get("hosts")
+    if not isinstance(hosts, list):
+        raise CheckError("SSH usage history has no hosts list")
+    seen: set[str] = set()
+    for raw_host in hosts:
+        if not isinstance(raw_host, Mapping):
+            raise CheckError("SSH usage history contains a malformed host")
+        host = raw_host.get("host")
+        if (
+            not isinstance(host, str)
+            or not host
+            or len(host) > MAX_REFERENCE_TEXT_LENGTH
+            or host.strip() != host
+            or host.startswith("-")
+            or any(not char.isprintable() or char.isspace() for char in host)
+        ):
+            raise CheckError("SSH usage history contains an unsafe host")
+        folded = host.casefold()
+        if folded in seen:
+            raise CheckError("SSH usage history contains duplicate hosts")
+        seen.add(folded)
+        count = raw_host.get("count")
+        if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+            raise CheckError("SSH usage history contains an invalid count")
+        last_connected = raw_host.get("lastConnected")
+        if (
+            isinstance(last_connected, bool)
+            or not isinstance(last_connected, int)
+            or last_connected < 0
+        ):
+            raise CheckError("SSH usage history contains an invalid lastConnected")
+
+
+def _history_snapshot(path: Path | None = None) -> HistorySnapshot:
+    path = path or _history_path()
+    try:
+        if path.stat().st_size > HISTORY_MAX_BYTES:
+            raise CheckError("SSH usage history exceeds the bounded snapshot size")
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return HistorySnapshot(False, None)
+    except CheckError:
+        raise
+    except (OSError, UnicodeError) as error:
+        raise CheckError(f"could not read SSH usage history: {_compact(error)}") from error
+    if len(text.encode("utf-8")) > HISTORY_MAX_BYTES:
+        raise CheckError("SSH usage history exceeds the bounded snapshot size")
+    try:
+        payload = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError) as error:
+        raise CheckError(f"SSH usage history is not valid JSON: {_compact(error)}") from error
+    _validate_history_payload(payload)
+    # ``sortMode`` is a schema-v1 compatibility field, not durable user data.
+    # Normalize it for the semantic history guard so the first picker render
+    # may rewrite legacy/missing/invalid values to recency without appearing
+    # to mutate usage records.
+    semantic_payload = dict(payload)
+    semantic_payload["sortMode"] = "recency"
+    try:
+        semantic = json.dumps(
+            semantic_payload,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError) as error:
+        raise CheckError(f"SSH usage history is not canonical JSON: {_compact(error)}") from error
+    return HistorySnapshot(True, semantic)
+
+
+def _assert_history_unchanged(before: HistorySnapshot, path: Path | None = None) -> None:
+    after = _history_snapshot(path)
+    if after != before:
+        before_state = "present" if before.present else "missing"
+        after_state = "present" if after.present else "missing"
+        raise CheckError(
+            f"SSH usage history changed during acceptance gate ({before_state} -> {after_state})"
+        )
+
+
+def _reference_key(reference: SessionReference) -> tuple[str, str, str, int]:
+    return (
+        reference.host_id.casefold(),
+        reference.server_generation,
+        reference.session_id,
+        reference.created_at,
+    )
+
+
+def _reference_text(reference: SessionReference) -> str:
+    return _compact(
+        ":".join(
+            (
+                reference.host_id,
+                reference.server_generation,
+                reference.session_id,
+                str(reference.created_at),
+            )
+        )
+    )
+
+
+def _parse_reference(value: object, expected_host: str) -> SessionReference:
+    if not isinstance(value, Mapping):
+        raise CheckError("Tmux response omitted a complete stable reference")
+    host_id = _safe_host_id(value.get("hostId"))
+    if host_id.casefold() != expected_host.casefold():
+        raise CheckError("Tmux stable reference host does not match the requested host")
+    server_generation = _safe_token(
+        value.get("serverGeneration"),
+        "Tmux serverGeneration",
+        maximum=MAX_REFERENCE_TEXT_LENGTH,
+    )
+    session_id = value.get("sessionId")
+    if (
+        not isinstance(session_id, str)
+        or len(session_id) > 128
+        or not SESSION_ID_RE.fullmatch(session_id)
+    ):
+        raise CheckError("Tmux sessionId is missing or unsafe")
+    created_at = value.get("createdAt")
+    if (
+        isinstance(created_at, bool)
+        or not isinstance(created_at, int)
+        or not 0 <= created_at <= 2**63 - 1
+    ):
+        raise CheckError("Tmux createdAt is missing or unsafe")
+    return SessionReference(host_id, server_generation, session_id, created_at)
+
+
+def _resolve(name: str) -> str:
+    found = shutil.which(name)
+    if found is None:
+        raise CheckError(f"{name} is not installed on PATH")
+    path = Path(found)
+    if not path.is_absolute():
+        raise CheckError(f"{name} did not resolve to an absolute executable path")
+    try:
+        target = path.resolve(strict=True)
+    except OSError as error:
+        raise CheckError(
+            f"{name} did not resolve to an installed target: {_compact(error)}"
+        ) from error
+    if name == "rofi-ssh-plus" and target == Path.home() / ".local/bin/rofi-ssh-plus":
+        expected = '#!/bin/sh\n# Chezmoi pins the shared authority independently of the picker.\nexport PYTHONPATH="$HOME/.local/share/mesh-plus/python${PYTHONPATH:+:$PYTHONPATH}"\nexec "$HOME/.local/share/rofi/extensions/ssh-plus/bin/rofi-ssh-plus" "$@"\n'
+        if not target.is_file() or not os.access(target, os.X_OK) or target.read_text() != expected:
+            raise CheckError("rofi-ssh-plus managed authority wrapper is invalid")
+        return str(target)
+    extension = COMMAND_EXTENSION_DIRS[name]
+    extension_root = Path.home() / ".local" / "share" / "rofi" / "extensions" / extension
+    try:
+        target.relative_to(extension_root.resolve(strict=True))
+    except (OSError, ValueError) as error:
+        raise CheckError(f"{name} resolved outside its installed extension ({target})") from error
+    if not target.is_file() or not os.access(target, os.X_OK):
+        raise CheckError(f"{name} did not resolve to an executable installed target")
+    return str(target)
+
+
+def _clean_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    for name in ROFI_CALLBACK_VARS:
+        environment.pop(name, None)
+    return environment
+
+
+def _run(
+    executable: str,
+    args: Sequence[str],
+    *,
+    environment: Mapping[str, str],
+    timeout: float = COMMAND_TIMEOUT_SECONDS,
+) -> subprocess.CompletedProcess[str]:
+    argv = [executable, *args]
+    try:
+        return subprocess.run(
+            argv,
+            env=dict(environment),
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise CheckError(f"{Path(executable).name} timed out after {timeout:g}s") from error
+    except OSError as error:
+        raise CheckError(f"could not run {Path(executable).name}: {_compact(error)}") from error
+
+
+def _invoke(
+    executable: str,
+    args: Sequence[str],
+    *,
+    environment: Mapping[str, str],
+    runner: CommandRunner | None = None,
+    timeout: float = COMMAND_TIMEOUT_SECONDS,
+) -> subprocess.CompletedProcess[str]:
+    if runner is None:
+        return _run(executable, args, environment=environment, timeout=timeout)
+    try:
+        result = runner(executable, tuple(args), environment)
+    except CheckError:
+        raise
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise CheckError(f"could not run {Path(executable).name}: {_compact(error)}") from error
+    if not isinstance(result, subprocess.CompletedProcess):
+        raise CheckError("command runner returned an invalid result")
+    return result
+
+
+def _require_success(
+    executable: str,
+    args: Sequence[str],
+    *,
+    environment: Mapping[str, str],
+    runner: CommandRunner | None = None,
+    timeout: float = COMMAND_TIMEOUT_SECONDS,
+) -> subprocess.CompletedProcess[str]:
+    result = _invoke(
+        executable,
+        args,
+        environment=environment,
+        runner=runner,
+        timeout=timeout,
+    )
+    if result.returncode != 0:
+        diagnostic = result.stderr or result.stdout
+        raise CheckError(
+            f"{Path(executable).name} exited {result.returncode}: {_compact(diagnostic)}"
+        )
+    return result
+
+
+def _json_document(result: subprocess.CompletedProcess[str], label: str) -> object:
+    try:
+        value = json.loads(result.stdout)
+    except (TypeError, ValueError, json.JSONDecodeError) as error:
+        raise CheckError(f"{label} did not emit one JSON document: {_compact(error)}") from error
+    return value
+
+
+def _mesh_hosts(payload: object) -> tuple[tuple[str, ...], str, str]:
+    if not isinstance(payload, Mapping) or payload.get("schemaVersion") != 1:
+        raise CheckError("Host Mesh response is not schemaVersion 1")
+    revision = _safe_revision(payload.get("meshRevision"))
+    local_id = _safe_host_id(payload.get("localHostId"))
+    raw_hosts = payload.get("hosts")
+    if not isinstance(raw_hosts, list) or not raw_hosts:
+        raise CheckError("Host Mesh response has no advertised hosts")
+
+    host_ids: set[str] = set()
+    local_hosts: list[str] = []
+    for raw_host in raw_hosts:
+        if not isinstance(raw_host, Mapping):
+            raise CheckError("Host Mesh response contains a malformed host")
+        host_id = _safe_host_id(raw_host.get("id"))
+        folded_id = host_id.casefold()
+        if folded_id in host_ids:
+            raise CheckError("Host Mesh response contains duplicate host IDs")
+        host_ids.add(folded_id)
+        if raw_host.get("local") is True:
+            local_hosts.append(host_id)
+    if len(local_hosts) != 1 or local_hosts[0].casefold() != local_id.casefold():
+        raise CheckError("Host Mesh response must have exactly one local host matching localHostId")
+    return (
+        tuple(raw_host["id"] for raw_host in raw_hosts if isinstance(raw_host, Mapping)),
+        local_id,
+        revision,
+    )
+
+
+def _check_mesh(
+    ssh_executable: str, environment: Mapping[str, str]
+) -> tuple[tuple[str, ...], str, str]:
+    result = _require_success(
+        ssh_executable,
+        ("mesh", "list", "--json"),
+        environment=environment,
+    )
+    payload = _json_document(result, "Host Mesh list")
+    return _mesh_hosts(payload)
+
+
+def _validate_rofi_protocol(output: object, label: str) -> None:
+    if not isinstance(output, str) or not output:
+        raise CheckError(f"{label} emitted empty Rofi script output")
+    if not re.search(r"\x00[^\x00\r\n]{1,128}\x1f", output):
+        raise CheckError(f"{label} emitted no valid NUL protocol header")
+
+
+def _rofi_header(output: str, key: str) -> str | None:
+    marker = f"\x00{key}\x1f"
+    offset = output.find(marker)
+    if offset < 0:
+        return None
+    value = output[offset + len(marker) :]
+    boundaries = [
+        index for separator in ("\n", "\t", "\x1e") if (index := value.find(separator)) >= 0
+    ]
+    return value[: min(boundaries)] if boundaries else value
+
+
+def _agent_default_selection(output: str) -> str:
+    """The leading active-group row must not displace a conversation."""
+    for match in re.finditer(r"\x00info\x1f([^\x00\x1f\t\r\n\x1e]+)", output):
+        try:
+            payload = json.loads(match.group(1))
+        except (ValueError, TypeError):
+            continue
+        if (
+            isinstance(payload, Mapping)
+            and isinstance(payload.get("kind"), str)
+            and payload.get("kind") in {"codex", "claude", "opencode"}
+            and isinstance(payload.get("id"), str)
+        ):
+            return "1"
+    return "0"
+
+
+def _render_callback(
+    executable: str,
+    retv: int,
+    environment: Mapping[str, str],
+    *,
+    data: str | None = None,
+    info: str | None = None,
+    runner: CommandRunner | None = None,
+) -> str:
+    callback_environment = dict(environment)
+    for name in ROFI_CALLBACK_VARS:
+        callback_environment.pop(name, None)
+    callback_environment["ROFI_RETV"] = str(retv)
+    if data is not None:
+        callback_environment["ROFI_DATA"] = data
+    if info is not None:
+        callback_environment["ROFI_INFO"] = info
+    result = _require_success(
+        executable,
+        (),
+        environment=callback_environment,
+        runner=runner,
+    )
+    combined = f"{result.stdout}\n{result.stderr}".casefold()
+    if "invalid_input" in combined:
+        raise CheckError(f"{Path(executable).name} callback reported invalid_input")
+    _validate_rofi_protocol(result.stdout, f"{Path(executable).name} ROFI_RETV={retv}")
+    return result.stdout
+
+
+def _check_view_navigation(
+    name: str,
+    executable: str,
+    environment: Mapping[str, str],
+    *,
+    runner: CommandRunner | None = None,
+) -> None:
+    initial = _render_callback(executable, 0, environment, runner=runner)
+    initial_prompt = _rofi_header(initial, "prompt")
+    if not initial_prompt:
+        raise CheckError(f"{name} initial render omitted its prompt")
+    initial_data = _rofi_header(initial, "data")
+    if name == "rofi-tmux-plus" and not initial_data:
+        raise CheckError("rofi-tmux-plus initial render omitted its snapshot continuation")
+
+    right = _render_callback(
+        executable,
+        11,
+        environment,
+        data=initial_data,
+        runner=runner,
+    )
+    right_data = _rofi_header(right, "data")
+    left = _render_callback(
+        executable,
+        12,
+        environment,
+        data=right_data,
+        runner=runner,
+    )
+
+    right_prompt = _rofi_header(right, "prompt")
+    left_prompt = _rofi_header(left, "prompt")
+    if not right_prompt or right_prompt == initial_prompt:
+        raise CheckError(f"{name} Right did not enter a different peer view")
+    if left_prompt != initial_prompt:
+        raise CheckError(f"{name} Left did not return to its initial peer view")
+    for direction, output in (("Right", right), ("Left", left)):
+        if _rofi_header(output, "keep-filter") != "true":
+            raise CheckError(f"{name} {direction} did not preserve the filter")
+        if name == "rofi-agent-plus":
+            if _rofi_header(output, "keep-selection") != "true":
+                raise CheckError(f"{name} {direction} did not re-arm selection preservation")
+            if _rofi_header(output, "new-selection") != _agent_default_selection(output):
+                raise CheckError(f"{name} {direction} did not select its first conversation")
+        else:
+            if _rofi_header(output, "keep-selection") != "true":
+                raise CheckError(f"{name} {direction} did not re-arm selection preservation")
+            if _rofi_header(output, "new-selection") != "0":
+                raise CheckError(f"{name} {direction} did not reset selection explicitly")
+
+
+def _expected_action_line(name: str, action: str) -> str:
+    order = {
+        "rofi-ssh-plus": ("Connect", "Forget recent history"),
+        "rofi-tmux-plus": ("Open", "Kill"),
+        "rofi-agent-plus": ("Resume", "Close", "New"),
+    }[name]
+    labels = []
+    for candidate in order:
+        label = candidate
+        if candidate == action:
+            color = (
+                "#ef5350"
+                if candidate == "Kill"
+                else "#ffb74d"
+                if candidate == "Forget recent history"
+                else "#42a5f5"
+            )
+            label = f'<span foreground="{color}" weight="bold">[{label}]</span>'
+        labels.append(label)
+    hint = "Tab: Cycle  │  Alt+A: All" if name == "rofi-agent-plus" else "Tab: Cycle actions"
+    return f"Enter: {' · '.join(labels)}  │  {hint}"
+
+
+def _check_action_cycle(
+    name: str,
+    executable: str,
+    environment: Mapping[str, str],
+    *,
+    runner: CommandRunner | None = None,
+) -> None:
+    labels = {
+        "rofi-tmux-plus": ("Open", "Kill"),
+        "rofi-agent-plus": ("Resume", "Close", "New"),
+    }
+    order = labels[name]
+    primary, secondary = order[:2]
+    initial = _render_callback(executable, 0, environment, runner=runner)
+    selected = _render_callback(
+        executable, 16, environment, data=_rofi_header(initial, "data"), runner=runner
+    )
+    restored = _render_callback(
+        executable, 17, environment, data=_rofi_header(selected, "data"), runner=runner
+    )
+    initial_prompt = _rofi_header(initial, "prompt")
+    if not initial_prompt:
+        raise CheckError(f"{name} did not render its host-scope prompt")
+    observations = [
+        ("initial", initial, primary),
+        ("Tab", selected, secondary),
+        ("Shift+Tab", restored, primary),
+    ]
+    if len(order) > 2:
+        previous = restored
+        for direction, retv, actions in (
+            ("Tab", 16, (*order[1:], primary)),
+            ("Shift+Tab", 17, (*reversed(order[1:]), primary)),
+        ):
+            for action in actions:
+                previous = _render_callback(
+                    executable,
+                    retv,
+                    environment,
+                    data=_rofi_header(previous, "data"),
+                    runner=runner,
+                )
+                observations.append((direction, previous, action))
+    for direction, output, action in observations:
+        if _rofi_header(output, "prompt") != initial_prompt:
+            raise CheckError(f"{name} {direction} changed the host-scope prompt")
+        message = _rofi_header(output, "message") or ""
+        if not message.startswith(_expected_action_line(name, action)):
+            raise CheckError(f"{name} {direction} did not display its action line")
+        if "Shift+Tab:" in message:
+            raise CheckError(f"{name} {direction} repeated the action hint")
+    for direction, output, _action in observations[1:]:
+        if _rofi_header(output, "keep-filter") != "true":
+            raise CheckError(f"{name} {direction} did not preserve the filter")
+        if _rofi_header(output, "keep-selection") != "true":
+            raise CheckError(f"{name} {direction} did not preserve selection")
+
+
+def _inventory_records(
+    tmux_executable: str,
+    host_id: str,
+    revision: str,
+    environment: Mapping[str, str],
+    *,
+    runner: CommandRunner | None = None,
+) -> tuple[SessionRecord, ...]:
+    result = _require_success(
+        tmux_executable,
+        (
+            "inventory",
+            "--json",
+            "--host",
+            host_id,
+            "--mesh-revision",
+            revision,
+        ),
+        environment=environment,
+        runner=runner,
+    )
+    payload = _json_document(result, "Tmux inventory")
+    if not isinstance(payload, Mapping) or payload.get("schemaVersion") != 1:
+        raise CheckError("Tmux inventory is not schemaVersion 1")
+    inventory_revision = _safe_revision(payload.get("meshRevision"))
+    if inventory_revision != revision:
+        raise CheckError("Tmux inventory has a different meshRevision")
+    raw_hosts = payload.get("hosts")
+    if not isinstance(raw_hosts, list):
+        raise CheckError("Tmux inventory has no hosts list")
+    matches: list[Mapping[str, object]] = []
+    host_ids: set[str] = set()
+    for raw_host in raw_hosts:
+        if not isinstance(raw_host, Mapping):
+            raise CheckError("Tmux inventory contains a malformed host")
+        returned_host_id = _safe_host_id(raw_host.get("hostId"))
+        folded_host_id = returned_host_id.casefold()
+        if folded_host_id in host_ids:
+            raise CheckError("Tmux inventory contains duplicate host IDs")
+        host_ids.add(folded_host_id)
+        if folded_host_id == host_id.casefold():
+            matches.append(raw_host)
+    if len(matches) != 1:
+        raise CheckError("Tmux inventory must contain exactly one matching host")
+    host = matches[0]
+    if host.get("status") != "ok" or not isinstance(host.get("sessions"), list):
+        raise CheckError("Tmux inventory is not an authoritative ok sessions list")
+    records: list[SessionRecord] = []
+    references: set[tuple[str, str, str, int]] = set()
+    for raw_session in host["sessions"]:
+        if not isinstance(raw_session, Mapping):
+            raise CheckError("Tmux inventory contains a malformed session")
+        reference = _parse_reference(raw_session, host_id)
+        key = _reference_key(reference)
+        if key in references:
+            raise CheckError("Tmux inventory contains duplicate stable references")
+        references.add(key)
+        records.append(SessionRecord(reference, _safe_name(raw_session.get("name"))))
+    return tuple(records)
+
+
+def _check_inventory(
+    tmux_executable: str,
+    local_id: str,
+    revision: str,
+    environment: Mapping[str, str],
+) -> None:
+    _inventory_records(tmux_executable, local_id, revision, environment)
+
+
+def _success_payload(result: subprocess.CompletedProcess[str], label: str) -> Mapping[str, object]:
+    if result.returncode != 0:
+        diagnostic = result.stderr or result.stdout
+        raise CheckError(f"{label} exited {result.returncode}: {_compact(diagnostic)}")
+    payload = _json_document(result, label)
+    if (
+        not isinstance(payload, Mapping)
+        or payload.get("schemaVersion") != 1
+        or payload.get("ok") is not True
+    ):
+        raise CheckError(f"{label} did not return a schemaVersion 1 success")
+    return payload
+
+
+def _check_echoed_revision(payload: Mapping[str, object], revision: str, label: str) -> None:
+    if "meshRevision" not in payload or payload["meshRevision"] is None:
+        raise CheckError(f"{label} omitted its meshRevision echo")
+    echoed = _safe_revision(payload["meshRevision"])
+    if echoed != revision:
+        raise CheckError(f"{label} echoed a different meshRevision")
+
+
+def _accepted_session(
+    payload: Mapping[str, object],
+    host_id: str,
+    expected_name: str,
+    revision: str,
+    label: str,
+) -> SessionRecord:
+    _check_echoed_revision(payload, revision, label)
+    session = payload.get("session")
+    reference = _parse_reference(session, host_id)
+    name = _safe_name(session.get("name") if isinstance(session, Mapping) else None)
+    if name != expected_name:
+        raise CheckError(f"{label} returned an unexpected session name")
+    return SessionRecord(reference, name)
+
+
+def _accepted_kill(
+    payload: Mapping[str, object],
+    expected: SessionReference,
+    revision: str,
+    label: str,
+) -> None:
+    _check_echoed_revision(payload, revision, label)
+    reference = _parse_reference(payload.get("reference"), expected.host_id)
+    if _reference_key(reference) != _reference_key(expected):
+        raise CheckError(f"{label} returned a different stable reference")
+
+
+def _error_payload(
+    result: subprocess.CompletedProcess[str], label: str, expected_code: str
+) -> Mapping[str, object]:
+    if result.returncode == 0:
+        raise CheckError(f"{label} unexpectedly succeeded")
+    payload = _json_document(result, label)
+    if not isinstance(payload, Mapping) or payload.get("schemaVersion") != 1:
+        raise CheckError(f"{label} did not return a schemaVersion 1 error")
+    error = payload.get("error")
+    if payload.get("ok") is not False or not isinstance(error, Mapping):
+        raise CheckError(f"{label} did not return a typed error envelope")
+    code = error.get("code")
+    if code != expected_code:
+        message = _compact(error.get("message"))
+        raise CheckError(
+            f"{label} returned error code {_compact(code)}, expected {expected_code}: {message}"
+        )
+    return payload
+
+
+def _reference_args(reference: SessionReference) -> tuple[str, ...]:
+    return (
+        "--server-generation",
+        reference.server_generation,
+        "--session-id",
+        reference.session_id,
+        "--created-at",
+        str(reference.created_at),
+    )
+
+
+def _random_session_name() -> str:
+    return f"{SESSION_NAME_PREFIX}{secrets.token_hex(16)}"
+
+
+class LifecycleGate:
+    """Run the exact-reference lifecycle against every advertised host."""
+
+    def __init__(
+        self,
+        tmux_executable: str,
+        environment: Mapping[str, str],
+        *,
+        runner: CommandRunner | None = None,
+        name_factory: Callable[[], str] = _random_session_name,
+        emit: Callable[[str], None] = print,
+    ) -> None:
+        self.tmux_executable = tmux_executable
+        self.environment = environment
+        self.runner = runner
+        self.name_factory = name_factory
+        self.emit = emit
+
+    def _call(self, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
+        return _invoke(
+            self.tmux_executable,
+            args,
+            environment=self.environment,
+            runner=self.runner,
+        )
+
+    @staticmethod
+    def _lifecycle_args(command: str, host_id: str, revision: str) -> list[str]:
+        return [command, "--json", "--host", host_id, "--mesh-revision", revision]
+
+    def _inventory(self, host_id: str, revision: str) -> tuple[SessionRecord, ...]:
+        return _inventory_records(
+            self.tmux_executable,
+            host_id,
+            revision,
+            self.environment,
+            runner=self.runner,
+        )
+
+    def _create(self, host_id: str, revision: str, name: str) -> Mapping[str, object]:
+        args = self._lifecycle_args("create", host_id, revision)
+        args.extend(("--name", name))
+        return _success_payload(self._call(args), "Tmux create")
+
+    def _duplicate_create(self, host_id: str, revision: str, name: str) -> None:
+        args = self._lifecycle_args("create", host_id, revision)
+        args.extend(("--name", name))
+        _error_payload(self._call(args), "duplicate Tmux create", "session_exists")
+
+    def _rename(
+        self,
+        host_id: str,
+        revision: str,
+        reference: SessionReference,
+        old_name: str,
+        new_name: str,
+    ) -> Mapping[str, object]:
+        args = self._lifecycle_args("rename", host_id, revision)
+        args.extend((*_reference_args(reference), "--expected-name", old_name, "--name", new_name))
+        return _success_payload(self._call(args), "Tmux rename")
+
+    def _expect_stale_kill(
+        self,
+        host_id: str,
+        revision: str,
+        reference: SessionReference,
+        old_name: str,
+    ) -> None:
+        args = self._lifecycle_args("kill", host_id, revision)
+        args.extend((*_reference_args(reference), "--expected-name", old_name))
+        _error_payload(self._call(args), "stale Tmux kill", "stale_session")
+
+    def _kill(
+        self,
+        host_id: str,
+        revision: str,
+        reference: SessionReference,
+        expected_name: str,
+        *,
+        label: str,
+    ) -> None:
+        args = self._lifecycle_args("kill", host_id, revision)
+        args.extend((*_reference_args(reference), "--expected-name", expected_name))
+        payload = _success_payload(self._call(args), label)
+        _accepted_kill(payload, reference, revision, label)
+
+    @staticmethod
+    def _find_exact(
+        records: Sequence[SessionRecord],
+        reference: SessionReference,
+        expected_name: str,
+        label: str,
+    ) -> None:
+        matches = [
+            record
+            for record in records
+            if _reference_key(record.reference) == _reference_key(reference)
+        ]
+        if len(matches) != 1:
+            raise CheckError(f"{label} did not contain exactly one matching stable reference")
+        if matches[0].name != expected_name:
+            raise CheckError(f"{label} returned an unexpected confirmed session name")
+
+    @staticmethod
+    def _assert_absent(
+        records: Sequence[SessionRecord], reference: SessionReference, label: str
+    ) -> None:
+        if any(_reference_key(record.reference) == _reference_key(reference) for record in records):
+            raise CheckError(f"{label} still contained the killed stable reference")
+
+    @staticmethod
+    def _assert_candidate_names_absent(
+        records: Sequence[SessionRecord], candidate_names: Sequence[str], label: str
+    ) -> None:
+        candidate_set = set(candidate_names)
+        retained = [record.name for record in records if record.name in candidate_set]
+        if retained:
+            names = ",".join(sorted(set(retained)))
+            raise CheckError(f"{label} retained gate-owned candidate name(s): {names}")
+
+    @classmethod
+    def _assert_candidate_names_absent_from_baseline(
+        cls,
+        records: Sequence[SessionRecord],
+        candidate_names: Sequence[str],
+    ) -> None:
+        try:
+            cls._assert_candidate_names_absent(records, candidate_names, "baseline inventory")
+        except CheckError as error:
+            raise CheckError(
+                "generated session candidate name already existed at baseline"
+            ) from error
+
+    @staticmethod
+    def _assert_reference_not_in_baseline(
+        reference: SessionReference,
+        before: Sequence[SessionRecord],
+        label: str,
+    ) -> None:
+        if any(_reference_key(record.reference) == _reference_key(reference) for record in before):
+            raise CheckError(f"{label} returned a pre-existing stable reference")
+
+    @staticmethod
+    def _assert_preserved(
+        before: Sequence[SessionRecord],
+        after: Sequence[SessionRecord],
+        label: str,
+    ) -> None:
+        current = {_reference_key(record.reference): record for record in after}
+        for record in before:
+            found = current.get(_reference_key(record.reference))
+            if found is None:
+                raise CheckError(f"{label} omitted a pre-existing stable reference")
+            if found.name != record.name:
+                raise CheckError(f"{label} changed a pre-existing session name")
+
+    def _final_verify(
+        self,
+        host_id: str,
+        revision: str,
+        before: Sequence[SessionRecord],
+        known_references: Sequence[SessionReference],
+        candidate_names: Sequence[str],
+        *,
+        label: str,
+    ) -> None:
+        final = self._inventory(host_id, revision)
+        failures: list[str] = []
+        for disposable_reference in known_references:
+            try:
+                self._assert_absent(final, disposable_reference, label)
+            except CheckError as error:
+                failures.append(_compact(error))
+        try:
+            self._assert_candidate_names_absent(final, candidate_names, label)
+        except CheckError as error:
+            failures.append(_compact(error))
+        try:
+            self._assert_preserved(before, final, label)
+        except CheckError as error:
+            failures.append(_compact(error))
+        if failures:
+            raise CheckError("; ".join(failures))
+
+    @classmethod
+    def _candidate_records(
+        cls,
+        records: Sequence[SessionRecord],
+        before: Sequence[SessionRecord],
+        candidate_names: Sequence[str],
+    ) -> list[SessionRecord]:
+        candidate_set = set(candidate_names)
+        before_references = {_reference_key(record.reference) for record in before}
+        candidates = [
+            record
+            for record in records
+            if record.name in candidate_set
+            and _reference_key(record.reference) not in before_references
+        ]
+        conflicting = [
+            record
+            for record in records
+            if record.name in candidate_set
+            and _reference_key(record.reference) in before_references
+        ]
+        if conflicting:
+            raise LifecycleSafetyError(
+                "candidate reconciliation matched a pre-existing stable reference"
+            )
+        if len(candidates) > 1:
+            raise LifecycleSafetyError(
+                "candidate reconciliation found multiple gate-owned sessions"
+            )
+        return candidates
+
+    def _recover_create_uncertainty(
+        self,
+        host_id: str,
+        revision: str,
+        before: Sequence[SessionRecord],
+        candidate_names: Sequence[str],
+    ) -> SessionRecord | None:
+        """Find one candidate created despite an unusable create response."""
+
+        try:
+            records = self._inventory(host_id, revision)
+        except CheckError as error:
+            raise LifecycleSafetyError(
+                f"create uncertainty inventory failed: {_compact(error)}"
+            ) from error
+        candidates = self._candidate_records(records, before, candidate_names)
+        if not candidates:
+            try:
+                self._assert_candidate_names_absent(
+                    records, candidate_names, "create recovery inventory"
+                )
+                self._assert_preserved(before, records, "create recovery inventory")
+            except CheckError as error:
+                raise LifecycleSafetyError(
+                    f"create recovery verification failed: {_compact(error)}"
+                ) from error
+            return None
+        return candidates[0]
+
+    def _reconcile_rename_uncertainty(
+        self,
+        host_id: str,
+        revision: str,
+        before: Sequence[SessionRecord],
+        known_reference: SessionReference,
+        candidate_names: Sequence[str],
+    ) -> SessionRecord | None:
+        """Recover a trusted name after an uncertain remote rename."""
+
+        try:
+            records = self._inventory(host_id, revision)
+        except CheckError as error:
+            raise LifecycleSafetyError(
+                f"rename uncertainty inventory failed: {_compact(error)}"
+            ) from error
+        matches = [
+            record
+            for record in records
+            if _reference_key(record.reference) == _reference_key(known_reference)
+        ]
+        candidates = self._candidate_records(records, before, candidate_names)
+        if matches:
+            if len(matches) != 1:
+                raise LifecycleSafetyError(
+                    "rename uncertainty found multiple known stable references"
+                )
+            match = matches[0]
+            if match.name not in set(candidate_names):
+                raise LifecycleSafetyError(
+                    "rename uncertainty returned a name outside the gate candidates"
+                )
+            if len(candidates) != 1 or _reference_key(candidates[0].reference) != _reference_key(
+                known_reference
+            ):
+                raise LifecycleSafetyError(
+                    "rename uncertainty found an ambiguous candidate session"
+                )
+            return match
+        if candidates:
+            return candidates[0]
+        try:
+            self._assert_candidate_names_absent(
+                records, candidate_names, "rename reconciliation inventory"
+            )
+            self._assert_preserved(before, records, "rename reconciliation inventory")
+        except CheckError as error:
+            raise LifecycleSafetyError(
+                f"rename reconciliation verification failed: {_compact(error)}"
+            ) from error
+        return None
+
+    def _exercise_host(self, host_id: str, revision: str) -> None:
+        before = self._inventory(host_id, revision)
+        name = _safe_name(self.name_factory())
+        if not name.startswith(SESSION_NAME_PREFIX):
+            raise CheckError("generated session name has an unsafe prefix")
+        renamed_name = _safe_name(name + "-renamed")
+        candidate_names = (name, renamed_name)
+        self._assert_candidate_names_absent_from_baseline(before, candidate_names)
+        cleanup_reference: SessionReference | None = None
+        trusted_references: list[SessionReference] = []
+        created_reference: SessionReference | None = None
+        current_name = name
+        create_attempted = False
+        rename_attempted = False
+        rename_reconciled = False
+        final_verified = False
+        primary_error: CheckError | None = None
+        recovery_error: CheckError | None = None
+        recovery_uncertain = False
+        reconciliation_error: CheckError | None = None
+        cleanup_error: CheckError | None = None
+        final_error: CheckError | None = None
+
+        try:
+            create_attempted = True
+            create_payload = self._create(host_id, revision, name)
+            created = _accepted_session(create_payload, host_id, name, revision, "Tmux create")
+            self._assert_reference_not_in_baseline(
+                created.reference,
+                before,
+                "Tmux create",
+            )
+            self._find_exact(
+                self._inventory(host_id, revision),
+                created.reference,
+                created.name,
+                "post-create inventory",
+            )
+            created_reference = created.reference
+            trusted_references.append(created.reference)
+            cleanup_reference = created.reference
+            current_name = created.name
+            self._duplicate_create(host_id, revision, created.name)
+            self._find_exact(
+                self._inventory(host_id, revision),
+                created.reference,
+                created.name,
+                "duplicate-create inventory",
+            )
+            rename_attempted = True
+            rename_payload = self._rename(
+                host_id,
+                revision,
+                created.reference,
+                created.name,
+                renamed_name,
+            )
+            renamed = _accepted_session(
+                rename_payload,
+                host_id,
+                renamed_name,
+                revision,
+                "Tmux rename",
+            )
+            if created_reference is None or _reference_key(renamed.reference) != _reference_key(
+                created_reference
+            ):
+                raise CheckError("Tmux rename changed the stable reference")
+            self._find_exact(
+                self._inventory(host_id, revision),
+                created_reference,
+                renamed.name,
+                "post-rename inventory",
+            )
+            rename_reconciled = True
+            current_name = renamed.name
+            self._expect_stale_kill(
+                host_id,
+                revision,
+                renamed.reference,
+                created.name,
+            )
+            self._find_exact(
+                self._inventory(host_id, revision),
+                renamed.reference,
+                renamed.name,
+                "stale-kill inventory",
+            )
+            self._kill(
+                host_id,
+                revision,
+                renamed.reference,
+                renamed.name,
+                label="exact Tmux kill",
+            )
+            cleanup_reference = None
+            self._final_verify(
+                host_id,
+                revision,
+                before,
+                trusted_references,
+                candidate_names,
+                label="final inventory",
+            )
+            final_verified = True
+        except CheckError as error:
+            primary_error = error
+        except Exception as error:  # noqa: BLE001 - owned cleanup must run for every callback failure
+            primary_error = CheckError(_compact(error))
+        finally:
+            if create_attempted and not trusted_references:
+                try:
+                    recovered = self._recover_create_uncertainty(
+                        host_id,
+                        revision,
+                        before,
+                        candidate_names,
+                    )
+                    if recovered is not None:
+                        trusted_references.append(recovered.reference)
+                        cleanup_reference = recovered.reference
+                        current_name = recovered.name
+                        self._kill(
+                            host_id,
+                            revision,
+                            recovered.reference,
+                            recovered.name,
+                            label="exact create-recovery Tmux kill",
+                        )
+                        cleanup_reference = None
+                except LifecycleSafetyError as error:
+                    recovery_error = error
+                    recovery_uncertain = True
+                except CheckError as error:
+                    recovery_error = error
+            if rename_attempted and created_reference is not None and not rename_reconciled:
+                try:
+                    reconciled = self._reconcile_rename_uncertainty(
+                        host_id,
+                        revision,
+                        before,
+                        created_reference,
+                        candidate_names,
+                    )
+                    if reconciled is not None:
+                        if not any(
+                            _reference_key(reference) == _reference_key(reconciled.reference)
+                            for reference in trusted_references
+                        ):
+                            trusted_references.append(reconciled.reference)
+                        cleanup_reference = reconciled.reference
+                        current_name = reconciled.name
+                    else:
+                        # Authoritative absence is enough to prove no exact
+                        # cleanup remains possible; final verification still
+                        # checks every trusted reference and candidate name.
+                        cleanup_reference = None
+                    rename_reconciled = True
+                except LifecycleSafetyError as error:
+                    reconciliation_error = error
+                    recovery_uncertain = True
+                except CheckError as error:
+                    reconciliation_error = error
+            if cleanup_reference is not None:
+                try:
+                    self._kill(
+                        host_id,
+                        revision,
+                        cleanup_reference,
+                        current_name,
+                        label="exact cleanup Tmux kill",
+                    )
+                    cleanup_reference = None
+                except CheckError as error:
+                    cleanup_error = error
+                except Exception as error:  # noqa: BLE001 - owned cleanup must run for every callback failure
+                    cleanup_error = CheckError(_compact(error))
+            if create_attempted and not final_verified:
+                try:
+                    self._final_verify(
+                        host_id,
+                        revision,
+                        before,
+                        trusted_references,
+                        candidate_names,
+                        label="post-failure final inventory",
+                    )
+                    final_verified = True
+                except CheckError as error:
+                    final_error = error
+                except Exception as error:  # noqa: BLE001 - owned cleanup must run for every callback failure
+                    final_error = CheckError(_compact(error))
+
+        failures: list[str] = []
+        if primary_error is not None:
+            failures.append(f"primary failure: {_compact(primary_error)}")
+        if recovery_error is not None:
+            failures.append(f"create recovery failure: {_compact(recovery_error)}")
+        if reconciliation_error is not None:
+            failures.append(f"rename reconciliation failure: {_compact(reconciliation_error)}")
+        if cleanup_error is not None:
+            failures.append(
+                "cleanup failure: "
+                + _compact(cleanup_error)
+                + f" (host={host_id}, name={current_name}, "
+                + f"reference={_reference_text(cleanup_reference) if cleanup_reference else 'unknown'})"
+            )
+        if final_error is not None:
+            failures.append(
+                "final verification failure: "
+                + _compact(final_error)
+                + f" (host={host_id}, name={current_name}, "
+                + f"reference={_reference_text(trusted_references[-1]) if trusted_references else 'unknown'})"
+            )
+        if failures:
+            uncertain = recovery_uncertain or final_error is not None
+            error_type = LifecycleSafetyError if uncertain else CheckError
+            raise error_type("; ".join(failures))
+
+    def run(self, host_ids: Sequence[str], revision: str) -> None:
+        self.emit(f"[check] exact-reference Tmux lifecycle across {len(host_ids)} advertised hosts")
+        failures: list[str] = []
+        for host_id in host_ids:
+            try:
+                self._exercise_host(host_id, revision)
+            except LifecycleSafetyError as error:
+                detail = f"{host_id}: {_compact(error)}"
+                self.emit(f"[error] {detail}")
+                raise LifecycleSafetyError("lifecycle gate stopped safely: " + detail) from error
+            except CheckError as error:
+                detail = f"{host_id}: {_compact(error)}"
+                failures.append(detail)
+                self.emit(f"[error] {detail}")
+            else:
+                self.emit(f"[ok] {host_id}: create/duplicate/rename/stale-kill/kill verified")
+        if failures:
+            raise CheckError("lifecycle gate failed: " + " | ".join(failures))
+
+
+def _fake_result(
+    executable: str,
+    args: Sequence[str],
+    payload: Mapping[str, object],
+    *,
+    returncode: int = 0,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(
+        [executable, *args],
+        returncode,
+        json.dumps(payload, separators=(",", ":")),
+        "",
+    )
+
+
+def _fake_arg(args: Sequence[str], name: str) -> str:
+    try:
+        index = args.index(name)
+        value = args[index + 1]
+    except (ValueError, IndexError) as error:
+        raise CheckError(f"fake command omitted {name}") from error
+    return value
+
+
+class _FakeLifecycleRunner:
+    """Scripted public-command responses used only by ``--self-test``."""
+
+    def __init__(
+        self,
+        *,
+        failure: str | None = None,
+        partial_create: bool = False,
+        incomplete_create_with_inventory: bool = False,
+        malformed_create_preexisting: bool = False,
+        baseline_ref_create: bool = False,
+        cleanup_failure: bool = False,
+        drop_existing_after_cleanup: bool = False,
+        retain_candidate: bool = False,
+        wrong_inventory_revision: bool = False,
+    ) -> None:
+        self.failure = failure
+        self.partial_create = partial_create
+        self.incomplete_create_with_inventory = incomplete_create_with_inventory
+        self.malformed_create_preexisting = malformed_create_preexisting
+        self.baseline_ref_create = baseline_ref_create
+        self.baseline_candidate_name: str | None = None
+        self.cleanup_failure = cleanup_failure
+        self.drop_existing_after_cleanup = drop_existing_after_cleanup
+        self.retain_candidate = retain_candidate
+        self.wrong_inventory_revision = wrong_inventory_revision
+        self.calls: list[tuple[str, tuple[str, ...]]] = []
+        self.kill_calls: list[tuple[str, ...]] = []
+        self.inventory_calls = 0
+        self.created: SessionRecord | None = None
+        self.duplicate_seen = False
+        self.stale_guard_seen = False
+        self.primary_failure_sent = False
+        self.existing = SessionRecord(
+            SessionReference("alpha", "tmux-v1:self-test", "$1", 10),
+            "pre-existing",
+        )
+
+    @staticmethod
+    def _session(record: SessionRecord) -> dict[str, object]:
+        return {
+            "hostId": record.reference.host_id,
+            "serverGeneration": record.reference.server_generation,
+            "sessionId": record.reference.session_id,
+            "createdAt": record.reference.created_at,
+            "name": record.name,
+        }
+
+    @staticmethod
+    def _error(code: str, message: str) -> dict[str, object]:
+        return {
+            "schemaVersion": 1,
+            "ok": False,
+            "error": {"code": code, "message": message},
+        }
+
+    def _inventory(self, executable: str, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
+        self.inventory_calls += 1
+        sessions: list[dict[str, object]] = []
+        if not (
+            self.drop_existing_after_cleanup and self.created is None and self.inventory_calls >= 5
+        ):
+            existing = self.existing
+            if self.baseline_candidate_name is not None:
+                existing = SessionRecord(
+                    existing.reference,
+                    self.baseline_candidate_name,
+                )
+            sessions.append(self._session(existing))
+        if self.created is not None:
+            sessions.append(self._session(self.created))
+        payload = {
+            "schemaVersion": 1,
+            "generatedAt": 1,
+            "meshRevision": (
+                "sha256:wrong-inventory" if self.wrong_inventory_revision else "sha256:selftest"
+            ),
+            "hosts": [{"hostId": "alpha", "status": "ok", "sessions": sessions}],
+        }
+        return _fake_result(executable, args, payload)
+
+    def __call__(
+        self,
+        executable: str,
+        args: Sequence[str],
+        environment: Mapping[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        del environment
+        tokens = tuple(args)
+        self.calls.append((executable, tokens))
+        if not tokens:
+            raise CheckError("fake lifecycle runner received an empty command")
+        command = tokens[0]
+        if command == "inventory":
+            return self._inventory(executable, tokens)
+        if command == "create":
+            name = _fake_arg(tokens, "--name")
+            if self.created is not None:
+                self.duplicate_seen = True
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("session_exists", "synthetic duplicate"),
+                    returncode=1,
+                )
+            if self.failure == "create-transport":
+                self.created = SessionRecord(
+                    SessionReference("alpha", "tmux-v1:self-test", "$2", 20),
+                    name,
+                )
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("transport_failed", "synthetic create transport failure"),
+                    returncode=75,
+                )
+            if self.malformed_create_preexisting:
+                return _fake_result(
+                    executable,
+                    tokens,
+                    {
+                        "schemaVersion": 1,
+                        "ok": True,
+                        "meshRevision": "sha256:selftest",
+                        "session": self._session(self.existing),
+                    },
+                )
+            if self.baseline_ref_create:
+                self.baseline_candidate_name = name
+                return _fake_result(
+                    executable,
+                    tokens,
+                    {
+                        "schemaVersion": 1,
+                        "ok": True,
+                        "meshRevision": "sha256:selftest",
+                        "session": self._session(SessionRecord(self.existing.reference, name)),
+                    },
+                )
+            if self.partial_create:
+                if self.incomplete_create_with_inventory:
+                    self.created = SessionRecord(
+                        SessionReference("alpha", "tmux-v1:self-test", "$2", 20),
+                        name,
+                    )
+                return _fake_result(
+                    executable,
+                    tokens,
+                    {
+                        "schemaVersion": 1,
+                        "ok": True,
+                        "meshRevision": "sha256:selftest",
+                        "session": {
+                            "hostId": "alpha",
+                            "sessionId": "$2",
+                            "createdAt": 20,
+                            "name": name,
+                        },
+                    },
+                )
+            self.created = SessionRecord(
+                SessionReference("alpha", "tmux-v1:self-test", "$2", 20),
+                name,
+            )
+            return _fake_result(
+                executable,
+                tokens,
+                {
+                    "schemaVersion": 1,
+                    "ok": True,
+                    "meshRevision": "sha256:selftest",
+                    "session": self._session(self.created),
+                },
+            )
+        if command == "rename":
+            if self.failure == "rename":
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("operation_failed", "synthetic rename failure"),
+                    returncode=1,
+                )
+            if self.created is None:
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("session_not_found", "synthetic missing session"),
+                    returncode=1,
+                )
+            expected = _fake_arg(tokens, "--expected-name")
+            if expected != self.created.name:
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("stale_session", "synthetic stale name"),
+                    returncode=1,
+                )
+            self.created = SessionRecord(
+                self.created.reference,
+                _fake_arg(tokens, "--name"),
+            )
+            if self.failure == "rename-malformed-preexisting":
+                return _fake_result(
+                    executable,
+                    tokens,
+                    {
+                        "schemaVersion": 1,
+                        "ok": True,
+                        "meshRevision": "sha256:selftest",
+                        "session": self._session(self.existing),
+                    },
+                )
+            if self.failure == "rename-malformed":
+                return _fake_result(
+                    executable,
+                    tokens,
+                    {
+                        "schemaVersion": 1,
+                        "ok": True,
+                        "meshRevision": "sha256:wrong-revision",
+                        "session": self._session(self.created),
+                    },
+                )
+            return _fake_result(
+                executable,
+                tokens,
+                {
+                    "schemaVersion": 1,
+                    "ok": True,
+                    "meshRevision": "sha256:selftest",
+                    "session": self._session(self.created),
+                },
+            )
+        if command == "kill":
+            self.kill_calls.append(tokens)
+            if self.created is None:
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("session_not_found", "synthetic missing session"),
+                    returncode=1,
+                )
+            expected = _fake_arg(tokens, "--expected-name")
+            if expected != self.created.name:
+                self.stale_guard_seen = True
+                if self.failure == "stale-kill" and not self.primary_failure_sent:
+                    self.primary_failure_sent = True
+                    return _fake_result(
+                        executable,
+                        tokens,
+                        self._error("operation_failed", "synthetic primary failure"),
+                        returncode=1,
+                    )
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("stale_session", "synthetic stale name"),
+                    returncode=1,
+                )
+            if self.cleanup_failure and self.primary_failure_sent:
+                return _fake_result(
+                    executable,
+                    tokens,
+                    self._error("operation_failed", "synthetic cleanup failure"),
+                    returncode=1,
+                )
+            reference = self.created.reference
+            if not self.retain_candidate:
+                self.created = None
+            return _fake_result(
+                executable,
+                tokens,
+                {
+                    "schemaVersion": 1,
+                    "ok": True,
+                    "meshRevision": "sha256:selftest",
+                    "reference": {
+                        "hostId": reference.host_id,
+                        "serverGeneration": reference.server_generation,
+                        "sessionId": reference.session_id,
+                        "createdAt": reference.created_at,
+                    },
+                },
+            )
+        raise CheckError(f"fake runner received unexpected command {command}")
+
+
+class _FakeCallbackRunner:
+    """Scripted callback output used only by ``--self-test``."""
+
+    def __init__(self, *, invalid_input: bool = False) -> None:
+        self.calls: list[tuple[str, tuple[str, ...], Mapping[str, str]]] = []
+        self.invalid_input = invalid_input
+
+    def __call__(
+        self,
+        executable: str,
+        args: Sequence[str],
+        environment: Mapping[str, str],
+    ) -> subprocess.CompletedProcess[str]:
+        self.calls.append((executable, tuple(args), dict(environment)))
+        name = Path(executable).name
+        retv = environment.get("ROFI_RETV")
+        labels = {
+            "rofi-tmux-plus": ("Tmux › All", "Tmux › Local", "Open", "Kill"),
+            "rofi-agent-plus": ("Agents › All", "Agents › Local", "Resume", "Close"),
+        }
+        initial, peer, primary, secondary = labels.get(
+            name, ("SSH", "SSH", "Connect", "Forget recent history")
+        )
+        action = primary
+        if name == "rofi-ssh-plus" and retv in {"16", "17"}:
+            prompt = initial
+            action = secondary if retv == "16" else primary
+            data = "action:forget" if retv == "16" else "action:connect"
+            preservation = "\x00keep-filter\x1ftrue\x1e\x00keep-selection\x1ftrue\x1e"
+        elif name == "rofi-ssh-plus" and retv in {"10", "11", "12"}:
+            prompt = initial
+            data = "action:connect"
+            preservation = "\x00keep-filter\x1ftrue\x1e\x00keep-selection\x1ftrue\x1e"
+        elif name != "rofi-ssh-plus" and retv in {"16", "17"}:
+            prompt = initial
+            if name == "rofi-agent-plus":
+                order = ("Resume", "Close", "New")
+                previous = environment.get("ROFI_DATA", "")
+                index = (
+                    int(previous.removeprefix("state:action:"))
+                    if previous.startswith("state:action:")
+                    else 0
+                )
+                index = (index + (1 if retv == "16" else -1)) % len(order)
+                action = order[index]
+                data = f"state:action:{index}"
+            else:
+                action = secondary if retv == "16" else primary
+                data = "state:secondary" if retv == "16" else "state:primary"
+            preservation = "\x00keep-filter\x1ftrue\x1e\x00keep-selection\x1ftrue\x1e"
+        elif retv == "11":
+            prompt = peer
+            data = "state:right"
+            preservation = "\x00keep-filter\x1ftrue\x1e"
+            if name in {"rofi-agent-plus", "rofi-tmux-plus"}:
+                preservation += "\x00keep-selection\x1ftrue\x1e\x00new-selection\x1f0\x1e"
+        elif retv == "12":
+            prompt = initial
+            data = "state:left"
+            preservation = "\x00keep-filter\x1ftrue\x1e"
+            if name in {"rofi-agent-plus", "rofi-tmux-plus"}:
+                preservation += "\x00keep-selection\x1ftrue\x1e\x00new-selection\x1f0\x1e"
+        else:
+            prompt = initial
+            data = "state:initial"
+            preservation = ""
+        no_custom = "\x00no-custom\x1ftrue\x1e" if name == "rofi-ssh-plus" else ""
+        message = f"\x00message\x1f{_expected_action_line(name, action)}\x1e"
+        if name == "rofi-ssh-plus" and retv == "0":
+            initial_output = (
+                f"\x00prompt\x1f{prompt}\n"
+                f"\x00message\x1f{_expected_action_line(name, action)}\n"
+                "\x00no-custom\x1ftrue\n"
+                f"\x00data\x1f{data}\n"
+                "\x00delim\x1f\\t\n"
+                'row\x00info\x1f{"version":1,"kind":"host","id":"row"}'
+                "\x00meta\x1frow\x00display\x1frow\nrecent\t"
+            )
+        else:
+            initial_output = (
+                f"\x00prompt\x1f{prompt}\x1e{message}{no_custom}"
+                f"\x00data\x1f{data}\x1e{preservation}row\x1e"
+            )
+        return subprocess.CompletedProcess(
+            [executable, *args],
+            0,
+            initial_output,
+            "invalid_input" if self.invalid_input else "",
+        )
+
+
+def _self_test_require(condition: bool, message: str) -> None:
+    if not condition:
+        raise CheckError("self-test assertion failed: " + message)
+
+
+def _self_test_error(gate: LifecycleGate) -> str:
+    try:
+        gate.run(("alpha",), "sha256:selftest")
+    except CheckError as error:
+        return str(error)
+    raise CheckError("self-test expected the lifecycle gate to fail")
+
+
+def _self_test_no_forbidden_commands(
+    calls: Sequence[tuple[str, Sequence[str]]], expected_executable: str
+) -> None:
+    forbidden = {"open", "--open", "--defer-until-attached", "--cwd", "--"}
+    providers = {"codex", "claude", "opencode", "provider"}
+    allowed = {"inventory", "create", "rename", "kill"}
+    baseline_reference = SessionReference("alpha", "tmux-v1:self-test", "$1", 10)
+    for executable, args in calls:
+        _self_test_require(executable == expected_executable, "fake used an installed executable")
+        _self_test_require(bool(args) and args[0] in allowed, "unexpected command in lifecycle")
+        _self_test_require(
+            not forbidden.intersection(args), "forbidden lifecycle argument appeared"
+        )
+        _self_test_require(
+            not providers.intersection(token.casefold() for token in args),
+            "provider command appeared in lifecycle argv",
+        )
+        if args[0] == "kill":
+            kill_reference = SessionReference(
+                "alpha",
+                _fake_arg(args, "--server-generation"),
+                _fake_arg(args, "--session-id"),
+                int(_fake_arg(args, "--created-at")),
+            )
+            _self_test_require(
+                _reference_key(kill_reference) != _reference_key(baseline_reference),
+                "lifecycle kill targeted the fake baseline reference",
+            )
+
+
+def _self_test() -> int:
+    mesh = {
+        "schemaVersion": 1,
+        "meshRevision": "sha256:selftest",
+        "localHostId": "alpha",
+        "hosts": [
+            {"id": "alpha", "local": True},
+            {"id": "beta", "local": False},
+        ],
+    }
+    host_ids, local_id, revision = _mesh_hosts(mesh)
+    _self_test_require(host_ids == ("alpha", "beta"), "mesh host order was not retained")
+    _self_test_require(
+        local_id == "alpha" and revision == "sha256:selftest", "mesh metadata changed"
+    )
+
+    with TemporaryDirectory(prefix="rofi-plus-history-selftest-") as directory:
+        history_path = Path(directory) / "history.json"
+        history_payload = {
+            "version": 1,
+            "sortMode": "recency",
+            "hosts": [{"host": "alpha", "lastConnected": 10, "count": 2}],
+        }
+        history_path.write_text(json.dumps(history_payload, indent=2), encoding="utf-8")
+        history_before = _history_snapshot(history_path)
+        history_path.write_text(
+            json.dumps(
+                {"hosts": history_payload["hosts"], "sortMode": "recency", "version": 1},
+                separators=(",", ":"),
+            ),
+            encoding="utf-8",
+        )
+        _assert_history_unchanged(history_before, history_path)
+        changed = dict(history_payload)
+        changed["hosts"] = [{"host": "alpha", "lastConnected": 10, "count": 3}]
+        history_path.write_text(json.dumps(changed), encoding="utf-8")
+        try:
+            _assert_history_unchanged(history_before, history_path)
+        except CheckError as error:
+            _self_test_require("history changed" in str(error), "history mutation was not detected")
+        else:
+            raise CheckError("self-test assertion failed: history mutation was accepted")
+        missing_path = Path(directory) / "missing.json"
+        missing = _history_snapshot(missing_path)
+        _self_test_require(not missing.present, "missing history was not represented distinctly")
+        missing_path.write_text(json.dumps(history_payload), encoding="utf-8")
+        try:
+            _assert_history_unchanged(missing, missing_path)
+        except CheckError:
+            pass
+        else:
+            raise CheckError("self-test assertion failed: missing history matched present history")
+    print("[ok] SSH usage history comparison is semantic and distinguishes missing state")
+
+    callbacks = _FakeCallbackRunner()
+    environment = {
+        "ROFI_RETV": "7",
+        "ROFI_INFO": "stale",
+        "ROFI_INPUT": "stale",
+        "ROFI_DATA": "stale",
+        "ROFI_OUTSIDE": "stale",
+    }
+    _check_view_navigation("rofi-tmux-plus", "/fake/rofi-tmux-plus", environment, runner=callbacks)
+    _check_action_cycle("rofi-tmux-plus", "/fake/rofi-tmux-plus", environment, runner=callbacks)
+    for _executable, args, environment in callbacks.calls:
+        _self_test_require(not args, "callback probe passed unexpected argv")
+        allowed = (
+            {"ROFI_RETV"} if environment.get("ROFI_RETV") == "0" else {"ROFI_RETV", "ROFI_DATA"}
+        )
+        _self_test_require(
+            set(environment).isdisjoint(set(ROFI_CALLBACK_VARS) - allowed),
+            "stale callback variables retained",
+        )
+
+    def make_gate(runner: _FakeLifecycleRunner) -> LifecycleGate:
+        return LifecycleGate(
+            "/fake/rofi-tmux-plus",
+            {"PATH": "/fake"},
+            runner=runner,
+            name_factory=lambda: "rofi-plus-accept-selftest",
+            emit=lambda _line: None,
+        )
+
+    wrong_inventory = _FakeLifecycleRunner(wrong_inventory_revision=True)
+    try:
+        make_gate(wrong_inventory)._inventory(local_id, revision)
+    except CheckError as error:
+        _self_test_require(
+            "different meshRevision" in str(error),
+            "inventory revision mismatch was not rejected",
+        )
+    else:
+        raise CheckError("self-test assertion failed: inventory revision mismatch was accepted")
+
+    happy = _FakeLifecycleRunner()
+    make_gate(happy).run((local_id,), revision)
+    _self_test_require(happy.created is None, "happy path retained the created session")
+    _self_test_require(happy.duplicate_seen, "duplicate create was not exercised")
+    _self_test_require(happy.stale_guard_seen, "stale expected-name guard was not exercised")
+    _self_test_require(happy.existing.name == "pre-existing", "pre-existing session changed")
+    _self_test_no_forbidden_commands(happy.calls, "/fake/rofi-tmux-plus")
+    print("[ok] happy lifecycle, duplicate collision, stale guard, and preservation")
+
+    malformed_create = _FakeLifecycleRunner(malformed_create_preexisting=True)
+    error = _self_test_error(make_gate(malformed_create))
+    _self_test_require(
+        "unexpected session name" in error,
+        "malformed create response was accepted",
+    )
+    _self_test_require(
+        not malformed_create.kill_calls,
+        "malformed create response triggered a response-only kill",
+    )
+    _self_test_require(
+        malformed_create.existing.name == "pre-existing",
+        "malformed create response changed the baseline record",
+    )
+    _self_test_no_forbidden_commands(malformed_create.calls, "/fake/rofi-tmux-plus")
+    print("[ok] malformed create response could not target the baseline reference")
+
+    baseline_ref_create = _FakeLifecycleRunner(baseline_ref_create=True)
+    error = _self_test_error(make_gate(baseline_ref_create))
+    _self_test_require(
+        "pre-existing stable reference" in error,
+        "create response baseline reference was not rejected",
+    )
+    _self_test_require(
+        not baseline_ref_create.kill_calls,
+        "baseline reference shown under a candidate name was killed",
+    )
+    _self_test_require(
+        baseline_ref_create.existing.name == "pre-existing",
+        "baseline reference was changed by cleanup",
+    )
+    _self_test_no_forbidden_commands(
+        baseline_ref_create.calls,
+        "/fake/rofi-tmux-plus",
+    )
+    print("[ok] create response baseline reference was never trusted or killed")
+
+    failed_after_create = _FakeLifecycleRunner(failure="rename")
+    error = _self_test_error(make_gate(failed_after_create))
+    _self_test_require("synthetic rename failure" in error, "primary rename failure was lost")
+    _self_test_require(
+        failed_after_create.created is None, "exact cleanup did not remove the created session"
+    )
+    _self_test_require(len(failed_after_create.kill_calls) == 1, "unexpected cleanup kill count")
+    _self_test_no_forbidden_commands(failed_after_create.calls, "/fake/rofi-tmux-plus")
+    cleanup_args = failed_after_create.kill_calls[0]
+    _self_test_require(
+        all(
+            item in cleanup_args for item in ("--server-generation", "--session-id", "--created-at")
+        ),
+        "cleanup did not use the complete reference",
+    )
+    print("[ok] mid-sequence failure used exact-reference cleanup")
+
+    malformed_rename = _FakeLifecycleRunner(failure="rename-malformed")
+    error = _self_test_error(make_gate(malformed_rename))
+    _self_test_require("different meshRevision" in error, "malformed rename failure was lost")
+    _self_test_require(malformed_rename.created is None, "malformed rename was not exactly cleaned")
+    _self_test_require(
+        len(malformed_rename.kill_calls) == 1, "malformed rename used extra cleanup kills"
+    )
+    _self_test_require(
+        any(token.endswith("-renamed") for token in malformed_rename.kill_calls[0]),
+        "malformed rename cleanup used the stale name",
+    )
+    _self_test_no_forbidden_commands(malformed_rename.calls, "/fake/rofi-tmux-plus")
+    print("[ok] malformed post-rename success used authoritative inventory reconciliation")
+
+    malformed_rename_preexisting = _FakeLifecycleRunner(failure="rename-malformed-preexisting")
+    error = _self_test_error(make_gate(malformed_rename_preexisting))
+    _self_test_require(
+        "unexpected session name" in error,
+        "malformed rename response was accepted",
+    )
+    _self_test_require(
+        malformed_rename_preexisting.created is None,
+        "malformed rename response did not clean the disposable session",
+    )
+    _self_test_require(
+        malformed_rename_preexisting.existing.name == "pre-existing",
+        "malformed rename response changed the baseline record",
+    )
+    _self_test_no_forbidden_commands(
+        malformed_rename_preexisting.calls,
+        "/fake/rofi-tmux-plus",
+    )
+    print("[ok] malformed rename response could not target the baseline reference")
+
+    create_failed_after_mutation = _FakeLifecycleRunner(failure="create-transport")
+    error = _self_test_error(make_gate(create_failed_after_mutation))
+    _self_test_require(
+        "synthetic create transport failure" in error,
+        "create transport failure was lost",
+    )
+    _self_test_require(
+        create_failed_after_mutation.created is None,
+        "create uncertainty recovery did not remove the session",
+    )
+    _self_test_require(
+        len(create_failed_after_mutation.kill_calls) == 1,
+        "create uncertainty recovery used an unexpected kill count",
+    )
+    recovery_args = create_failed_after_mutation.kill_calls[0]
+    _self_test_require(
+        all(
+            item in recovery_args
+            for item in ("--server-generation", "--session-id", "--created-at")
+        ),
+        "create uncertainty recovery omitted the full stable reference",
+    )
+    _self_test_no_forbidden_commands(create_failed_after_mutation.calls, "/fake/rofi-tmux-plus")
+    print("[ok] create transport failure recovered and cleaned by inventory reference")
+
+    incomplete_with_inventory = _FakeLifecycleRunner(
+        partial_create=True,
+        incomplete_create_with_inventory=True,
+    )
+    error = _self_test_error(make_gate(incomplete_with_inventory))
+    _self_test_require(
+        "Tmux serverGeneration" in error,
+        "incomplete create primary failure was lost",
+    )
+    _self_test_require(
+        incomplete_with_inventory.created is None,
+        "incomplete create inventory recovery did not remove the session",
+    )
+    _self_test_require(
+        len(incomplete_with_inventory.kill_calls) == 1
+        and all(
+            item in incomplete_with_inventory.kill_calls[0]
+            for item in ("--server-generation", "--session-id", "--created-at")
+        ),
+        "incomplete create recovery omitted the full stable reference",
+    )
+    _self_test_no_forbidden_commands(incomplete_with_inventory.calls, "/fake/rofi-tmux-plus")
+    print("[ok] incomplete success with an inventory record recovered exactly")
+
+    partial = _FakeLifecycleRunner(partial_create=True)
+    error = _self_test_error(make_gate(partial))
+    _self_test_require(
+        "retained unique name" not in error,
+        "partial create without an inventory record was misreported as retained",
+    )
+    _self_test_require("Tmux serverGeneration" in error, "partial create failure was lost")
+    _self_test_require(not partial.kill_calls, "partial create attempted a kill")
+    _self_test_no_forbidden_commands(partial.calls, "/fake/rofi-tmux-plus")
+    print("[ok] incomplete create with no inventory record failed safely without a kill")
+
+    cleanup_failed = _FakeLifecycleRunner(failure="stale-kill", cleanup_failure=True)
+    error = _self_test_error(make_gate(cleanup_failed))
+    _self_test_require("synthetic primary failure" in error, "primary failure was hidden")
+    _self_test_require("synthetic cleanup failure" in error, "cleanup failure was hidden")
+    _self_test_require(
+        "reference=alpha:tmux-v1:self-test:$2:20" in error, "cleanup reference was not reported"
+    )
+    _self_test_require(cleanup_failed.kill_calls, "cleanup was not attempted after primary failure")
+    _self_test_no_forbidden_commands(cleanup_failed.calls, "/fake/rofi-tmux-plus")
+    print("[ok] cleanup failure remains nonzero and preserves primary diagnostics")
+
+    retained_candidate = _FakeLifecycleRunner(retain_candidate=True)
+    error = _self_test_error(make_gate(retained_candidate))
+    _self_test_require(
+        "still contained the killed stable reference" in error,
+        "retained candidate was not detected by final verification",
+    )
+    _self_test_require(
+        retained_candidate.created is not None, "retained candidate unexpectedly disappeared"
+    )
+    _self_test_no_forbidden_commands(retained_candidate.calls, "/fake/rofi-tmux-plus")
+    print("[ok] retained gate-owned candidate is a lifecycle safety failure")
+
+    preservation_failed = _FakeLifecycleRunner(drop_existing_after_cleanup=True)
+    error = _self_test_error(make_gate(preservation_failed))
+    _self_test_require("final verification failure" in error, "final preservation was not checked")
+    _self_test_require(
+        "omitted a pre-existing stable reference" in error,
+        "pre-existing loss was not reported",
+    )
+    _self_test_no_forbidden_commands(preservation_failed.calls, "/fake/rofi-tmux-plus")
+    print("[ok] final verification proves disposable absence and pre-existing preservation")
+    print("[ok] owner contract and guard self-test")
+    return 0
+
+
+def _live(lifecycle=False, legacy_callbacks=False):
+    before = _history_snapshot(_history_path())
+    try:
+        environment = _clean_environment()
+        ssh = _resolve("rofi-ssh-plus")
+        host_ids, local_id, revision = _check_mesh(ssh, environment)
+        executable = _resolve(OWNER_COMMAND)
+        with TemporaryDirectory(prefix="owner-picker-state-") as state:
+            environment = dict(environment, XDG_STATE_HOME=state, XDG_CACHE_HOME=state + "/cache")
+            _check_inventory(executable, local_id, revision, environment)
+            _check_view_navigation(OWNER_COMMAND, executable, environment)
+            _check_action_cycle(OWNER_COMMAND, executable, environment)
+            if lifecycle:
+                LifecycleGate(executable, environment).run(host_ids, revision)
+    finally:
+        _assert_history_unchanged(before, _history_path())
+    print("[ok] installed owner contract checks; graphical/provider acceptance is separate")
+    return 0
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--self-test", action="store_true")
+    mode.add_argument("--live", action="store_true")
+    parser.add_argument(
+        "--lifecycle",
+        action="store_true",
+        help="Tmux only: explicitly exercise owned disposable native sessions",
+    )
+    parser.add_argument(
+        "--legacy-callbacks",
+        action="store_true",
+        help="Agent only: exercise the historical viewer/group contract",
+    )
+    args = parser.parse_args()
+    if args.lifecycle and (OWNER_COMMAND != "rofi-tmux-plus" or not args.live):
+        parser.error("--lifecycle requires Tmux --live")
+    if args.legacy_callbacks and (OWNER_COMMAND != "rofi-agent-plus" or not args.live):
+        parser.error("--legacy-callbacks requires Agent --live")
+    try:
+        return _self_test() if args.self_test else _live(args.lifecycle, args.legacy_callbacks)
+    except Exception as error:  # noqa: BLE001 - owned cleanup must run for every callback failure
+        print(f"[error] {_compact(error)}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

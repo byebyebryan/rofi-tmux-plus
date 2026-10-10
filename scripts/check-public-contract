@@ -1,0 +1,386 @@
+#!/usr/bin/env python3
+"""Hermetic cross-repository gate for the exact released Rofi Plus P9 tuple."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+from collections.abc import Mapping, Sequence
+from pathlib import Path
+
+COMMANDS = ("rofi-ssh-plus", "rofi-tmux-plus", "rofi-agent-plus")
+CAPABILITY = "host-mesh-v1+tmux-session-v1"
+REPOSITORIES = {
+    "ssh": (
+        "https://github.com/byebyebryan/rofi-ssh-plus",
+        ".local/share/rofi/extensions/ssh-plus",
+    ),
+    "tmux": (
+        "https://github.com/byebyebryan/rofi-tmux-plus",
+        ".local/share/rofi/extensions/tmux-plus",
+    ),
+    "agent": (
+        "https://github.com/byebyebryan/rofi-agent-plus",
+        ".local/share/rofi/extensions/agent-plus",
+    ),
+}
+CHECKOUT_FILES = {
+    "ssh": (
+        "bin/rofi-ssh-plus",
+        "scripts/check",
+        "contracts/host-mesh-v1/fixtures/config-local-only.toml",
+    ),
+    "tmux": (
+        "bin/rofi-tmux-plus",
+        "scripts/check",
+        "scripts/check-contract-sync",
+        "contracts/tmux-session-v1/SHA256SUMS",
+    ),
+    "agent": (
+        "bin/rofi-agent-plus",
+        "scripts/check",
+        "scripts/check-contract-sync",
+    ),
+}
+
+
+OWNER = "tmux"
+
+
+class GateError(RuntimeError):
+    """A bounded candidate-gate failure."""
+
+
+def _checkout(argument: str, kind: str) -> Path:
+    supplied = Path(argument)
+    if not supplied.is_absolute():
+        raise GateError(f"{kind} checkout must be an absolute path")
+    try:
+        root = supplied.resolve(strict=True)
+    except OSError as error:
+        raise GateError(f"cannot resolve {kind} checkout: {error}") from error
+    if not root.is_dir():
+        raise GateError(f"{kind} checkout is not a directory: {root}")
+    for relative in CHECKOUT_FILES[kind]:
+        candidate = root / relative
+        if not candidate.is_file():
+            raise GateError(f"{kind} checkout is missing {relative}")
+    head = _git(root, "rev-parse", "HEAD").strip()
+    if re.fullmatch(r"[0-9a-f]{40}", head) is None:
+        raise GateError(f"{kind} checkout has no exact Git HEAD")
+    if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
+        raise GateError(f"{kind} checkout must be clean for released verification")
+    return root
+
+
+def _git(root: Path, *arguments: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *arguments],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as error:
+        raise GateError(f"could not inspect Git checkout {root}: {error}") from error
+    if result.returncode != 0:
+        raise GateError(f"Git inspection failed for {root}")
+    return result.stdout
+
+
+def _run_public(
+    name: str,
+    argv: Sequence[str],
+    env: Mapping[str, str],
+    *,
+    timeout: float,
+) -> bytes:
+    process: subprocess.Popen[bytes] | None = None
+    try:
+        process = subprocess.Popen(
+            list(argv),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=dict(env),
+            start_new_session=True,
+        )
+        stdout, stderr = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout, stderr = process.communicate()
+        raise GateError(f"{name} timed out") from error
+    except OSError as error:
+        raise GateError(f"could not run {name}: {error}") from error
+    if process.returncode != 0:
+        diagnostic = stderr.decode("utf-8", "replace").strip().replace("\n", " ")[:400]
+        raise GateError(f"{name} exited {process.returncode}: {diagnostic or 'no diagnostic'}")
+    if stderr:
+        diagnostic = stderr.decode("utf-8", "replace").strip().replace("\n", " ")[:400]
+        raise GateError(f"{name} wrote unexpected stderr: {diagnostic}")
+    return stdout
+
+
+def _pairs(values: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in values:
+        if key in result:
+            raise GateError("public JSON contains a duplicate object key")
+        result[key] = value
+    return result
+
+
+def _constant(value: str) -> object:
+    raise GateError(f"public JSON contains non-finite number {value}")
+
+
+def _float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise GateError("public JSON contains a non-finite number")
+    return parsed
+
+
+def _document(name: str, raw: bytes, maximum: int) -> Mapping[str, object]:
+    if len(raw) > maximum:
+        raise GateError(f"{name} exceeded its candidate-gate output cap")
+    if not raw.endswith(b"\n") or raw[:-1].endswith((b"\r", b"\n", b" ", b"\t")):
+        raise GateError(f"{name} does not have exactly one final LF")
+    if raw.startswith(b"\xef\xbb\xbf") or b"\x00" in raw:
+        raise GateError(f"{name} contains a forbidden wire byte")
+    try:
+        text = raw[:-1].decode("utf-8", "strict")
+        decoder = json.JSONDecoder(
+            object_pairs_hook=_pairs,
+            parse_constant=_constant,
+            parse_float=_float,
+        )
+        value, end = decoder.raw_decode(text)
+    except (UnicodeError, ValueError, json.JSONDecodeError) as error:
+        raise GateError(f"{name} is not strict JSON") from error
+    if end != len(text) or not isinstance(value, Mapping):
+        raise GateError(f"{name} contains trailing data or is not an object")
+    return value
+
+
+def _expect_keys(value: object, expected: set[str], label: str) -> list[Mapping[str, object]]:
+    if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
+        raise GateError(f"{label} is not an object list")
+    rows = list(value)
+    actual = {str(item.get("id") if "id" in item else item.get("hostId")) for item in rows}
+    if actual != expected or len(rows) != len(expected):
+        raise GateError(f"{label} contains unexpected host identities: {sorted(actual)}")
+    return rows
+
+
+def _write_stub(path: Path, exit_code: int) -> None:
+    path.write_text(f"#!/bin/sh\nexit {exit_code}\n", encoding="utf-8")
+    path.chmod(0o700)
+
+
+def _self_test() -> None:
+    accepted = _document("self-test", b'{"ok":true}\n', 64)
+    if accepted != {"ok": True}:
+        raise GateError("strict JSON self-test did not round-trip")
+    for invalid in (b'{"ok":true}', b'{"ok":true}\n\n', b'{"ok":true,"ok":false}\n'):
+        try:
+            _document("self-test", invalid, 64)
+        except GateError:
+            continue
+        raise GateError("strict JSON self-test accepted an invalid wire document")
+    try:
+        _checkout("relative", "ssh")
+    except GateError:
+        pass
+    else:
+        raise GateError("checkout self-test accepted a relative path")
+    print("[ok] Rofi Plus released-tuple gate self-test")
+
+
+def _public_gate(ssh: Path, tmux: Path, agent: Path) -> None:
+    temporary_parent = Path(os.environ.get("TMPDIR", "/tmp"))
+    if not temporary_parent.is_absolute() or not temporary_parent.is_dir():
+        raise GateError("TMPDIR must name an existing absolute directory")
+    with tempfile.TemporaryDirectory(
+        prefix="rofi-plus-candidate.", dir=temporary_parent
+    ) as temporary_name:
+        root = Path(temporary_name)
+        root.chmod(0o700)
+        prefix = root / "bin"
+        home = root / "home"
+        config_home = root / "config"
+        state_home = root / "state"
+        cache_home = root / "cache"
+        data_home = root / "data"
+        runtime = root / "runtime"
+        tmux_tmp = root / "tmux"
+        for directory in (
+            prefix,
+            home,
+            config_home,
+            state_home,
+            cache_home,
+            data_home,
+            runtime,
+            tmux_tmp,
+        ):
+            directory.mkdir(mode=0o700)
+
+        roots = {"rofi-ssh-plus": ssh, "rofi-tmux-plus": tmux}
+        for command, checkout in roots.items():
+            (prefix / command).symlink_to(checkout / "bin" / command)
+        (prefix / "python3").symlink_to(sys.executable)
+        for provider in ("codex", "claude", "opencode"):
+            _write_stub(prefix / provider, 127)
+        _write_stub(prefix / "ps", 0)
+
+        ssh_config = config_home / "rofi-ssh-plus" / "config.toml"
+        ssh_config.parent.mkdir(mode=0o700)
+        shutil.copyfile(
+            ssh / "contracts/host-mesh-v1/fixtures/config-local-only.toml",
+            ssh_config,
+        )
+        ssh_config.chmod(0o600)
+
+        env = dict(os.environ)
+        env.update(
+            {
+                "HOME": str(home),
+                "XDG_CONFIG_HOME": str(config_home),
+                "XDG_STATE_HOME": str(state_home),
+                "XDG_CACHE_HOME": str(cache_home),
+                "XDG_DATA_HOME": str(data_home),
+                "XDG_RUNTIME_DIR": str(runtime),
+                "TMUX_TMPDIR": str(tmux_tmp),
+                "PATH": f"{prefix}{os.pathsep}{env.get('PATH', '')}",
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": os.environ.get("PYTHONPATH", ""),
+            }
+        )
+        env.pop("TMUX", None)
+        for name in tuple(env):
+            if name.startswith("ROFI_") or name in {"NIRI_SOCKET", "WAYLAND_DISPLAY", "DISPLAY"}:
+                env.pop(name, None)
+        for command in roots:
+            resolved = shutil.which(command, path=env["PATH"])
+            if resolved != str(prefix / command):
+                raise GateError(f"{command} did not resolve through the temporary PATH")
+
+        ssh_doc = _document(
+            "SSH Plus mesh list",
+            _run_public(
+                "SSH Plus mesh list",
+                ("rofi-ssh-plus", "mesh", "list", "--json"),
+                env,
+                timeout=10,
+            ),
+            512 * 1024,
+        )
+        ssh_rows = _expect_keys(ssh_doc.get("hosts"), {"alpha"}, "Host Mesh")
+        if ssh_doc.get("localHostId") != "alpha" or ssh_rows[0].get("local") is not True:
+            raise GateError("Host Mesh did not identify synthetic alpha as local")
+        revision = ssh_doc.get("meshRevision")
+        if not isinstance(revision, str) or not revision:
+            raise GateError("Host Mesh omitted its revision")
+
+        tmux_doc = _document(
+            "Tmux Plus inventory",
+            _run_public(
+                "Tmux Plus inventory",
+                ("rofi-tmux-plus", "inventory", "--json", "--host", "alpha", "--panes"),
+                env,
+                timeout=20,
+            ),
+            1024 * 1024,
+        )
+        tmux_rows = _expect_keys(tmux_doc.get("hosts"), {"alpha"}, "Tmux inventory")
+        tmux_row = tmux_rows[0]
+        if (
+            tmux_doc.get("meshRevision") != revision
+            or "viewerEndpoint" in tmux_doc
+            or tmux_row.get("local") is not True
+            or tmux_row.get("status") != "ok"
+            or tmux_row.get("sessions") != []
+        ):
+            raise GateError("Tmux inventory leaked state or disagreed with Host Mesh")
+
+        viewer_doc = _document(
+            "Tmux Plus viewer inventory",
+            _run_public(
+                "Tmux Plus viewer inventory",
+                (
+                    "rofi-tmux-plus",
+                    "inventory",
+                    "--json",
+                    "--host",
+                    "alpha",
+                    "--panes",
+                    "--with-viewers",
+                ),
+                env,
+                timeout=20,
+            ),
+            1024 * 1024,
+        )
+        endpoint = viewer_doc.get("viewerEndpoint")
+        if (
+            viewer_doc.get("meshRevision") != revision
+            # Separate reads naturally have different observation timestamps.
+            or not isinstance(viewer_doc.get("hosts"), list)
+            or [
+                {key: value for key, value in host.items() if key != "observedAt"}
+                for host in viewer_doc["hosts"]
+                if isinstance(host, Mapping)
+            ]
+            != [
+                {key: value for key, value in host.items() if key != "observedAt"}
+                for host in tmux_doc["hosts"]
+            ]
+            or not isinstance(endpoint, Mapping)
+            or endpoint.get("hostId") != "alpha"
+            or type(endpoint.get("observedAt")) is not int
+            or not 0 <= endpoint["observedAt"] <= 2**63 - 1
+        ):
+            raise GateError("Tmux viewer inventory changed owner facts or endpoint authority")
+
+        print("[ok] isolated owner public CLI boundary")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--ssh-checkout", type=Path)
+    parser.add_argument("--tmux-checkout", type=Path)
+    args = parser.parse_args()
+    if args.self_test:
+        _self_test()
+        return
+    own = Path(__file__).resolve().parents[1]
+    ssh = _checkout(str(own if OWNER == "ssh" else args.ssh_checkout), "ssh")
+    tmux = (
+        _checkout(str(own if OWNER == "tmux" else args.tmux_checkout), "tmux")
+        if OWNER != "ssh"
+        else None
+    )
+    agent = _checkout(str(own), "agent") if OWNER == "agent" else None
+    _public_gate(ssh, tmux, agent)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except GateError as error:
+        print(f"[FAIL] {error}", file=sys.stderr)
+        raise SystemExit(1) from None

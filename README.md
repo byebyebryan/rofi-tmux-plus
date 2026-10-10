@@ -26,7 +26,7 @@ The [Mesh selection guide](docs/mesh-integration.md) and
 [accepted catalog-fix record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)
 bind the exact packages, headless/native checks, resource/capacity limits and
 managed recovery/paired rollback. The
-[managed operations ledger](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+[managed operations ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
 owns installed selection. Earlier graphical acceptance keeps its original
 artifact and endpoint scope; graphical presentation/input and physical suspend
 were optional and unrun for these Mesh wiring releases.

@@ -47,7 +47,7 @@ the correct descriptor-named wheel is used by the accepted gate.
 
 The exact accepted wheel and native bundle are published as
 [0.9.0a1](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.9.0a1).
-The independent [paired managed gate](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-local-performance-operations.md)
+The independent [paired managed gate](https://github.com/byebyebryan/tmux-observer/blob/main/docs/local-performance-implementation.md)
 passes scoped selection, all installed bytes/controls, native/fresh/prepared
 parity, restart recovery and actual paired rollback/reselection on both hosts.
 Ordinary session references/generations/hooks and unrelated controls survive.

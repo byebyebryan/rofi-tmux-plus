@@ -119,7 +119,7 @@ native bundle SHA256 is
 `1a5701c0887aa2304e97f6fc4ab0c7512a96a919dec17e899102fdac48ce5e46`.
 Frontend CI passed at `9c39575` after installing the exact pinned Observer wheel.
 
-T15 is accepted through [the managed operations record](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+T15 is accepted through [the managed operations record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
 and its exact tuple/member evidence. Scoped chezmoi installation on Snap and
 Starship verifies all 69 Core members, 198 frontend members, manifest, launchers,
 units/drop-ins, owner enablement and desktop startup. Both final prepared frames
