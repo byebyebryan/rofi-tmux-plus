@@ -1,6 +1,6 @@
 {
   "modules": {
-    "tmux_observer/__init__.py": "030912aa4ba2b74f8149b8bf7c89f85684e597098e42deb09b3a2330ce033721",
+    "tmux_observer/__init__.py": "ed82128e2e008323e20c92f0f0e1392b6deddd3fec3f89a26a5b4eb8e520d163",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
     "tmux_observer/_attachment_state.py": "8103965c24877ef5073c5648c28b2890b6d79644dbd8e7ed5073654022e4a8ef",
     "tmux_observer/_clock.py": "ba64e80360cab121704ab0918b9f03fc2537de3cf6bf31d21a3f5a62b1739d80",
@@ -65,7 +65,7 @@
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
     "tmux_observer_client/_mesh_control.py": "8910709bdf92205d291781ee0352bb2037f25a12780782f4b4d800f969083063",
     "tmux_observer_client/_mesh_projection.py": "dc0479477f555e9e6af3a095d11fdd52513c067620c5d7a350475c3d01199922",
-    "tmux_observer_client/_mesh_worker.py": "3fd36bdd487bb0f9a977f8f9706dda5460dfb21499cc6ca6b4d12c69b59a82d4",
+    "tmux_observer_client/_mesh_worker.py": "630c3a42b2a92d230be8522db62dd15d8a292f6a04126ee6edccd2ea46f90197",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
     "tmux_observer_client/_owner_document.py": "16da2d1c696c351c5384a346fc1fee8c9ae3d173108d83977af4a18f23e54725",
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
@@ -85,7 +85,7 @@
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "80c46925ec7c89dca7c86a944a256b47fd6e1430",
-  "version": "0.6.0a2",
-  "wheelSha256": "a6a58409e8eeb8e5ed982063bb13fc7683182361d953baee25c8cf562b4f8324"
+  "sourceCommit": "436211859557031e5168f900f4af9df02dcb7be4",
+  "version": "0.6.0a3",
+  "wheelSha256": "be39895706a1b41c5529b34cc749a0e92578514a6072f88d3ba7c20da866036d"
 }
