@@ -1,5 +1,12 @@
 # Tmux Plus
 
+Coordinated transport selection, 2026-10-10: Mesh 0.1.0a9, Tmux Observer
+0.6.0a4 and Tmux Plus 0.12.0a4 are deployed on Snap and Starship. Agent's
+a13 reader and a12 bridge use new private a9 environments; its a15 collector
+and a16 writer retain their prior artifacts. The frozen networking contracts
+are unchanged. [Exact gates and limits](https://github.com/byebyebryan/mesh-plus/blob/main/docs/evidence/2026-10-10-fleet-adoption/README.md)
+keep source, packaged, installed and operational acceptance distinct.
+
 A Rofi picker and public CLI for local and remote tmux sessions.
 Browse sessions, reopen the last useful context, focus or attach with Open,
 and use guarded Kill confirmation. Tmux Plus remains useful for manual tmux
