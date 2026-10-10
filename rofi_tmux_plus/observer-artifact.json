@@ -85,7 +85,7 @@
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "16c2bfeef62dad05b2bce34b6d8326dfb767fcee",
+  "sourceCommit": "599448fb5e2bcef133bec3b9a1e1944ed8798ac8",
   "version": "0.6.0a1",
-  "wheelSha256": "ed450ff726b6f77f178f2b7d1d3f0c87a4cc4f9e3640d49b1273b75fa28a8fee"
+  "wheelSha256": "28268c9b6dc6e5ee39eadeeeb22ba64c44f1a15fed9c041222744754b046e1b1"
 }
