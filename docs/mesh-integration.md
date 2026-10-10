@@ -21,5 +21,15 @@ reader restart. It establishes no remote desktop, ordinary resource, managed
 selection, Starship foreground or physical sleep acceptance. The legacy backend
 remains selectable for independent comparison and rollback.
 
-Candidate source, package and Snap graphical evidence will be recorded here
-after each gate. No source pin alone authorizes artifact promotion.
+The candidate from `dac43de` pins Observer `9e5a875`. Its 293-test source gate
+passes against that exact installed producer. The wheel and managed bundle
+rebuild deterministically; installed payload/pin and native ABI checks pass.
+The producer's [evidence record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-09-mesh-integration/README.md)
+owns the exact hashes and scoped native/resource reports.
+
+Snap is unattended with screens off; DMS owns exclusive keyboard input, and
+the graphical guard refused to type. Final a4 graphical acceptance is pending.
+Earlier a2 Mesh and legacy warm-frame probes both missed the existing 150 ms
+target; those results do not establish final-candidate timing. Normal resources,
+capacity, shared managed configuration, paired recovery and rollout remain
+separate gates. No candidate was published or selected by this loop.
