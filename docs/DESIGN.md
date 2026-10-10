@@ -1,205 +1,159 @@
-# Design: rofi-tmux-plus
+# Product and interaction design
 
-This document retains the original product/CLI implementation milestones.
-Current Observer-backed read behavior is recorded in
-[migration](observer-migration.md) and the [0.7.0a2 repair](tmux-plus-0.7.0a2.md).
-The next UI/action separation is defined by [observer boundaries](observer-boundaries.md).
-The selected Tmux tuple is owned by chezmoi's
-[`tmux-observer-operations.md`](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md);
-the older suite ledger referenced below retains its historical checkpoint.
-
-Status: P6 local and Host Mesh-backed remote lifecycle and live inventory, the
-private retained remote cache and refresh lifecycle, fail-closed callback
-recovery, and automated fleet acceptance are complete. P7 removed the
-redundant picker-model read before a successful typed open; lifecycle still
-revalidates the current Mesh and exact stable reference. The coordinated P8
-flat-scope navigation cutover and P9 producer/consumer implementation and
-canonical bundles are published in this repository. P11 adds caller-local
-viewer observations to bulk inventory and the Tmux picker; release and managed
-acceptance remain separate. Chezmoi's current `docs/rofi-plus-status.md` ledger
-is the authority for managed deployment and acceptance.
-
-## P9 locked CLI contracts
-
-Tmux Plus has both P9 roles. As a Host Mesh consumer, it vendors the complete
-canonical Host Mesh v1 bundle with one exact producer-provenance record, then
-continues to parse the subprocess output independently. As the Tmux Session
-producer, it publishes a complete bundle of canonical Draft 2020-12 schemas,
-machine metadata, normative semantic rules, checksums, and synthetic valid plus
-raw-invalid fixtures for inventory and every lifecycle response.
-
-P9 keeps the existing executable boundary through `PATH`; it adds no Python
-dependency on SSH Plus and no static remote-host fallback. Failure to resolve an
-executable SSH Plus command continues to select the existing local-only
-identity. Once a path resolves, launch failure, disappearance, oversized or
-malformed output, and incompatibility remain visible failures.
-
-Inventory and lifecycle stdout remain one strict UTF-8 JSON document followed
-by exactly one LF. Stderr is bounded diagnostics only, numeric nonzero exit
-codes carry no domain meaning, and only a matching typed error/nonzero-exit pair
-may influence documented pre-action recovery. Ambiguous transport or response
-failure never repeats a lifecycle action. Per-host inventory failures remain
-data in a successful top-level inventory.
-
-The P9 artifacts describe and test the current v1 semantics; they do not add a
-runtime handshake or reopen P8 navigation. The coordinated suite design and
-rollout boundary live in the managed `rofi-plus-p9-cli-contracts.md` document.
-
-## P11 endpoint-local viewer observations
-
-The `0.5.1` follow-up includes manually opened remote SSH shells in qualified
-Open? display evidence. It combines a unique current session/owner title with
-a live terminal SSH process on that owner's selected route and a positive
-owner attached-client count. It accepts `ssh HOST`, optionally `-t` or `-tt`,
-without a remote command. Title alone, a connection alone, and global attachment
-counts alone remain insufficient. Existing metadata, completeness, pending,
-and ambiguity guards still apply. It adds no operation handle or extra remote
-query; strict viewer inspection and batch close eligibility remain unchanged.
-
-`inventory --json --with-viewers` enriches owner session facts after the
-selected local and remote rows return. `viewerEndpoint` identifies the caller's
-logical local host and observation time; each returned session has a
-`localViewer` state. The caller performs one bounded Niri scan and reuses its
-bounded process/metadata index across rows. Remote owner helpers report only
-their tmux facts. A scan failure keeps those facts and returns unknown viewer
-states. Plain inventory omits the extension.
-
-The picker consumes that same bulk observer for local and remote session
-owners. Its private cache is scoped to the desktop context, Mesh revision, and
-complete session reference, with a ten-second freshness window. Cache frames,
-scope changes, Tab, and action callbacks do not scan the desktop. Open and
-matched Open? are display observations only; existing open, close, and Kill
-guards remain authoritative.
-
-P9 itself did not change picker presentation. A subsequent post-P9 SSH-only
-refinement makes SSH recent-only and restores its native filter arrows; it
-leaves Tmux behavior, Host Mesh v1, and both P9 wire contracts unchanged. That
-SSH refinement is published separately; chezmoi owns its managed deployment and
-acceptance status.
-
-## P10 action cycle
-
-P10 replaces the old in-picker custom creation, rename, and direct-delete
-paths with a two-item browse action cycle:
-
-```text
-Open → Kill → Open
-```
-
-`ROFI_DATA` persists the named `action` (`open` or `kill`) rather than a
-position. A missing action is Open for a new invocation. An unknown or
-malformed action blocks Enter with a visible error; it never falls back to
-Open. `pendingAction` is separate typed confirmation state and stores the
-exact selected reference for Kill.
-
-The prompt shows the picker and host scope; the persistent message is the
-single place showing the active Enter action and next Tab action. Tab
-(`custom-7`, return value 16) moves forward and Shift+Tab (`custom-8`, return
-value 17) moves backward, wrapping through the action list. Their callbacks
-load only the exact presentation snapshot named by `ROFI_DATA`; they do not
-read a model, contact a remote, or mutate state outside Rofi continuation
-data. Tab itself performs no lifecycle operation. Up and Down retain native
-row navigation.
-
-Open Enter uses the highlighted typed session reference. Kill Enter first
-enters confirmation using that same complete reference. Confirmation names the
-host and session and reports the attached-client impact. Cancel returns to
-Open browsing. A failed kill remains in confirmation with an attempted guard,
-so another Enter cannot issue a second kill; Cancel and selecting Kill again is
-the explicit retry path. A successful kill returns to Open browsing.
-
-Kill requires a freshly loaded live host row. An unavailable host leaves its
-session row visible, restores Open, preserves the typed selection, and shows a
-notice instead of entering confirmation.
-
-Kill browse rows combine Rofi `active` and `urgent` tokens so the managed
-selected-row theme can render the danger treatment. Open preserves its existing
-`open here` active and unavailable urgent semantics. Alt+R, scope changes, and
-automatic refresh retain the active action. Refresh records the typed stable
-row identity and emits Rofi `new-selection` when exactly one matching row
-survives a reorder.
-
-The retired `ROFI_RETV` values 2 (custom input), 3 (direct delete), and 13
-(F2 rename) are no-ops even for already-open Rofi windows. CLI `create` and
-`rename` remain public lifecycle commands; P10 removes only their picker UI
-paths.
-
-## P8 flat-scope implementation
-
-P8 replaces the previously deployed `Recent` / `Hosts` root pair and per-host
-child layers with leaf-only peer views:
-
-```text
-Tmux › Open
-Tmux › Attached
-Tmux › All
-Tmux › Local
-Tmux › <remote host in Host Mesh order>
-```
-
-`All` is the mixed, recency-ordered cross-host session list. `Local` follows,
-then every authoritative remote in stable Host Mesh order; availability and
-activity never reorder the ring. Empty and unavailable hosts keep their scope.
-When no remote exists, the redundant `All` and `Local` scopes collapse to one
-`Local` view, alongside Open and Attached. Tmux Plus defaults to All when it
-exists, otherwise Local, and restores an endpoint-local remembered view and
-last successfully opened complete session reference through its launcher.
-
-Left and Right wrap through scopes without discovery or network work, preserve
-the current filter, and reset selection to the first eligible matching row.
-P10 supersedes the former Tab row-navigation rule with its named action cycle.
-Enter follows the visible P10 action for the selected session. Escape and Ctrl+G
-always close through Rofi's native cancel action and are never script callbacks.
-
-Each model render is also written as a private, content-addressed presentation
-snapshot. The continuation state carries only its opaque snapshot key. Left and
-Right callbacks load that exact key and do not construct configuration, read
-Host Mesh, inspect local tmux, or call lifecycle code. A missing, corrupt, or
-unsafe snapshot fails closed with a bounded notice so the picker can be reopened.
-The cache retains the newest 256 owned snapshots (plus the snapshot being
-written), which bounds disk growth while leaving room for concurrent and
-long-lived picker windows.
-
-P10 removes Ctrl+Enter creation and F2 rename from the picker. Kill
-confirmation remains transient state; Left and Right do nothing there, and
-native Escape closes the picker without committing the action. Host Mesh v1
-and Tmux Session v1 do not change.
+Current behavior for Tmux Plus **0.12.0a2**, Observer **0.6.0a2** and Mesh
+**0.1.0a7**, recorded 2026-10-10. This guide describes presentation and user intent.
+[Mesh selection](mesh-integration.md) and
+[managed operations](https://github.com/byebyebryan/dotfiles/blob/main/docs/tmux-observer-operations.md)
+own exact installed selection. [Product design history](design-history.md)
+preserves the earlier P6–P11 implementation milestones and retired cache model.
 
 ## Product boundary
 
-`rofi-tmux-plus` is a fast, searchable manager for tmux sessions on the local
-host and explicitly configured SSH peers. The primary object is a tmux session
-on a logical host. SSH is transport; provider-specific agent history is a
-higher layer.
+Tmux Plus is a searchable picker for sessions on the local default tmux server
+and configured logical hosts. It remains useful for manual tmux management.
+Agent Plus consumes its generic Tmux Session v1 CLI; provider discovery, task
+state and resume policy belong to that consumer.
 
-The project owns generic tmux inventory and lifecycle:
+The UI owns labels, ordering, view membership, filter/caret, selection,
+bookmarks, confirmation and feedback. Observer supplies validated prepared
+facts and a separate action client. Mesh supplies host authority and reusable
+state networking. See [component boundaries](observer-boundaries.md) and
+[Observer runtime architecture](https://github.com/byebyebryan/tmux-observer/blob/main/docs/runtime-architecture.md).
 
-- list and filter sessions;
-- focus a matching local Niri terminal when possible;
-- attach locally or through SSH;
-- create a session;
-- rename a session; and
-- kill a session after confirmation.
+## Views and session rows
 
-It does not identify Codex, Claude Code, or OpenCode sessions or decide how
-those providers resume. `rofi-agent-plus` owns that policy and consumes the
-generic [Tmux Session Contract v1](TMUX_SESSION_V1.md).
+The wrapping view ring is:
 
-Remote hosts come from the implemented
-[Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md).
-Tmux Plus does not maintain a second list of aliases or SSH routes. It remains
-useful in local-only mode when SSH Plus is absent; remote capability requires a
-compatible Host Mesh provider.
+```text
+Open → Attached → All → Local → remote hosts in catalog order
+```
 
-The public `rofi-tmux-plus` and `rofi-ssh-plus` executables are resolved through
-`PATH`. Suite deployments install them under `~/.local/bin` or an equivalent
-user executable directory; Rofi script-mode symlinks are not used as private
-cross-project API paths.
+With no remote hosts, All and Local collapse to Local. A first invocation
+defaults to All when available, otherwise Local. Empty Open/Attached views and
+empty or unavailable configured hosts retain their place in the ring;
+activity and availability do not reorder hosts.
 
-## Configuration and local integration
+| View | Membership |
+| --- | --- |
+| Open | Fresh successful owner facts plus confirmed or qualified viewer evidence on this desktop |
+| Attached | Fresh successful owner facts with positive native tmux client counts |
+| All / Local / host | Relevant sessions, including explicitly retained unavailable rows |
 
-Configuration is optional at
-`${XDG_CONFIG_HOME:-~/.config}/rofi-tmux-plus/config.toml`. Version 1 accepts:
+Open and Attached are independent: a remote client may establish Attached
+without a local desktop viewer. Failed or unsupported viewer observation leaves
+membership unknown. Unknown is distinct from a complete empty view. All or Local
+keeps sessions available for inspection.
+
+Session rows use two lines: the session name, then host/path/window/status/activity
+metadata. Concrete host views omit the redundant host label. Search metadata
+retains the logical host, complete path, name, current window and status. The typed
+reference in `ROFI_INFO` supplies selection identity; rendered text does not.
+
+`open here` denotes supported confirmed presence; `open here?` denotes qualified
+matching or a retained local association with current native inputs. Manual
+remote SSH shells can qualify when unique title/owner, route/process and positive
+attachment evidence agree. Neither label supplies a verified close handle.
+Activity age is tmux's native timestamp, not source freshness or agent progress.
+
+Rofi row tokens convey confidence and action state:
+
+| Row | `active` | `urgent` | Selectable |
+| --- | --- | --- | --- |
+| Fresh open-here or qualified session | yes | no | yes |
+| Fresh attached/detached session | no | no | yes |
+| Retained session from an unavailable host | no | yes | yes |
+| Kill-mode session | yes | yes | yes |
+| Empty scope | no | no | no |
+| Empty concrete scope with unavailable host | no | yes | no |
+| Kill-confirmation action | yes | yes | yes |
+
+The managed theme owns colors. Refresh activity and old activity timestamps do
+not create warning tokens. Recovery clears unavailable treatment on the next render.
+
+## Navigation and remembered context
+
+| Key | Behavior |
+| --- | --- |
+| Up / Down | Native row selection |
+| Left / Right | Wrap through views; keep filter and select the first eligible row |
+| Tab / Shift+Tab | Cycle Open/Kill forward or backward |
+| Enter | Run the selected Open intent or enter Kill confirmation |
+| Alt+R | Request bounded passive reconciliation |
+| Escape / Ctrl+G | Native cancel from every state |
+| Ctrl+B / Ctrl+F | Move the text cursor |
+
+The prompt names the host scope. The persistent message shows the selected Enter
+action, both choices and the Tab hint. Bounded notices follow separately.
+Malformed action state blocks Enter with a visible error.
+
+Preferences are bounded endpoint-local XDG state. Explicit view changes are
+remembered. Only a successful Open replaces the last-used session reference;
+highlighting, cancellation, failure and Kill do not. A completed focus or terminal
+spawn is the compatibility meaning of Open success, not proof of remote attachment.
+
+The bookmark identity is `(hostId, serverGeneration, sessionId, createdAt)`.
+Rename preserves it; server replacement and ID reuse do not. A removed remembered
+host falls back to All or Local. An absent bookmarked row uses the first eligible
+row without switching views or performing extra discovery.
+
+Each dialog starts with an empty filter, Open selected and no pending confirmation.
+The launcher prepares a frame and passes its selected row to Rofi. Bookmark
+restoration happens once; later updates preserve the currently highlighted
+complete identity when visible. Explicit view changes reset selection.
+Direct script invocation can restore the view but does not guarantee the initial row.
+
+## Prepared updates and explicit refresh
+
+Startup and browsing consume the prepared local Fleet v1 view and one owned
+read-client watch. Timer, navigation and action-cycle callbacks adopt validated
+prepared facts without tmux, SSH or desktop collection. Presentation snapshots
+are private UI state; they are not observation caches or action authority.
+
+Owner facts, native local bindings, remote desktop evidence and watch health have
+independent expiry. Every adopted/rendered frame rechecks scope and freshness.
+A heartbeat renews no source fact. Quiet renewal can update leases without a UI
+redraw; material changes, expiry, ticket results and recovery wake adoption.
+
+An expired or unavailable owner can retain historical rows in All/host views.
+Positive Open/Attached membership is revoked. Viewer failure alone does not
+invalidate healthy native inventory. Complete-empty, unknown, warming and failed
+states keep distinct presentation.
+
+Alt+R preserves filter, selected reference and action, requests fixed owner/desktop
+sources and tracks an incarnation-bound refresh ticket. Its notice clears on a
+terminal ticket outcome even when rows are unchanged. An incomplete or failed
+refresh cannot be presented as complete success. Post-action reconciliation
+targets the affected owner and cannot repeat the native action.
+
+## Open and guarded Kill
+
+Open passes the exact selected target to Observer's action client. That client
+revalidates the route, native identity and any focus candidate. It can focus a
+unique compatible viewer or launch the configured terminal. Ambiguous viewer
+evidence is rejected under the picker policy; it does not choose the first title
+match. An uncertain dispatch is reported once and never automatically repeated.
+
+Kill requires current host evidence before entering confirmation. The confirmation
+freezes the complete reference and observed-name guard, names host/session and
+attachment impact, and selects Cancel initially. Updated observations cannot
+retarget it. Left/Right do nothing during confirmation. Escape closes without an
+uncommitted action; Cancel returns to Open browsing.
+
+A failed attempt retains an attempted guard, preventing another Enter from
+dispatching the same Kill. Cancel and explicitly selecting Kill again create a
+new intent. Success returns to Open. The action client independently revalidates
+the exact target before mutation; cached state never authorizes deletion.
+
+The browse surface exposes Open/Kill. CLI consumers retain `create`, `rename`,
+`viewers` and `close-viewer` alongside `open` and `kill`.
+The [Tmux Session v1 contract](TMUX_SESSION_V1.md) owns argv, JSON, typed errors,
+native option guards and effect semantics. Verified close has stronger checks
+than display presence.
+
+## Configuration and installation
+
+Optional configuration lives at
+`${XDG_CONFIG_HOME:-~/.config}/rofi-tmux-plus/config.toml`:
 
 ```toml
 schema_version = 1
@@ -208,311 +162,32 @@ refresh_seconds = 30
 attach_timeout_seconds = 60
 ```
 
-`terminal` is a nonempty argv prefix, not a shell command string. Tmux Plus
-appends `-e` and its exact local or SSH attachment argv. The default is
-`["ghostty"]`. Values containing NUL or control characters are invalid.
-`refresh_seconds` controls picker-cache freshness; bounded SSH connection
-policy remains owned by Host Mesh. `attach_timeout_seconds` controls the
-provider-neutral first-client gate used by programmatic creation.
+`terminal` is an argv prefix, never a shell command. The action client appends
+the attachment invocation. `attach_timeout_seconds` bounds the programmatic
+first-client gate. `refresh_seconds` remains an accepted compatibility setting;
+the prepared picker does not use it to change owner polling, leases or Mesh
+cadence. Observer services own those schedules.
 
-Unknown keys, wrong types, empty terminal elements, `refresh_seconds` outside
-1 through 86400, and `attach_timeout_seconds` outside 1 through 3600 are
-visible configuration errors. The command does not silently fall back after
-reading a present but malformed file.
+Unknown keys, malformed values and a present invalid file are visible errors.
+The launcher validates its packaged native Rofi mode and supported binary tuple,
+prepares initial selection, owns the watch and stops only its owned children.
+Unsupported or drifted native integration produces a bounded error display.
 
-Terminal spawning uses a detached user scope when available and otherwise a
-new session with closed standard streams. Niri focus is best-effort: if `niri`
-is missing, its JSON cannot be interpreted, or no exact window matches, Tmux
-Plus launches a terminal rather than failing the open. Interactive creation
-without a path starts in the selected host user's home directory. The public
-CLI rejects an explicit missing directory; it never inherits Niri or Rofi's
-incidental current directory.
+Prepared browsing requires already running owner/fleet services and a configured
+Mesh source. The generic fleet command defaults to legacy; managed controls
+explicitly select Mesh. Package installation alone starts no service.
+Explicit CLI inventory remains fresh and is usable independently of prepared
+service health; remote fresh/lifecycle operations retain Host Mesh v1 routing.
 
-## Views and rows
+## Validation and limits
 
-The picker has leaf-only peer views:
+[Development](development.md) explains source setup and checks.
+[Current Mesh evidence](mesh-integration.md) records exact headless frames/callbacks,
+native passivity, resources, installed recovery and paired rollback.
+Those passes do not establish graphical appearance/input or physical suspend.
+Earlier [migration](observer-migration.md) and [release records](README.md#historical-records)
+retain their own graphical artifact/endpoint scope.
 
-```text
-Tmux › Open
-Tmux › Attached
-Tmux › All
-Tmux › Local
-Tmux › <remote host in Host Mesh order>
-```
-
-`All` is the mixed list across live hosts, ordered by the existing session
-recency rules. `Local` follows, and remote scopes follow in the stable order
-provided by Host Mesh. Availability, activity, and session age never reorder
-the scope ring. Empty and unavailable authoritative hosts retain their scope;
-the view is not removed merely because it has no current rows. With no remote
-hosts, `All` and `Local` collapse to one concrete `Local` scope.
-
-Every normal browsing row is a tmux session. Host rows are not an intermediate
-chooser layer.
-
-Session rows reserve two physical lines:
-
-```text
-rofi-tmux-plus
-Desktop B · ~/code/rofi-tmux-plus · 2 windows · open here · activity 4m
-```
-
-In a concrete host scope, the redundant host label is omitted. The working
-directory is shortened for display only. Search metadata retains the logical
-host ID, display label, complete path, session name, current window, and
-status. Selection identity always comes from typed JSON in `ROFI_INFO`, never
-from visible text.
-
-The status vocabulary is:
-
-- `open here`: a matching Niri terminal is visible on the current desktop;
-- `attached`: tmux reports one or more clients but none can be focused here;
-- `detached`: tmux reports no clients; and
-- `unavailable`: the row is a retained snapshot from an unreachable host.
-
-Attachment count is authoritative only for a live observation. An unavailable
-row says when it was last seen and does not present its old attachment status
-as current fact.
-
-### Observation confidence and row state
-
-Rofi row-state tokens convey confidence and local action state independently of
-the textual status and activity age:
-
-| Row state | `active` | `urgent` | Selectable |
-| --- | --- | --- | --- |
-| Live `open here` session | yes | no | yes |
-| Live attached or detached session | no | no | yes |
-| Retained session from an unavailable host | no | yes | yes |
-| Kill-mode session | yes | yes | yes |
-| Normal empty scope | no | no | no |
-| Empty concrete scope whose host is unavailable | no | yes | no |
-| Kill-confirmation action | yes | yes | yes |
-
-In Open mode, the `active` token on a session row means that the row is open
-here now; it is not a proxy for recent activity. The `urgent` token means that
-the current observation cannot establish the retained session or concrete host
-as available. Kill mode deliberately applies both tokens to every selectable
-session row so the managed selected state can show danger. A refresh running in
-the background or an old cache/activity
-timestamp does not otherwise add either token. A successful atomic host
-snapshot clears the unavailable warning on its next render; theme colors remain
-outside this repository.
-
-## Navigation
-
-Browsing follows the suite-wide Rofi contract:
-
-| Key | Behavior |
-| --- | --- |
-| Tab / Shift+Tab | Cycle the visible action forward or backward |
-| Left / Right | Wrap through `Open`, `Attached`, `All`, `Local`, and remote scopes |
-| Enter | Open or begin Kill confirmation for the selected session |
-| Escape | Close Rofi through its native cancel action |
-| Ctrl+G | Close Rofi through the same native cancel action |
-| Alt+R | Perform a bounded refresh |
-
-Ctrl+B and Ctrl+F replace the text cursor actions displaced by Left and Right.
-Rofi's default Ctrl+N remains row-down. The managed invocation assigns Alt+R,
-Right, Left, Tab, and Shift+Tab to callbacks 1, 2, 3, 7, and 8. It unbinds
-Rofi's native element-next and element-prev Tab actions. Escape and Ctrl+G are
-native cancel bindings and never enter the script callback path.
-
-The only non-browsing state is explicit Kill confirmation:
-
-```text
-session + Kill action ──Enter──> kill confirmation ──Cancel──> Open browsing
-```
-
-Left and Right do nothing in confirmation so a pending operation cannot change
-accidentally. Native Escape closes the picker from every state, discarding an
-uncommitted action. A selected session is handed directly to the lifecycle
-service from typed Rofi metadata. The lifecycle service independently
-revalidates Mesh authority and the full stable reference before acting.
-
-Configuration, model, and callback failures are bounded at the Rofi process
-boundary. Escape and Ctrl+G remain native cancel actions even when a
-configuration, model, callback state, or companion contract is malformed. The
-legacy callback numbers 2, 3, 13, and 15 are immediate no-ops for stale
-windows; none renders state or performs an action. Snapshot callback failures
-render a bounded diagnostic while retaining a safe picker state.
-
-Kill confirmation selects `Cancel` by default. Its destructive row names the
-logical host and session and reports how many clients the live observation
-would disconnect.
-
-## Stable identity and action safety
-
-The authoritative session reference is:
-
-```text
-(logical host ID, tmux server generation, tmux session ID, creation timestamp)
-```
-
-Tmux session names are display and creation inputs, not durable identities.
-Every attach, rename, and kill re-reads the target through the selected host
-and verifies the server generation, session ID, and creation timestamp in one
-bounded operation. Rename and kill also require the observed name as an
-optimistic-concurrency precondition. Open normally does not, so an external
-rename of the same proven session remains openable. An identity mismatch
-returns `stale_session` and refreshes rather than risking an action against a
-different session after a tmux server restart.
-
-Tmux targets use the session ID after validation. Remote command fragments and
-all dynamic values are shell-quoted; local processes use argv arrays. User
-options accepted for programmatic creation are restricted to tmux `@` session
-options.
-
-## Remembered context and filtered views
-
-The Open and Attached views precede All/Local/remote scopes and remain present
-when empty. Open requires fresh endpoint-local confirmed or matched viewer
-presence plus fresh successful owner evidence. Attached requires fresh positive
-owner client counts. Neither implies provider activity or grants a close handle.
-Unknown membership points to All, or Local in local-only mode. Explicit scope
-changes preserve the filter and reset selection; initial preparation alone can
-restore the last successfully opened row. Preferences live under XDG state,
-are bounded owned records, and supply no lifecycle authority.
-
-The launcher prepares one frame, passes its selected row to Rofi, and serves
-that exact frame to the first script callback. Every frame arms keep-filter and
-keep-selection because Rofi 2.0 reads those flags from the preceding frame;
-explicit new-selection controls reset versus preservation. Confirmation keeps
-its frozen reference and starts on Cancel.
-
-## Discovery and cache lifecycle
-
-Opening the picker must not wait for every SSH host:
-
-1. Query the local default tmux server synchronously.
-2. Load the most recent valid remote snapshots.
-3. Render immediately and request independent finite owner and viewer jobs
-   when their observations are due. Each kind has its own request and run locks.
-4. Pin owner collection to one Host Mesh revision and publish validated host
-   results as they complete. Per-host operation epochs reject late results after
-   a newer observation or mutation reconciliation.
-5. Renew positive viewer observations after seven seconds and expire at ten;
-   other observations renew at ten. Scans read retained owner facts, never SSH
-   inventory, and bind matches to their supporting owner inputs and desktop context.
-6. Use a stable one-second Rofi timer while renewal is scheduled. Idle ticks read
-   only the presentation snapshot until work is due; running jobs can publish
-   progress on the next tick. Preserve the filter and surviving highlighted
-   reference; reset explicitly when a view changes or its row disappears.
-7. Clear transient job status after completion, while retaining the next bounded
-   renewal deadline. Configured owner freshness is independent of viewer scans;
-   expired counts become unknown and leave Open/Attached membership.
-
-The private picker model exposes the complete current logical-host catalog in
-Mesh declaration order separately from observed inventory rows. Thus the flat
-scope ring can offer configured remotes on a cold cache without pretending
-that they were already contacted.
-
-A successful host refresh, including a reachable host with no tmux server or
-no sessions, replaces that host's cached inventory. A transport failure
-retains the previous snapshot and marks it unavailable; any retained client
-count is cleared because it is no longer a current attachment observation. A
-non-authoritative reached-domain error has the same retained/unavailable
-presentation. A reachable host on which tmux is missing is a visible capability
-error, not an SSH route failure, and authoritatively clears old sessions.
-
-Remote cache files are private, versioned, fingerprinted by Mesh revision and
-cache schema, locked during mutation, and atomically replaced. Presentation
-snapshots use a separate private cache with 0700 directories, 0600 regular
-files, content-addressed names, bounded payloads, and atomic writes; garbage
-collection only considers owned regular files matching the exact snapshot-name
-shape. Cache layout is private implementation state and is not an integration
-contract. Refresh
-markers are also revision-scoped: a marker from an old Mesh cannot block or
-surface as the current refresh. The detached inventory owner has a 15-second
-hard deadline; its marker becomes `stalled` only after 20 seconds, so a normal
-bounded refresh is never labelled stalled before its deadline.
-
-The live inventory operation defined by Tmux Session Contract v1 does not
-return cached sessions. The picker and higher-level consumers decide whether
-and how to retain stale domain data.
-
-## SSH and remote requirements
-
-Background discovery and noninteractive management require key-, agent-, or
-equivalent noninteractive SSH authentication. They use `BatchMode=yes`, the
-Host Mesh timeout policy, and no automatic host-key acceptance. Interactive
-terminal attachment may still expose normal SSH diagnostics.
-
-Consumers try the mesh's ordered route candidates using their actual domain
-command, rather than performing a separate `ssh ... true` probe. Once a remote
-nonce-bearing Host Mesh v1 marker establishes that the authenticated wrapper
-ran, Tmux Plus reports that route as reachable even if tmux is absent or its
-command fails. It reports a route unreachable only for a classified SSH
-transport failure before the marker and includes the mesh revision and
-observation time in every report.
-
-Remote hosts require SSH, a POSIX-compatible shell for the bounded discovery
-wrapper, and tmux. They do not require this repository or Python to be
-installed.
-
-## Open, create, rename, and kill
-
-Open first revalidates the selected reference and any optional generic
-`@NAME=VALUE` requirements. It then looks for a current Niri window matching
-the live session name and native host identity. If found, it focuses that
-window. Otherwise it launches the configured terminal in a detached user scope
-and attaches by exact tmux session ID, locally or through `ssh -t`. A missing
-or changed required option is `stale_session`, before focus or terminal launch;
-the generic contract never attributes those options to a provider.
-
-Window matching is best-effort. It benefits from a tmux title containing the
-session name and native hostname, but failure never prevents a new client from
-opening.
-
-Interactive creation by name behaves as ensure-and-open: an exact existing
-name is opened; otherwise a new default-shell session is created and opened.
-The default directory is the selected host user's home.
-The public automation contract exposes stricter `create` semantics that fail
-on a name collision, allowing Agent Plus to preserve provider ownership and
-choose another name safely. Its provider-neutral defer-until-attached option
-preserves waiting-wrapper reuse without teaching Tmux Plus about agent types.
-
-Rename and kill act on a revalidated stable reference. Creation can atomically
-set requested `@` session options and install a bounded first-attachment wait
-gate before returning success. A holding wrapper prevents the requested
-program from exiting before metadata and the complete descriptor are secured.
-If creation or metadata setup fails, cleanup requires the operation token and
-full stable identity; an unrelated or externally replaced session is never
-removed.
-
-## Process ownership and errors
-
-Rofi callbacks never wait for a terminal process. Terminal windows and remote
-attachments are detached from Rofi and survive picker exit. Background
-refresh has one lock-protected owner and a hard deadline.
-
-Action failures keep the picker open with a short, self-clearing message.
-Network errors are summarized per logical host and bounded in length. Command
-exit status is kept distinct from displayed diagnostics.
-
-## Non-goals
-
-- Managing tmux windows or panes interactively.
-- Alternate tmux sockets or servers.
-- Zellij or another multiplexer.
-- Discovering arbitrary SSH configuration or `known_hosts`.
-- Moving or synchronizing sessions between hosts.
-- Provider-specific agent discovery or resume policy.
-- Replacing the tmux-native interface after attachment.
-- A resident daemon, compiled Rofi plugin, or DMS integration in this repo.
-
-## Implementation sequence
-
-1. Implement and test the Tmux Session v1 model and local inventory CLI.
-2. Publish success, partial-host, stale-mesh, stale-session, and creation
-   rollback fixtures for contract consumers.
-3. Add stable local lifecycle operations and isolated tmux integration tests.
-4. Consume Host Mesh v1 for bounded remote inventory and route reporting.
-5. Implement Rofi rows, views, action states, and regression tests.
-6. Integrate Agent Plus only after the contract passes independently.
-7. The managed Chezmoi source installs all public commands on `PATH`, keeps
-   raw Ghostty on `Mod+T`, adds `Mod+Return` as a second terminal shortcut,
-   cuts `Mod+G` over to Tmux Plus, and retains the tmux cheatsheet on
-   `Mod+Shift+G`. P6 live focus, attach, and remote acceptance completed for
-   the exercised local and remote paths; those remain host-specific rollout
-   checks for later changes.
+Native tmux events and broader compositor/terminal support require separate
+producer and consumer acceptance. Open/Attached remain display views and do not
+infer agent work, completion, provider identity or lifecycle authority.

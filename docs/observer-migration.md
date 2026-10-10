@@ -1,5 +1,10 @@
 # Observer client migration
 
+Historical first-delivery acceptance for the exact tuple below. Use
+[current Mesh selection](mesh-integration.md) and [product design](DESIGN.md)
+for today's package and picker behavior. The evidence here retains its original
+artifact and graphical endpoint scope.
+
 Tmux Plus `0.7.0a1`: T13 fresh CLI compatibility and T14 prepared/native picker
 acceptance and T15 managed selection pass for the recorded tuple below.
 The user selected Starship for graphical tests while Snap is in active use.

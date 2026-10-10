@@ -1,8 +1,12 @@
 # Tmux Plus as an observation and action client
 
-Reviewed: 2026-10-08. B4 source implementation follows the accepted Observer read
-migration and the [0.7.0a2 browse renewal repair](tmux-plus-0.7.0a2.md).
-Source candidate 0.8.0a1 remains unselected until its independent runtime gates pass.
+This note preserves the 2026-10-08 consumer boundary design and chronological
+candidate/acceptance ledger. B4 followed the Observer read migration and
+[0.7.0a2 browse renewal repair](tmux-plus-0.7.0a2.md); the later sections record
+its independent acceptance and selection. Earlier “current” candidates below
+refer to those checkpoints. Today's implementation is summarized in
+[product design](DESIGN.md), with Plus 0.12.0a2 / Observer 0.6.0a2 / Mesh 0.1.0a7
+selection and evidence in [Mesh integration](mesh-integration.md).
 
 The authoritative cross-component design is Observer's
 [component boundaries](https://github.com/byebyebryan/tmux-observer/blob/main/docs/component-boundaries.md),
