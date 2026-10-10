@@ -7,9 +7,11 @@ service; importing the prepared frontend requires no Mesh connection or collecto
 
 The producer's [integration ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/mesh-integration.md)
 owns cached-state transport, source receipts, explicit refresh compatibility and
-the separately reviewed Mesh dependency. The Mesh a2 candidate is frozen from
-`fd40916f2b0e5c9d2a3f8b51d0da02585894ddcb`; the deployed authority a1 and older
-Observer/Plus selection remain independent until a paired rollout is accepted.
+the separately reviewed Mesh dependency. The Mesh a4 candidate is frozen from
+`2cc12accb331db7ee65ab426da09576a907b291c`, matching the separately selected
+Agent Mesh release. Older Observer/Plus selection remains independent until a
+paired Tmux rollout is accepted. Shared launcher/source changes must preserve
+and verify both domains.
 
 `scripts/accept-native-picker --transport mesh` uses exact installed wheels,
 disposable native sessions and the real Mesh backend. Its fixed local-only
