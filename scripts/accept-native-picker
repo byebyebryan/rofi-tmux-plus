@@ -354,9 +354,14 @@ def main():
                     w.get("pid") == pid and w.get("is_focused") for w in current
                 ), "owned Rofi lost focus; no input sent"
             else:
-                assert exclusive and all(l["namespace"] == "rofi" for l in exclusive), (
-                    "owned Rofi lacks exclusive layer focus; no input sent"
-                )
+                assert exclusive and all(l["namespace"] == "rofi" for l in exclusive), {
+                    "refused": "owned Rofi lacks exclusive layer focus; no input sent",
+                    "focusedOutput": output,
+                    "rofiLayers": [layer for layer in layers if layer["namespace"] == "rofi"],
+                    "exclusiveLayers": [
+                        layer for layer in layers if layer["keyboard_interactivity"] == "Exclusive"
+                    ],
+                }
             command(["wtype", *args], env=env)
 
         def screenshot(pid, label):

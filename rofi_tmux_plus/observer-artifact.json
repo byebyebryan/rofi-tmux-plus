@@ -63,7 +63,7 @@
     "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
     "tmux_observer_client/_local_bindings.py": "5a51bee86bef5efa62447e3945799aa17a9d922eb26cda794601b76cade41531",
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
-    "tmux_observer_client/_mesh_control.py": "bb3be4670e01f1c66808f20af42a5a233d468c7bd75b9fd96a28ad8dd79442dd",
+    "tmux_observer_client/_mesh_control.py": "8910709bdf92205d291781ee0352bb2037f25a12780782f4b4d800f969083063",
     "tmux_observer_client/_mesh_projection.py": "dc0479477f555e9e6af3a095d11fdd52513c067620c5d7a350475c3d01199922",
     "tmux_observer_client/_mesh_worker.py": "b47c1823c5cd84c7e81376e8abb23e8669684137b72d428c670b6b084d8d07d0",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
@@ -80,12 +80,12 @@
     "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
     "tmux_observer_client/fleet.py": "073ee59800d960d027a4a09677ea6ce018fe95f1843de2237a132d58eebff802",
     "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
-    "tmux_observer_client/mesh_fleet.py": "e9aace7c1f56ad6fd4493406c161245abb293f7c382a1b32b60dbdabdb225f2f",
+    "tmux_observer_client/mesh_fleet.py": "f5cfa131fdc6e9e066d4c5089eae448a9a6dc161928e614f8c0d1d0e4ac03e4f",
     "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "b9c683671793c475e53c61acb5357ca379fcb640",
+  "sourceCommit": "ee5831e17ed887a115e74a9772c5d1ee45bcf234",
   "version": "0.6.0a1",
-  "wheelSha256": "383bfb0bb9903c9e2b9d1e254c3e7f204e836722b3e874e5335b8acf4521df33"
+  "wheelSha256": "5022b83c0b5a2b8be2c584f73f9d5177b14261933293c04c56572bd62b738d00"
 }
