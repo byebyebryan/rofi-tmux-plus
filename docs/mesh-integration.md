@@ -1,35 +1,34 @@
-# Mesh-backed Observer candidate
+# Mesh-backed Observer selection
 
-Source candidate Tmux Plus 0.12.0a1 pins Observer 0.6.0a1 and its complete runtime
-manifest. The frontend retains Fleet v1, Tmux Session v1, desktop freshness and
-independent action guards. Observer's new Mesh backend is selected by the fleet
-service; importing the prepared frontend requires no Mesh connection or collector.
+Tmux Plus **0.12.0a1** from `07c261986f9480b78d7a92a068be940ecf2cad33` is
+published and selected on Snap/Starship with Observer **0.6.0a1** from
+`1931d733c6fd22892024f79e98e0f7995c4a2cb3` and shared Mesh **0.1.0a6** from
+`74b9e54c1fc433aaeb5db29683faf65f6b61016a`. The frontend retains Fleet v1,
+Tmux Session v1, desktop freshness and independent action guards. The fleet
+selects Mesh explicitly; prepared imports require no connection or collector.
 
-The producer's [integration ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/mesh-integration.md)
-owns cached-state transport, source receipts, explicit refresh compatibility and
-the separately reviewed Mesh dependency. The Mesh a4 candidate is frozen from
-`2cc12accb331db7ee65ab426da09576a907b291c`, matching the separately selected
-Agent Mesh release. Older Observer/Plus selection remains independent until a
-paired Tmux rollout is accepted. Shared launcher/source changes must preserve
-and verify both domains.
+The producer's [accepted rollout record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-mesh-rollout/README.md)
+binds exact wheel/bundle hashes, reproducible builds, 293 Plus source tests,
+producer source/installed native gates and passing exact-source CI. Headless
+acceptance exercises the actual installed frames and callbacks: all seven cases
+pass, with 100 warm frames at **124.256 ms p95** against the unchanged 150 ms
+target. The ordinary 600-second two-host resource gate and all eleven declared
+capacity cases pass within their recorded scope.
 
-`scripts/accept-native-picker --transport mesh` uses exact installed wheels,
-disposable native sessions and the real Mesh backend. Its fixed local-only
-catalog is a fixture shared by the consumer and Mesh authority APIs. It exercises
-local binding/viewer freshness, refresh, filtering, native watch recovery and
-reader restart. It establishes no remote desktop, ordinary resource, managed
-selection, Starship foreground or physical sleep acceptance. The legacy backend
-remains selectable for independent comparison and rollback.
+Managed installed verification, owner/reader recovery, old Observer/Plus paired
+rollback and reselection pass on both hosts. Shared launcher/source changes pass
+Agent and Tmux local/remote snapshot/subscription probes; Agent private artifacts,
+services, ordinary native sessions and unrelated drift are preserved. Agent's
+private resident Mesh bridge retains its independently selected SDK a4.
 
-The candidate from `dac43de` pins Observer `9e5a875`. Its 293-test source gate
-passes against that exact installed producer. The wheel and managed bundle
-rebuild deterministically; installed payload/pin and native ABI checks pass.
-The producer's [evidence record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-09-mesh-integration/README.md)
-owns the exact hashes and scoped native/resource reports.
+The [integration ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/mesh-integration.md)
+owns source receipts, refresh compatibility and reusable transport. The legacy
+backend and previous paired archives retain the accepted rollback path. Original
+[candidate evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-09-mesh-integration/README.md)
+keeps its historical tuple, resource failures and limits. Earlier Mesh and legacy
+timing misses do not describe the accepted final bytes.
 
-Snap is unattended with screens off; DMS owns exclusive keyboard input, and
-the graphical guard refused to type. Final a4 graphical acceptance is pending.
-Earlier a2 Mesh and legacy warm-frame probes both missed the existing 150 ms
-target; those results do not establish final-candidate timing. Normal resources,
-capacity, shared managed configuration, paired recovery and rollout remain
-separate gates. No candidate was published or selected by this loop.
+`scripts/accept-native-picker --transport mesh` remains available for owned
+graphical checks. The user accepted headless frames/callbacks for this wiring
+migration; graphical input/visible presentation and physical suspend remain
+optional and unrun. The earlier DMS exclusive-input guard was preserved.
