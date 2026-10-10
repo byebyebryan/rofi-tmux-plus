@@ -59,7 +59,7 @@
     "tmux_observer_client/_desktop_types.py": "c9dc984d6652d04f6c06e29d6e7f2f005500e22626867da4adbe425ea7bb4060",
     "tmux_observer_client/_errors.py": "28b7a21340e9eb06b9106e80a41aaeaef411f23260138b8cc6a7a48f4ada3089",
     "tmux_observer_client/_fleet_state.py": "98f36d4d5972c65cbf9e7aa03b6e15e6a0d702934d1de416c640058992b6ed2b",
-    "tmux_observer_client/_fleet_tickets.py": "c9c781a0e69ad84d079b31e38e955f4a8473d66f4882f719cce2c3917df13a7b",
+    "tmux_observer_client/_fleet_tickets.py": "33212a787bc3a469bb37a02ad8bd65dda685280ef83ff2b66e5396ae8959e147",
     "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
     "tmux_observer_client/_local_bindings.py": "5a51bee86bef5efa62447e3945799aa17a9d922eb26cda794601b76cade41531",
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
@@ -85,7 +85,7 @@
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "c1525e48b9906548b5aa3804ebb9903d45aab634",
+  "sourceCommit": "9e5a8752b6f4715969ab4fd669951cbdf6a87219",
   "version": "0.6.0a1",
-  "wheelSha256": "13d38d81391a964e61d8812bd3b2ae0550c8c58f2ee8827b928a7f2926f65836"
+  "wheelSha256": "faccbe94e35b464403744211032c579a6bcbce09aa83adc6396279dd85cb06fe"
 }
