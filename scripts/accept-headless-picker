@@ -118,6 +118,11 @@ def main():
         root = Path(temporary)
         for name in ("runtime", "native", "config", "state", "cache", "bin"):
             (root / name).mkdir(mode=0o700)
+        config = root / "config/rofi-ssh-plus"
+        config.mkdir(mode=0o700)
+        (config / "config.toml").write_text(
+            "schema_version = 1\nlocal_id = " + json.dumps(args.host_id) + "\n"
+        )
         env = dict(os.environ)
         for key in (
             "TMUX",
