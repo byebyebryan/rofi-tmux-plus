@@ -126,7 +126,9 @@ def _run_public(
         raise GateError(f"could not run {name}: {error}") from error
     if process.returncode != 0:
         diagnostic = stderr.decode("utf-8", "replace").strip().replace("\n", " ")[:400]
-        raise GateError(f"{name} exited {process.returncode}: {diagnostic or 'no diagnostic'}")
+        raise GateError(
+            f"{name} exited {process.returncode}: {diagnostic or stdout.decode('utf-8', 'replace').strip().replace(chr(10), ' ')[:400] or 'no diagnostic'}"
+        )
     if stderr:
         diagnostic = stderr.decode("utf-8", "replace").strip().replace("\n", " ")[:400]
         raise GateError(f"{name} wrote unexpected stderr: {diagnostic}")
