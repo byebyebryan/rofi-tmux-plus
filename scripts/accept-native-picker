@@ -93,6 +93,12 @@ def main():
         "--managed-binding", type=Path, help="exercise the installed Mod+G arguments"
     )
     parser.add_argument("--skip-timing", action="store_true", help="diagnostic GUI run only")
+    parser.add_argument(
+        "--transport",
+        choices=("legacy", "mesh"),
+        default="legacy",
+        help="explicit prepared fleet backend for this owned fixture",
+    )
     args = parser.parse_args()
     artifact, _wheel = builder().verify(args.artifact)
     python = args.python.absolute()
@@ -147,6 +153,7 @@ def main():
         "hostId": args.host_id,
         "harnessSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "timingSkipped": args.skip_timing,
+        "transport": args.transport,
         "installation": "managed source bundle" if args.source_bundle else "wheel",
         "managedBindingSha256": (
             hashlib.sha256(args.managed_binding.read_bytes()).hexdigest()
@@ -207,6 +214,38 @@ def main():
             + "\nexit 1\n"
         )
         (root / "bin/ssh").chmod(0o755)
+        if args.transport == "mesh":
+            # Fixed local-only authority fixture. Both consumer and Mesh use
+            # the same public catalog; no ordinary host state/history is read.
+            catalog = {
+                "schemaVersion": 1,
+                "generatedAt": 1,
+                "meshRevision": "sha256:" + "a" * 64,
+                "localHostId": args.host_id,
+                "sshPolicy": {
+                    "executable": "ssh",
+                    "connectTimeoutSeconds": 2,
+                    "connectionAttempts": 1,
+                    "routeHealthTtlSeconds": 300,
+                },
+                "hosts": [
+                    {
+                        "id": args.host_id,
+                        "display": args.host_id,
+                        "local": True,
+                        "aliases": [],
+                        "routes": [],
+                    }
+                ],
+            }
+            authority_fixture = (
+                "#!" + str(python) + "\nimport json,sys\n"
+                "assert sys.argv[1:] == ['mesh', 'list', '--json']\n"
+                "print(json.dumps(" + repr(catalog) + "))\n"
+            )
+            for name in ("mesh-plus", "rofi-ssh-plus"):
+                (root / "bin" / name).write_text(authority_fixture)
+                (root / "bin" / name).chmod(0o700)
         (root / "recorder/sitecustomize.py").write_text(RECORDER)
         gui_env = dict(
             env,
@@ -467,7 +506,15 @@ def main():
                 "owner",
             )
             fleet = start(
-                [str(bins / "tmux-observer-client"), "fleet", "--host-id", args.host_id], "fleet"
+                [
+                    str(bins / "tmux-observer-client"),
+                    "fleet",
+                    "--host-id",
+                    args.host_id,
+                    "--transport",
+                    args.transport,
+                ],
+                "fleet",
             )
             until(ready, seconds=10)
             assert owner.poll() is None
@@ -873,7 +920,14 @@ def main():
             )
             index = len(events())
             fleet = start(
-                [str(bins / "tmux-observer-client"), "fleet", "--host-id", args.host_id],
+                [
+                    str(bins / "tmux-observer-client"),
+                    "fleet",
+                    "--host-id",
+                    args.host_id,
+                    "--transport",
+                    args.transport,
+                ],
                 "fleet-restarted",
             )
             until(ready)
