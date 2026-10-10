@@ -1,6 +1,6 @@
 {
   "modules": {
-    "tmux_observer/__init__.py": "8d8f16680dee3ab0e390c0ce417b65bf2c9d1fb12b29c9c5ba31febcebc43180",
+    "tmux_observer/__init__.py": "09868537e5e209cd1d0eceaefcc2e9daaef86dc68d1cd4892b547ac12bfaf483",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
     "tmux_observer/_attachment_state.py": "8103965c24877ef5073c5648c28b2890b6d79644dbd8e7ed5073654022e4a8ef",
     "tmux_observer/_clock.py": "ba64e80360cab121704ab0918b9f03fc2537de3cf6bf31d21a3f5a62b1739d80",
@@ -63,9 +63,9 @@
     "tmux_observer_client/_fresh_desktop.py": "845c975366ae31e459b64bac7037fd8e8e7bec2e15b3a2fe0115c376afdc45fb",
     "tmux_observer_client/_local_bindings.py": "5a51bee86bef5efa62447e3945799aa17a9d922eb26cda794601b76cade41531",
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
-    "tmux_observer_client/_mesh_control.py": "8910709bdf92205d291781ee0352bb2037f25a12780782f4b4d800f969083063",
+    "tmux_observer_client/_mesh_control.py": "ba90c7ec6bc1d13ecd950c0161edfa139490389740b43a8805ecc126c2ba2087",
     "tmux_observer_client/_mesh_projection.py": "dc0479477f555e9e6af3a095d11fdd52513c067620c5d7a350475c3d01199922",
-    "tmux_observer_client/_mesh_worker.py": "1b149c3e01369bb886ce16ec41a88862c3cef79f277a77614492419b539975d7",
+    "tmux_observer_client/_mesh_worker.py": "1034a5f6c81b28d525a7e87700ce535df9aa5da413d4e60cd12a34524a95c92c",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
     "tmux_observer_client/_owner_document.py": "16da2d1c696c351c5384a346fc1fee8c9ae3d173108d83977af4a18f23e54725",
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
@@ -85,7 +85,7 @@
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "1c99f5fb1ae4bb5cf9c52014aeb1f9b22d8248d2",
-  "version": "0.6.0a4",
-  "wheelSha256": "6282ed94c5b401579de86c9dc9f9e989d85f7dae2feb7da4607657a37136b6c2"
+  "sourceCommit": "5d8b7234ba10920beb59bde35c2f79c73d382b25",
+  "version": "0.6.0a5",
+  "wheelSha256": "958d2f5381d57f172294e35654e19c96770ccd38e7ef8421a23f3dcf00abe536"
 }

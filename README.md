@@ -1,5 +1,10 @@
 # Tmux Plus
 
+Source candidate, 2026-10-10: Tmux Plus **0.12.0a5** pins the complete
+Tmux Observer **0.6.0a5** package. The candidate includes the reviewed refresh
+scope and Mesh bridge retirement fixes. Artifact validation and coordinated
+adoption are separate from the deployed selection below.
+
 Coordinated transport selection, 2026-10-10: Mesh 0.1.0a9, Tmux Observer
 0.6.0a4 and Tmux Plus 0.12.0a4 are deployed on Snap and Starship. Agent's
 a13 reader and a12 bridge use new private a9 environments; its a15 collector
@@ -14,8 +19,8 @@ management; Agent Plus consumes its generic CLI without adding provider policy h
 
 ## Current selection
 
-As recorded on **2026-10-10**, Snap and Starship select **Tmux Plus 0.12.0a2**,
-**Tmux Observer 0.6.0a2** and **Mesh Plus 0.1.0a7**.
+As recorded on **2026-10-10**, Snap and Starship select **Tmux Plus 0.12.0a4**,
+**Tmux Observer 0.6.0a4** and **Mesh Plus 0.1.0a9**.
 
 The [Mesh selection guide](docs/mesh-integration.md) and
 [accepted catalog-fix record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)
