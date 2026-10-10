@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
@@ -243,7 +244,9 @@ def _public_gate(ssh: Path, tmux: Path, agent: Path) -> None:
         roots = {"rofi-ssh-plus": ssh, "rofi-tmux-plus": tmux}
         for command, checkout in roots.items():
             (prefix / command).symlink_to(checkout / "bin" / command)
-        (prefix / "python3").symlink_to(sys.executable)
+        interpreter = prefix / "python3"
+        interpreter.write_text("#!/bin/sh\nexec " + shlex.quote(sys.executable) + ' "$@"\n')
+        interpreter.chmod(0o700)
         for provider in ("codex", "claude", "opencode"):
             _write_stub(prefix / provider, 127)
         _write_stub(prefix / "ps", 0)
