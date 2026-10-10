@@ -41,23 +41,31 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--host-id", choices=("snap", "starship"), required=True)
     parser.add_argument("--transport", choices=("legacy", "mesh"), required=True)
+    parser.add_argument(
+        "--source-bundle", type=Path, help="exercise exact managed bundle entry point"
+    )
     args = parser.parse_args()
     probe = helper()
     artifact, _wheel = probe.builder().verify(args.artifact)
     python = args.python.absolute()
     bins = python.parent
+    bundle = args.source_bundle.resolve() if args.source_bundle else None
+    setup = "import sys;sys.path.insert(0," + repr(str(bundle)) + ");" if bundle else ""
     package = probe.command(
         [
             str(python),
             "-I",
             "-B",
             "-c",
-            "import rofi_tmux_plus; from rofi_tmux_plus.observer_client import observer_api; observer_api(); print(rofi_tmux_plus.__file__)",
+            setup
+            + "import rofi_tmux_plus; from rofi_tmux_plus.observer_client import observer_api; observer_api(); print(rofi_tmux_plus.__file__)",
         ]
     ).strip()
     parent = Path(package).parent.parent
+    if bundle:
+        assert parent.resolve() == bundle
     for member, source in artifact["sourceFiles"].items():
-        path = parent / (source if source.startswith("rofi_tmux_plus/") else member)
+        path = parent / (source if bundle or source.startswith("rofi_tmux_plus/") else member)
         assert (
             hashlib.sha256(path.read_bytes()).hexdigest() == artifact["members"][member]["sha256"]
         )
@@ -66,6 +74,7 @@ def main():
         "artifact": artifact,
         "transport": args.transport,
         "hostId": args.host_id,
+        "installation": "managed source bundle" if bundle else "wheel",
         "harnessSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "cases": [],
         "state": "running",
@@ -75,6 +84,31 @@ def main():
             "Actual installed frame commands and callbacks; no Rofi window, compositor, input or visible-presentation claim",
         ],
     }
+    picker = (
+        [str(python), str(bundle / "bin/rofi-tmux-plus")]
+        if bundle
+        else [str(bins / "rofi-tmux-plus")]
+    )
+
+    def verify_bundle():
+        if bundle is None:
+            return
+        manifest_path = bundle / "release-manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        assert manifest["candidate"] == artifact
+        actual = {
+            path.relative_to(bundle).as_posix() for path in bundle.rglob("*") if path.is_file()
+        }
+        assert actual == {*manifest["files"], "release-manifest.json"}
+        for relative, expected in manifest["files"].items():
+            path = bundle / relative
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"]
+            assert path.stat().st_size == expected["bytes"]
+            assert bool(path.stat().st_mode & 0o111) == expected["executable"]
+        record["bundleManifestSha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        record["bundleFiles"] = len(manifest["files"])
+
+    verify_bundle()
 
     def passed(name):
         record["cases"].append(name)
@@ -193,7 +227,7 @@ def main():
             context = dict(env, ROFI_RETV=retv)
             if data is not None:
                 context["ROFI_DATA"] = data
-            return probe.command([str(bins / "rofi-tmux-plus")], env=context)
+            return probe.command(picker, env=context)
 
         baseline = None
         try:
@@ -231,7 +265,7 @@ def main():
             warm_env = dict(env, ROFI_RETV="0")
             warm_env.pop("PYTHONDONTWRITEBYTECODE", None)
             at = time.perf_counter_ns()
-            warm = probe.command([str(bins / "rofi-tmux-plus")], env=warm_env)
+            warm = probe.command(picker, env=warm_env)
             assert "azlalpha" in warm
             record["warmupFrameMs"] = (time.perf_counter_ns() - at) / 1000000
             record["bytecodeCachePolicy"] = (
@@ -241,7 +275,7 @@ def main():
             for _ in range(100):
                 at = time.perf_counter_ns()
                 process = subprocess.Popen(
-                    [str(bins / "rofi-tmux-plus")],
+                    picker,
                     env=dict(env, ROFI_RETV="0"),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -298,6 +332,10 @@ def main():
             assert native("list-sessions", "-F", native_format) == baseline
             assert native("show-hooks") == hooks
             passed("full_native_references_attachment_counts_and_hooks_preserved")
+            verify_bundle()
+            if bundle:
+                assert any((root / "cache/rofi-tmux-plus/bytecode").rglob("*.pyc"))
+                passed("managed_bundle_bytes_preserved_and_import_cache_uses_private_xdg_cache")
             assert p95 <= 150, record["warmFrameMs"]
             record["state"] = "passed"
         except Exception as error:  # noqa: BLE001 - preserve exact acceptance failure

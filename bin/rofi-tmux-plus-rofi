@@ -3,14 +3,23 @@
 
 from __future__ import annotations
 
-import pathlib
+import os
 import sys
 
-sys.dont_write_bytecode = True
+if sys.pycache_prefix is None:
+    sys.pycache_prefix = os.path.join(
+        os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")),
+        "rofi-tmux-plus",
+        "bytecode",
+        sys.implementation.cache_tag,
+    )
+
+import pathlib
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from rofi_tmux_plus.launcher import main  # noqa: E402
+from rofi_tmux_plus.launcher import main
 
 raise SystemExit(main())

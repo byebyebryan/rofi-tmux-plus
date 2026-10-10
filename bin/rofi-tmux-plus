@@ -3,18 +3,28 @@
 
 from __future__ import annotations
 
-import pathlib
+import os
 import sys
+
+# Cache imports outside the managed source tree. A prepared picker can reuse
+# bytecode without creating files that conflict with external bundle selection.
+if sys.pycache_prefix is None:
+    sys.pycache_prefix = os.path.join(
+        os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")),
+        "rofi-tmux-plus",
+        "bytecode",
+        sys.implementation.cache_tag,
+    )
+
+import pathlib
 
 # Detached refreshes may start from Rofi or a systemd scope rather than the
 # checkout root.  Resolve this launcher so source and external-tree installs
 # retain their sibling package without relying on inherited PYTHONPATH.
-sys.dont_write_bytecode = True
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from rofi_tmux_plus.cli import main  # noqa: E402
-
+from rofi_tmux_plus.cli import main
 
 raise SystemExit(main())
