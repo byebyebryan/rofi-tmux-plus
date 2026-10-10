@@ -10,12 +10,19 @@ reviewed [component boundary note](docs/observer-boundaries.md) defines ownershi
 native observation, networking, desktop association and action clients retain their
 own contracts; Tmux Plus retains presentation and user intent. The
 [0.10.0a2 fleet performance acceptance](docs/fleet-performance.md) records the
-current Observer 0.4.0a1 pair, Snap graphical checks and scoped managed deployment
+previous Observer 0.4.0a1 pair, Snap graphical checks and scoped managed deployment
 on Snap and Starship. The
 [0.8.0a1 release candidate](docs/tmux-plus-0.8.0a1.md) delegates actions as well
 as reads to the pinned Observer package. Its exact installed/native, Snap picker,
 resource, publication and managed recovery/paired rollback gates pass in their
 recorded scopes.
+
+Current selection: **Tmux Plus 0.12.0a2 / Observer 0.6.0a2 / Mesh 0.1.0a7**
+on Snap and Starship. The [catalog bound-fix record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md) binds exact artifacts,
+source/native checks, installed headless frames/callbacks, resource/capacity and
+managed recovery/paired rollback. This release repins the bounded Mesh catalog
+reader. Graphical presentation and physical suspend remain optional and unrun
+for this wiring change; earlier graphical evidence keeps its original scope.
 
 Tmux Session Contract v1 provides strict versioned JSON inventory across the
 local default server and compatible Host Mesh remotes, plus safe `open`,
@@ -61,7 +68,7 @@ PYTHONPATH=. ./bin/rofi-tmux-plus inventory --json
 
 The launcher validates and loads the native `tmux-plus` mode, with the callbacks
 above. See [migration](docs/observer-migration.md) and the
-[current repair](docs/tmux-plus-0.7.0a2.md) for their separate acceptance scopes.
+[browse renewal repair](docs/tmux-plus-0.7.0a2.md) for their separate acceptance scopes.
 Open is the initial action; Tab advances to Kill and Shift+Tab reverses
 the ordered action cycle, with wraparound. The prompt shows the host scope;
 the persistent message shows `Enter:` with both actions, highlights the
