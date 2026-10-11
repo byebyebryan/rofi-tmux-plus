@@ -16,7 +16,7 @@ Start with the [project overview](../README.md) and
 | [Host Mesh v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md) | Public fresh/lifecycle route contract |
 | [Managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md) | Installed tuple, source pins, scoped recovery and rollback |
 
-The [selected artifact evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)
+The [selected artifact evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
 owns native, headless, resource/capacity and installed recovery/rollback acceptance.
 Source success, installed bytes and graphical acceptance remain distinct.
 

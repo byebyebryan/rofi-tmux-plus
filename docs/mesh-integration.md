@@ -2,20 +2,23 @@
 
 ## Current recorded selection
 
-As of **2026-10-10**, Snap and Starship select:
+As of **2026-10-11**, Snap and Starship select:
 
 | Component | Version | Frozen runtime source |
 | --- | --- | --- |
-| Tmux Plus | **0.12.0a5** | `8d5242ac3b5252028803a982e70d8215613d5010` |
-| Tmux Observer | **0.6.0a5** | `5d8b7234ba10920beb59bde35c2f79c73d382b25` |
+| Tmux Plus | **0.12.0a6** | `b2afd590997a6747f44b90c904c0284e8aaf66a4` |
+| Tmux Observer | **0.6.0a6** | `cb45e40a7915f78fc13a65b955d2ce2d2bc7b4e9` |
+| Tmux reader SDK | **0.1.0a13** | `d9cdac4ba6314430c3c8eb4d948a9d697c90b411` |
 | Shared Mesh bridge CLI | **0.1.0a10** | `3684fe083c0ab5af3c74aa27dff169e5764489f5` |
 
-Source candidate **0.12.0a6** pins the accepted Observer **0.6.0a6** wheel and all
-84 Python modules. Observer now supplies its pure profile to Mesh SDK **0.1.0a13**.
-[Producer package and resource acceptance](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
-precedes consumer installed/headless acceptance and managed selection. The staged
-rollout retains the shared a10 bridge CLI and selects a13 for the Tmux reader;
-no Agent package or service is migrated by this consumer.
+Plus a6 pins the accepted Observer a6 wheel and all 84 Python modules. Observer
+supplies its pure profile to the reviewed Mesh SDK. Independent producer,
+consumer and managed gates pass in the
+[SDK adoption record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md).
+Both hosts verify installed bytes, cached delivery, recovery, paired a5 rollback
+and a6 reselection. Snap has an owner-only topology; Starship has its captured
+desktop/fleet. The shared a10 bridge CLI and independent Agent selection remain.
+No Agent package or service is migrated by this consumer.
 
 Documentation commits can advance after a runtime freeze. The producer pin in
 [observer-artifact.json](../rofi_tmux_plus/observer-artifact.json) identifies the
