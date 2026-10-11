@@ -6,27 +6,23 @@ As of **2026-10-10**, Snap and Starship select:
 
 | Component | Version | Frozen runtime source |
 | --- | --- | --- |
-| Tmux Plus | **0.12.0a2** | `a4344278b6ac135dff72188c7d5b7330ff0463ef` |
-| Tmux Observer | **0.6.0a2** | `80c46925ec7c89dca7c86a944a256b47fd6e1430` |
-| Mesh Plus | **0.1.0a7** | `01da59e2df75a133b617ff2da466221144ed2e4d` |
+| Tmux Plus | **0.12.0a5** | `8d5242ac3b5252028803a982e70d8215613d5010` |
+| Tmux Observer | **0.6.0a5** | `5d8b7234ba10920beb59bde35c2f79c73d382b25` |
+| Shared Mesh bridge CLI | **0.1.0a10** | `3684fe083c0ab5af3c74aa27dff169e5764489f5` |
 
-Documentation commits can advance after a runtime freeze. The Plus producer
-pin in [observer-artifact.json](../rofi_tmux_plus/observer-artifact.json) identifies
-the exact Observer wheel and all verified Python modules; the
+Source candidate **0.12.0a6** pins the accepted Observer **0.6.0a6** wheel and all
+84 Python modules. Observer now supplies its pure profile to Mesh SDK **0.1.0a13**.
+[Producer package and resource acceptance](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
+precedes consumer installed/headless acceptance and managed selection. The staged
+rollout retains the shared a10 bridge CLI and selects a13 for the Tmux reader;
+no Agent package or service is migrated by this consumer.
+
+Documentation commits can advance after a runtime freeze. The producer pin in
+[observer-artifact.json](../rofi_tmux_plus/observer-artifact.json) identifies the
+exact wheel and module hashes; the
 [managed operations ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
-owns exact installed selection and controls.
-
-The [accepted catalog bound fix](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-10-catalog-bound-fix/README.md)
-binds deterministic packages, native/SSH checks, 382 Observer and 293 Plus source
-tests, installed headless callbacks, ordinary resources, capacity and both-host
-managed recovery/paired rollback. Seven headless behavior cases pass; the accepted
-100-frame repeat has p95 **90.206 ms** against the unchanged 150 ms target.
-The first unchanged candidate timing miss and serial previous-tuple comparison
-remain recorded. Timing describes that exact measured checkpoint.
-
-SDK a7 lives at the versioned shared root. SDK a6 remains installed for the tested
-rollback to Observer 0.6.0a1 / Plus 0.12.0a1 and their prior controls.
-Independent Agent private selections remain outside this consumer's authority.
+owns installed selection and controls. Retained versioned SDK roots support
+paired rollback. Historical reports retain their exact package/timing scope.
 
 ## Networking, refresh and actions
 

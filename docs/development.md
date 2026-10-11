@@ -43,7 +43,7 @@ PY
 uv pip install --python .venv/bin/python --no-deps "$TMUX_OBSERVER_WHEEL_DIR"/tmux_observer-*.whl ruff==0.16.6
 ```
 
-The current pin is Observer **0.6.0a5**. When deliberately updating it, derive the
+The current pin is Observer **0.6.0a6**. When deliberately updating it, derive the
 filename from the updated pin and repeat the producer's independent gates before
 consumer selection. Keep the wheel available for explicit package acceptance;
 the installed module pin and wheel digest are different verification scopes.
