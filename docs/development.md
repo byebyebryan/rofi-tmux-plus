@@ -18,7 +18,7 @@ exact released producer wheel into a private temporary directory:
 
 ```sh
 uv venv .venv
-export TMUX_OBSERVER_WHEEL="$(mktemp -d)/tmux_observer-0.6.0a2-py3-none-any.whl"
+export TMUX_OBSERVER_WHEEL_DIR="$(mktemp -d)"
 python3 - <<'PY'
 import hashlib
 import json
@@ -27,7 +27,9 @@ import urllib.request
 from pathlib import Path
 
 pin = json.loads(Path("rofi_tmux_plus/observer-artifact.json").read_text())
-wheel = Path(os.environ["TMUX_OBSERVER_WHEEL"])
+wheel = Path(os.environ["TMUX_OBSERVER_WHEEL_DIR"]) / (
+    "tmux_observer-" + pin["version"] + "-py3-none-any.whl"
+)
 url = (
     "https://github.com/byebyebryan/tmux-observer/releases/download/v"
     + pin["version"] + "/" + wheel.name
@@ -38,11 +40,11 @@ assert len(raw) <= 4 * 1024 * 1024, "Observer artifact exceeds bound"
 assert hashlib.sha256(raw).hexdigest() == pin["wheelSha256"], "Observer artifact drift"
 wheel.write_bytes(raw)
 PY
-uv pip install --python .venv/bin/python --no-deps "$TMUX_OBSERVER_WHEEL" ruff==0.16.6
+uv pip install --python .venv/bin/python --no-deps "$TMUX_OBSERVER_WHEEL_DIR"/tmux_observer-*.whl ruff==0.16.6
 ```
 
-The current pin is Observer **0.6.0a2**. When deliberately updating it, use the
-new exact wheel filename and repeat the producer's independent gates before
+The current pin is Observer **0.6.0a5**. When deliberately updating it, derive the
+filename from the updated pin and repeat the producer's independent gates before
 consumer selection. Keep the wheel available for explicit package acceptance;
 the installed module pin and wheel digest are different verification scopes.
 

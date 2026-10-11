@@ -28,13 +28,15 @@ jobs:
             "$shellcheck_tmpdir/shellcheck-v0.11.0/shellcheck" /usr/local/bin/shellcheck
       - name: Run repository gate
         env:
-          TMUX_OBSERVER_WHEEL: ${{ runner.temp }}/tmux_observer-0.6.0a5-py3-none-any.whl
+          TMUX_OBSERVER_WHEEL_DIR: ${{ runner.temp }}/tmux-observer-wheel
         run: |
           python - <<'PY'
           import hashlib, json, os, urllib.request
           from pathlib import Path
           pin = json.loads(Path("rofi_tmux_plus/observer-artifact.json").read_text())
-          wheel = Path(os.environ["TMUX_OBSERVER_WHEEL"])
+          directory = Path(os.environ["TMUX_OBSERVER_WHEEL_DIR"])
+          directory.mkdir(mode=0o700, exist_ok=True)
+          wheel = directory / ("tmux_observer-" + pin["version"] + "-py3-none-any.whl")
           url = "https://github.com/byebyebryan/tmux-observer/releases/download/v" + pin["version"] + "/" + wheel.name
           with urllib.request.urlopen(url, timeout=30) as response:
               raw = response.read(4 * 1024 * 1024 + 1)
@@ -42,5 +44,5 @@ jobs:
           assert hashlib.sha256(raw).hexdigest() == pin["wheelSha256"], "observer artifact drift"
           wheel.write_bytes(raw)
           PY
-          python -m pip install --no-deps "$TMUX_OBSERVER_WHEEL"
+          python -m pip install --no-deps "$TMUX_OBSERVER_WHEEL_DIR"/tmux_observer-*.whl
           ./scripts/check
