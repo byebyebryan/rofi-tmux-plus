@@ -1,7 +1,10 @@
 # Product and interaction design
 
-Current behavior for Tmux Plus **0.12.0a2**, Observer **0.6.0a2** and Mesh
-**0.1.0a7**, recorded 2026-10-10. This guide describes presentation and user intent.
+Current behavior for Tmux Plus **0.12.0a6** and Observer **0.6.0a6**, with Mesh
+reader SDK **0.1.0a13** and retained shared bridge CLI **0.1.0a10**, recorded
+2026-10-11. This guide describes presentation and user intent. The SDK wiring
+release preserves the prior UI implementation; its [headless acceptance](evidence/2026-10-11-mesh-sdk-adoption/README.md)
+does not extend earlier graphical evidence to new artifacts.
 [Mesh selection](mesh-integration.md) and
 [managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
 own exact installed selection. [Product design history](design-history.md)
