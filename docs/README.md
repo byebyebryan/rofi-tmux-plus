@@ -16,14 +16,17 @@ Start with the [project overview](../README.md) and
 | [Host Mesh v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md) | Public fresh/lifecycle route contract |
 | [Managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md) | Installed tuple, source pins, scoped recovery and rollback |
 
-The [selected artifact evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
+The [selected publisher artifact evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
 owns native, headless, resource/capacity and installed recovery/rollback acceptance.
+The [Plus artifact record](evidence/2026-10-12-publisher-integration/README.md)
+binds its exact wheel/bundle and independent source/headless gates.
 Source success, installed bytes and graphical acceptance remain distinct.
 
 ## Historical records
 
 | Record | Original scope |
 | --- | --- |
+| [Previous SDK adoption](evidence/2026-10-11-mesh-sdk-adoption/README.md) | Plus a6 / Observer a6 / reader SDK a13 / retained bridge a10 |
 | [CPU performance](cpu-performance.md) | Plus 0.11.0a1 / Observer 0.5.0a1 |
 | [Fleet performance](fleet-performance.md) | Plus 0.10.0a2 / Observer 0.4.0a1 |
 | [Local performance](local-performance.md) / [0.9.0a1](tmux-plus-0.9.0a1.md) | Attachment-driven retained local association |
