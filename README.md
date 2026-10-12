@@ -1,9 +1,10 @@
 # Tmux Plus
 
-Released **0.12.0a6** pins the complete accepted Tmux Observer **0.6.0a6**
-package. Observer supplies its pure Tmux profile to Mesh SDK **0.1.0a13**, with
-the shared **0.1.0a10** bridge CLI retained. Presentation, refresh and action
-contracts retain their prior behavior. [Acceptance evidence](docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
+Released **0.12.0a7** pins the complete accepted Tmux Observer **0.6.0a7**
+package. Observer owns cached native acquisition and supplies its pure Tmux
+profile to the public Mesh **0.1.0a15** publisher/reader API. The shared bridge
+selects the same static lazy Observer factory. Presentation, refresh and action
+contracts retain their prior behavior. [Acceptance evidence](docs/evidence/2026-10-12-publisher-integration/README.md)
 keeps source, installed/headless and managed gates separate.
 
 A Rofi picker and public CLI for local and remote tmux sessions.
@@ -13,11 +14,11 @@ management; Agent Plus consumes its generic CLI without adding provider policy h
 
 ## Current selection
 
-As recorded on **2026-10-11**, Snap and Starship select **Tmux Plus 0.12.0a6**,
-**Tmux Observer 0.6.0a6**, reader SDK **0.1.0a13** and shared bridge CLI **0.1.0a10**.
+As recorded on **2026-10-12**, Snap and Starship select **Tmux Plus 0.12.0a7**,
+**Tmux Observer 0.6.0a7**, reader SDK/shared bridge CLI **0.1.0a15**.
 
 The [Mesh selection guide](docs/mesh-integration.md) and
-[accepted SDK adoption record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md)
+[accepted publisher record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
 bind the exact packages, headless/native checks, resource/capacity limits and
 managed recovery/paired rollback. The
 [managed operations ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)

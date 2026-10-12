@@ -2,23 +2,25 @@
 
 ## Current recorded selection
 
-As of **2026-10-11**, Snap and Starship select:
+As of **2026-10-12**, Snap and Starship select:
 
 | Component | Version | Frozen runtime source |
 | --- | --- | --- |
-| Tmux Plus | **0.12.0a6** | `b2afd590997a6747f44b90c904c0284e8aaf66a4` |
-| Tmux Observer | **0.6.0a6** | `cb45e40a7915f78fc13a65b955d2ce2d2bc7b4e9` |
-| Tmux reader SDK | **0.1.0a13** | `d9cdac4ba6314430c3c8eb4d948a9d697c90b411` |
-| Shared Mesh bridge CLI | **0.1.0a10** | `3684fe083c0ab5af3c74aa27dff169e5764489f5` |
+| Tmux Plus | **0.12.0a7** | `657c62c529aa368e1740fbd3a9cd42db176b1eca` |
+| Tmux Observer | **0.6.0a7** | `fcaa8a868ce875b033bec7a0efcd2186a4baa533` |
+| Tmux reader SDK/shared bridge CLI | **0.1.0a15** | `c46262c0f0185244e96c79ea2036e4f57b2e4e1e` |
 
-Plus a6 pins the accepted Observer a6 wheel and all 84 Python modules. Observer
-supplies its pure profile to the reviewed Mesh SDK. Independent producer,
-consumer and managed gates pass in the
-[SDK adoption record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-11-mesh-sdk-adoption/README.md).
-Both hosts verify installed bytes, cached delivery, recovery, paired a5 rollback
-and a6 reselection. Snap has an owner-only topology; Starship has its captured
-desktop/fleet. The shared a10 bridge CLI and independent Agent selection remain.
-No Agent package or service is migrated by this consumer.
+Plus a7 pins the accepted Observer a7 wheel and all 86 Python modules. Observer
+owns checked cached acquisition and supplies its pure profile to the generic
+Mesh publisher helper. The local fleet and fixed SSH launcher select the same
+static lazy factory. Native, Session/Fleet v1, refresh, actions and UI behavior
+retain their prior contracts; the native mode's file hashes are unchanged.
+[Consumer acceptance](evidence/2026-10-12-publisher-integration/README.md) and the
+[producer/managed ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
+bind independent source, artifact, headless, compatibility, resource and rollout
+checks. Both hosts verify exact bytes, recovery, paired a6 rollback and a7
+reselection. Snap retains owner scope; Starship retains its captured desktop/fleet.
+Independent Agent selection remains outside this consumer's migration.
 
 Documentation commits can advance after a runtime freeze. The producer pin in
 [observer-artifact.json](../rofi_tmux_plus/observer-artifact.json) identifies the

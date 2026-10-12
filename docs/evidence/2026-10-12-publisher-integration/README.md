@@ -17,12 +17,15 @@ Installed [wheel](headless-wheel.json) and [bundle](headless-bundle.json) gates
 pass with isolated catalog/preferences and owned disposable default tmux servers.
 Prepared frame commands and read-only callbacks preserve rows and filter;
 explicit refresh reaches terminal feedback, and owner outage remains bounded.
-Both runs include 100 warm frames under the unchanged 150 ms p95 target. Complete
+Both runs include 100 warm frames at 58.367/57.451 ms p95, under the unchanged
+150 ms target. Complete
 native references, attachment counts and hooks survive cleanup. The managed
 bundle verifies all bytes/modes and private XDG import-cache placement.
 
 These consumer artifacts are accepted for the publisher wiring pass. The
 [producer acceptance ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
 owns Mesh compatibility and resources. Per-host managed exact bytes, service
-recovery, paired rollback and reselection remain independent. No graphical input
+recovery, restored a6 paired rollback and final a7 reselection pass independently
+in that ledger. Public wheel/bundle downloads match the accepted digests; hosted
+CI passes at `8eb38ee`. No graphical input
 or physical suspend is claimed for these headless gates.
