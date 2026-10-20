@@ -1,6 +1,6 @@
 {
   "modules": {
-    "tmux_observer/__init__.py": "0155421429e36d70598c20e86e43799d7a6fd1091a30961f32142745c2c659b0",
+    "tmux_observer/__init__.py": "57c4f08aa6a704fcf107c3f7174361f4c65671d9cd30b0957dd96be12e363d89",
     "tmux_observer/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
     "tmux_observer/_attachment_state.py": "8103965c24877ef5073c5648c28b2890b6d79644dbd8e7ed5073654022e4a8ef",
     "tmux_observer/_clock.py": "ba64e80360cab121704ab0918b9f03fc2537de3cf6bf31d21a3f5a62b1739d80",
@@ -26,6 +26,7 @@
     "tmux_observer/collector.py": "b3840897512d5fa895df381dfa7bb54716538695a37bafe4e71f332dd4860ed9",
     "tmux_observer/delivery.py": "c2973812beec07377e10e7b6a342a97d9149ad718ff828841e1ae8a29b67b8ff",
     "tmux_observer/mesh.py": "4704aa43466f632ba48c4cfda021fac39b78ff9cca517282cc0226c8b97e262f",
+    "tmux_observer/mesh_preparation.py": "6b826db84bdd502f2be1f29a6d3bd33c9decd1a8c244d545cb361afc3ca8ad01",
     "tmux_observer/mesh_profile.py": "359b4d3c2ea3d1005c430416f53a0537822d6156c9becf3a67ac24dddcc4b64b",
     "tmux_observer/mesh_publisher.py": "6d07b4cfd41acce4f2ef22b45d769fdafaf27d8f5875d28d1327df7953b859de",
     "tmux_observer/native.py": "2e9fb95f21c2e386049393342834ca29f5ea63dc09efa42829c3e96ed15a6286",
@@ -68,7 +69,7 @@
     "tmux_observer_client/_local_stream.py": "ed524440369568f5266946240066e003d4c0ff9d11a8827675efd0fc61fdc257",
     "tmux_observer_client/_mesh_control.py": "ba90c7ec6bc1d13ecd950c0161edfa139490389740b43a8805ecc126c2ba2087",
     "tmux_observer_client/_mesh_projection.py": "dc0479477f555e9e6af3a095d11fdd52513c067620c5d7a350475c3d01199922",
-    "tmux_observer_client/_mesh_worker.py": "25807dfc3267e71f1d6ece1efde33b12ecb11f0c2dd790fdfeea407a722e491d",
+    "tmux_observer_client/_mesh_worker.py": "f2d46c8a2b39cfb903572624cce41dd898137353174cd1e055cebcbf1ea0e276",
     "tmux_observer_client/_niri_observation.py": "728029d4c516bfb2c6853c2bc7c3d312d46dc6fe76cce1531c329541dc662656",
     "tmux_observer_client/_owner_document.py": "16da2d1c696c351c5384a346fc1fee8c9ae3d173108d83977af4a18f23e54725",
     "tmux_observer_client/_process_evidence.py": "4893ee592e69849b420ee3048b0d8fdd820eac7b614fe411706d3d0b3c34491d",
@@ -76,19 +77,19 @@
     "tmux_observer_client/_watch.py": "017d1c467696de8038d8e4a26940f1b23a87c3796c2834b62f35c9f3cf55d3cd",
     "tmux_observer_client/attachments.py": "585b362181c37a75f6289ccfb85b6ab218ae59cfee9b0ae28652a470b1265448",
     "tmux_observer_client/bindings_contract.py": "eed9d91d97834bced7f0838c8733745f20ce985ca4d89de5edcae9a240356044",
-    "tmux_observer_client/cli.py": "c7a1ff55e39521f769652d6036fa60b0a0ae2de98583ea23144dd706c422117c",
+    "tmux_observer_client/cli.py": "d74e1942b8fee726162ed2eeb134fd65037ef834069427f3936d9666403fafa2",
     "tmux_observer_client/contract.py": "c26cd3b598b8ed1815523efd79360817220c6c619614f526a002006850c4ed85",
     "tmux_observer_client/desktop.py": "f33fa86827c38cf296750b0cf359762d3bd984517c867c6d0f2ea63d05d2faf5",
     "tmux_observer_client/desktop_contract.py": "8b156a921a89d254c634ac3e89fb3d8ed5747a8207720b0e5e41078f00f21f4c",
     "tmux_observer_client/direct.py": "f3b912753011d3c447455ae4f9aa3de4eaaa39d420c585ecd449cfc0a1f14535",
     "tmux_observer_client/fleet.py": "073ee59800d960d027a4a09677ea6ce018fe95f1843de2237a132d58eebff802",
     "tmux_observer_client/mesh.py": "ea17cbc2904c042f312288cd2d9c485507a56d268b412fa527024cd184991523",
-    "tmux_observer_client/mesh_fleet.py": "cdf04f8e58767b18fae79e3c60878c22fe07cf3e837a41307109e9c728eee13e",
+    "tmux_observer_client/mesh_fleet.py": "a2b1b678d82c3641843cf5ba4a2e587e8f781199997f4b4f7ed60c807a2b565b",
     "tmux_observer_client/public.py": "b4c8cff48d443faa13e96a9082e0b0ac632fa218e48fbd410719c63a281ace4b",
     "tmux_observer_client/ssh.py": "ffc60fbb3c19fe97208acb317a2792c4a66a2161ac8bc4f6bb724065d39382cd"
   },
   "schemaVersion": 1,
-  "sourceCommit": "fcaa8a868ce875b033bec7a0efcd2186a4baa533",
-  "version": "0.6.0a7",
-  "wheelSha256": "e73a88f89b38242631766dd45f6e669f43c54e36857e5716595c0a56321e5091"
+  "sourceCommit": "bb4b0438864e587f3d70cce2576d25c76aa8460a",
+  "version": "0.6.0a9",
+  "wheelSha256": "b117cc5d353f323ce25c6629dc3371d5d95aa349639cf09974fda3a62f8d7738"
 }

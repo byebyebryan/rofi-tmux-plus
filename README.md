@@ -1,5 +1,10 @@
 # Tmux Plus
 
+The **0.12.0a8 private candidate** pins the exact qualified Observer
+**0.6.0a9** artifact for the Mesh a24 full-view update. The complete module/hash
+guard remains enabled. Presentation, native action contracts and delta delivery
+selection are unchanged; the installed cohort is qualified separately.
+
 Released **0.12.0a7** pins the complete accepted Tmux Observer **0.6.0a7**
 package. Observer owns cached native acquisition and supplies its pure Tmux
 profile to the public Mesh **0.1.0a15** publisher/reader API. The shared bridge
