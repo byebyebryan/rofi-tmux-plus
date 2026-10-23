@@ -15,7 +15,12 @@ version string matches.
 
 From the repository root, create a development environment and obtain the exact
 producer wheel from its owning acceptance/deployment record. The current a9
-pin is a private qualified artifact; its version does not imply a hosted release.
+pin is a qualified artifact prepared for the Observer `v0.6.0a9` prerelease;
+the public wheel is still required before this consumer's hosted workflow can
+download it. See the [a8 public supply record](evidence/2026-10-23-public-delivery/README.md)
+for the ordered release inputs and the bundle-only Plus asset set. The Plus
+release does not publish a standalone wheel; its embedded candidate manifest
+retains the inner wheel's build digest.
 Stage the wheel at an explicit path and verify it before installation:
 
 ```sh
@@ -55,9 +60,9 @@ PATH="$PWD/.venv/bin:$PATH" ./scripts/check
 
 An already installed exact Observer payload is sufficient for source tests.
 [CI](../.github/workflows/check.yml) currently expects a hosted wheel for the pin
-and verifies its digest. The private a9 cohort needs separately authorized
-artifact publication or an explicit qualified artifact supply before that CI
-recipe is usable; local acceptance does not establish hosted CI success.
+and verifies its digest. It becomes usable after Observer publishes the exact
+a9 wheel at the pinned release URL. A local source pass does not establish
+hosted CI success.
 Canonical producer/consumer bundle synchronization
 is also available as `./scripts/check-contract-sync`; it requires compatible
 public producer commands on PATH.

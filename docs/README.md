@@ -9,6 +9,7 @@ Start with the [project overview](../README.md) and
 | --- | --- |
 | [Product and interaction design](DESIGN.md) | Views, keys, remembered context, rows, freshness, actions and configuration |
 | [Development](development.md) | Exact Observer pin, checkout setup and source/contract checks |
+| [Public delivery preparation](evidence/2026-10-23-public-delivery/README.md) | Exact a8 bundle-only assets, Observer prerequisite and provenance |
 | [Mesh selection](mesh-integration.md) | Current tuple, separate networking/control paths and accepted evidence |
 | [Tmux Session v1](TMUX_SESSION_V1.md) | Public CLI argv, guards, strict JSON and compatibility |
 | [Observer boundaries](observer-boundaries.md) | Consumer responsibilities and extraction history |

@@ -4,6 +4,9 @@ The **0.12.0a8 private candidate** pins the exact qualified Observer
 **0.6.0a9** artifact for the Mesh a24 full-view update. The complete module/hash
 guard remains enabled. Presentation, native action contracts and delta delivery
 selection are unchanged; the installed cohort is qualified separately.
+The prepared [a8 public supply record](docs/evidence/2026-10-23-public-delivery/README.md)
+defines a bundle-only prerelease asset set; the historical a7 wheel assets are
+unchanged.
 
 Released **0.12.0a7** pins the complete accepted Tmux Observer **0.6.0a7**
 package. Observer owns cached native acquisition and supplies its pure Tmux
