@@ -13,34 +13,29 @@ truth is [observer-artifact.json](../rofi_tmux_plus/observer-artifact.json).
 Installing an arbitrary Observer checkout can fail this check even when its
 version string matches.
 
-From the repository root, create a development environment and download the
-exact released producer wheel into a private temporary directory:
+From the repository root, create a development environment and obtain the exact
+producer wheel from its owning acceptance/deployment record. The current a9
+pin is a private qualified artifact; its version does not imply a hosted release.
+Stage the wheel at an explicit path and verify it before installation:
 
 ```sh
 uv venv .venv
-export TMUX_OBSERVER_WHEEL_DIR="$(mktemp -d)"
+export TMUX_OBSERVER_WHEEL=/absolute/private/path/tmux_observer-0.6.0a9-py3-none-any.whl
 python3 - <<'PY'
 import hashlib
 import json
 import os
-import urllib.request
 from pathlib import Path
 
 pin = json.loads(Path("rofi_tmux_plus/observer-artifact.json").read_text())
-wheel = Path(os.environ["TMUX_OBSERVER_WHEEL_DIR"]) / (
-    "tmux_observer-" + pin["version"] + "-py3-none-any.whl"
-)
-url = (
-    "https://github.com/byebyebryan/tmux-observer/releases/download/v"
-    + pin["version"] + "/" + wheel.name
-)
-with urllib.request.urlopen(url, timeout=30) as response:
-    raw = response.read(4 * 1024 * 1024 + 1)
+wheel = Path(os.environ["TMUX_OBSERVER_WHEEL"])
+assert wheel.name == "tmux_observer-" + pin["version"] + "-py3-none-any.whl"
+with wheel.open("rb") as stream:
+    raw = stream.read(4 * 1024 * 1024 + 1)
 assert len(raw) <= 4 * 1024 * 1024, "Observer artifact exceeds bound"
 assert hashlib.sha256(raw).hexdigest() == pin["wheelSha256"], "Observer artifact drift"
-wheel.write_bytes(raw)
 PY
-uv pip install --python .venv/bin/python --no-deps "$TMUX_OBSERVER_WHEEL_DIR"/tmux_observer-*.whl ruff==0.16.6
+uv pip install --python .venv/bin/python --no-deps "$TMUX_OBSERVER_WHEEL" ruff==0.16.6
 ```
 
 The checked-in [Observer artifact pin](../rofi_tmux_plus/observer-artifact.json)
@@ -59,8 +54,11 @@ PATH="$PWD/.venv/bin:$PATH" ./scripts/check
 ```
 
 An already installed exact Observer payload is sufficient for source tests.
-[CI](../.github/workflows/check.yml) downloads the same pinned wheel and verifies
-its digest before the gate. Canonical producer/consumer bundle synchronization
+[CI](../.github/workflows/check.yml) currently expects a hosted wheel for the pin
+and verifies its digest. The private a9 cohort needs separately authorized
+artifact publication or an explicit qualified artifact supply before that CI
+recipe is usable; local acceptance does not establish hosted CI success.
+Canonical producer/consumer bundle synchronization
 is also available as `./scripts/check-contract-sync`; it requires compatible
 public producer commands on PATH.
 

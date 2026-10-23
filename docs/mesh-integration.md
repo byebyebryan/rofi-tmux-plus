@@ -2,6 +2,22 @@
 
 ## Current recorded selection
 
+The managed cohort selects Plus **0.12.0a8**, Observer **0.6.0a9**, and Mesh
+**0.1.0a24** for the Tmux Reader SDK and dedicated bridge. Full-view delivery is
+selected; view-feed and semantic delta remain off. The generic shared Mesh CLI
+retains its independent a15 pin. Exact Observer module/wheel guards come from
+[observer-artifact.json](../rofi_tmux_plus/observer-artifact.json); host controls
+and effective pins come from the
+[deployment manifest](https://github.com/byebyebryan/dotfiles/blob/main/deployments/tmux-observer.json).
+
+The [2026-10-20 owner receipt](https://github.com/byebyebryan/tmux-observer/blob/a71a4d55bb6f428fc142caf6422f60424425173b/docs/evidence/2026-10-20-mesh-a24-full-view/README.md)
+records Snap/Starship installed/recovery acceptance. Later host inventory does
+not extend native, graphical, capacity or physical acceptance. Agent Plus now
+opens native managers independently; this stack's consumers are generic tmux
+and Tmux Plus clients.
+
+## Previous accepted cohort (2026-10-12)
+
 As of **2026-10-12**, Snap and Starship select:
 
 | Component | Version | Frozen runtime source |

@@ -1,9 +1,10 @@
 # Product and interaction design
 
-Current behavior for Tmux Plus **0.12.0a6** and Observer **0.6.0a6**, with Mesh
-reader SDK **0.1.0a13** and retained shared bridge CLI **0.1.0a10**, recorded
-2026-10-11. This guide describes presentation and user intent. The SDK wiring
-release preserves the prior UI implementation; its [headless acceptance](evidence/2026-10-11-mesh-sdk-adoption/README.md)
+This guide describes presentation and user intent. Its 2026-10-11 a6/a6
+interaction baseline was retained by later wiring releases; the current managed
+cohort is Plus **0.12.0a8** / Observer **0.6.0a9** with Tmux reader/bridge Mesh
+**0.1.0a24**. Generic shared CLI selection remains independent. The earlier
+[a6 headless acceptance](evidence/2026-10-11-mesh-sdk-adoption/README.md)
 does not extend earlier graphical evidence to new artifacts.
 [Mesh selection](mesh-integration.md) and
 [managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
@@ -14,8 +15,9 @@ preserves the earlier P6–P11 implementation milestones and retired cache model
 
 Tmux Plus is a searchable picker for sessions on the local default tmux server
 and configured logical hosts. It remains useful for manual tmux management.
-Agent Plus consumes its generic Tmux Session v1 CLI; provider discovery, task
-state and resume policy belong to that consumer.
+Agent Plus independently opens native provider managers and no longer consumes
+its generic Tmux Session v1 CLI. Direct/manual tmux clients retain that facade;
+provider discovery, conversation state and native resume policy stay external.
 
 The UI owns labels, ordering, view membership, filter/caret, selection,
 bookmarks, confirmation and feedback. Observer supplies validated prepared

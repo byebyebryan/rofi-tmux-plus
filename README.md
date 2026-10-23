@@ -14,13 +14,24 @@ keeps source, installed/headless and managed gates separate.
 
 A Rofi picker and public CLI for local and remote tmux sessions.
 Browse sessions, reopen the last useful context, focus or attach with Open,
-and use guarded Kill confirmation. Tmux Plus remains useful for manual tmux
-management; Agent Plus consumes its generic CLI without adding provider policy here.
+and use guarded Kill confirmation. Tmux Plus remains useful for generic/manual
+tmux management. Agent Plus now enters native provider managers directly and
+has no Tmux Plus dependency. Native provider session control stays with those
+managers; this picker continues to serve its independent tmux workflows.
 
 ## Current selection
 
-As recorded on **2026-10-12**, Snap and Starship select **Tmux Plus 0.12.0a7**,
-**Tmux Observer 0.6.0a7**, reader SDK/shared bridge CLI **0.1.0a15**.
+The managed cohort selects **Tmux Plus 0.12.0a8**, **Tmux Observer 0.6.0a9**
+and Tmux reader/bridge **Mesh 0.1.0a24**, with full-view delivery. The generic
+shared CLI retains its independent a15 selection. Owner
+[deployment manifests](https://github.com/byebyebryan/dotfiles/blob/main/deployments/tmux-observer.json)
+determine host selection. The
+[2026-10-20 acceptance](https://github.com/byebyebryan/tmux-observer/blob/a71a4d55bb6f428fc142caf6422f60424425173b/docs/evidence/2026-10-20-mesh-a24-full-view/README.md)
+records Snap/Starship's installed/recovery scope; later host inventory does not
+expand that acceptance. View-feed and semantic delta remain unselected.
+
+The preceding **2026-10-12** acceptance covered Plus **0.12.0a7**, Observer
+**0.6.0a7** and reader/shared bridge **0.1.0a15**.
 
 The [Mesh selection guide](docs/mesh-integration.md) and
 [accepted publisher record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
