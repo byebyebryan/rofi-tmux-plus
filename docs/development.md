@@ -14,10 +14,8 @@ Installing an arbitrary Observer checkout can fail this check even when its
 version string matches.
 
 From the repository root, create a development environment and obtain the exact
-producer wheel from its owning acceptance/deployment record. The current a9
-pin is a qualified artifact prepared for the Observer `v0.6.0a9` prerelease;
-the public wheel is still required before this consumer's hosted workflow can
-download it. See the [a8 public supply record](evidence/2026-10-23-public-delivery/README.md)
+producer wheel from the [Observer v0.6.0a9 public prerelease](https://github.com/byebyebryan/tmux-observer/releases/tag/v0.6.0a9).
+The exact hash-pinned wheel is published and used by this consumer's hosted workflow. See the [a8 public supply record](evidence/2026-10-23-public-delivery/README.md)
 for the ordered release inputs and the bundle-only Plus asset set. The Plus
 release does not publish a standalone wheel; its embedded candidate manifest
 retains the inner wheel's build digest.
@@ -25,7 +23,7 @@ Stage the wheel at an explicit path and verify it before installation:
 
 ```sh
 uv venv .venv
-export TMUX_OBSERVER_WHEEL=/absolute/private/path/tmux_observer-0.6.0a9-py3-none-any.whl
+export TMUX_OBSERVER_WHEEL=/absolute/download/path/tmux_observer-0.6.0a9-py3-none-any.whl
 python3 - <<'PY'
 import hashlib
 import json
@@ -59,10 +57,9 @@ PATH="$PWD/.venv/bin:$PATH" ./scripts/check
 ```
 
 An already installed exact Observer payload is sufficient for source tests.
-[CI](../.github/workflows/check.yml) currently expects a hosted wheel for the pin
-and verifies its digest. It becomes usable after Observer publishes the exact
-a9 wheel at the pinned release URL. A local source pass does not establish
-hosted CI success.
+[CI](../.github/workflows/check.yml) downloads the published a9 wheel at the pinned
+release URL and verifies its digest before installation. A local source pass and
+a current-head hosted pass remain distinct verification scopes.
 Canonical producer/consumer bundle synchronization
 is also available as `./scripts/check-contract-sync`; it requires compatible
 public producer commands on PATH.

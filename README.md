@@ -1,26 +1,21 @@
 # Tmux Plus
 
-The **0.12.0a8 private candidate** pins the exact qualified Observer
-**0.6.0a9** artifact for the Mesh a24 full-view update. The complete module/hash
-guard remains enabled. Presentation, native action contracts and delta delivery
-selection are unchanged; the installed cohort is qualified separately.
-The prepared [a8 public supply record](docs/evidence/2026-10-23-public-delivery/README.md)
-defines a bundle-only prerelease asset set; the historical a7 wheel assets are
-unchanged.
-
-Released **0.12.0a7** pins the complete accepted Tmux Observer **0.6.0a7**
-package. Observer owns cached native acquisition and supplies its pure Tmux
-profile to the public Mesh **0.1.0a15** publisher/reader API. The shared bridge
-selects the same static lazy Observer factory. Presentation, refresh and action
-contracts retain their prior behavior. [Acceptance evidence](docs/evidence/2026-10-12-publisher-integration/README.md)
-keeps source, installed/headless and managed gates separate.
-
 A Rofi picker and public CLI for local and remote tmux sessions.
 Browse sessions, reopen the last useful context, focus or attach with Open,
 and use guarded Kill confirmation. Tmux Plus remains useful for generic/manual
 tmux management. Agent Plus now enters native provider managers directly and
 has no Tmux Plus dependency. Native provider session control stays with those
 managers; this picker continues to serve its independent tmux workflows.
+
+[Project walkthrough](https://dev.byebyebryan.com/fleet-plus/projects/tmux-plus/) ·
+[Documentation](docs/README.md) · [Development](docs/development.md)
+
+Published [**0.12.0a8**](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a8)
+is a bundle-only prerelease, paired with the exact publicly released Tmux Observer
+0.6.0a9 wheel. The release preserves the qualified bundle bytes and complete
+Observer module/hash guard. See the [supply preparation](docs/evidence/2026-10-23-public-delivery/README.md)
+and subsequent [public closeout](https://github.com/byebyebryan/mesh-plus/blob/b306d44c329c6289781cc4db14f939ed2a4d20c2/docs/evidence/2026-10-23-public-delivery/README.md).
+Earlier release passages remain in [README history](docs/readme-history.md).
 
 ## Current selection
 
