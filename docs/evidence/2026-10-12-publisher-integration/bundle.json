@@ -1,8 +1,0 @@
-{
-  "bundle": "rofi-tmux-plus-0.12.0a7-linux_x86_64.zip",
-  "sha256": "9ff245167b6f8508bc2b4ca0fd95d7dc0b9564fa6c84836f8c6e9555616aa4ae",
-  "sourceCommit": "657c62c529aa368e1740fbd3a9cd42db176b1eca",
-  "wheelSha256": "e33faa95e1de072aa9b8ad1c3b7006338356bec902ebd5db093010cf4cb6d53b",
-  "files": 377,
-  "manifestSha256": "3baf68512d3589b1b874f2a6311ab37eeb8a2ee8acabe322a2fedfe821ba723c"
-}

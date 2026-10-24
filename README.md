@@ -15,7 +15,7 @@ launcher invocation. A standalone Plus wheel is not published for this release.
 
 The graphical picker needs the qualified native mode/Rofi tuple and already
 running prepared services. Installing Python packages alone is insufficient.
-For checkout work, follow [development](docs/development.md); arbitrary Observer
+For checkout work, follow [development](docs/maintenance/development.md); arbitrary Observer
 source bytes fail the intentional complete-module artifact guard.
 
 ## Browse or inspect
@@ -32,7 +32,7 @@ source bytes fail the intentional complete-module artifact guard.
 The view ring is Open → Attached → All → Local → configured remote hosts.
 Open/Attached use different evidence; neither grants a close handle or provider
 lifecycle authority. Unknown and unavailable state stays visible.
-See [usage](docs/usage.md) for detailed views, selection and confirmation.
+See [usage](docs/guides/usage.md) for detailed views, selection and confirmation.
 
 ```sh
 rofi-tmux-plus inventory --json
@@ -41,7 +41,7 @@ rofi-tmux-plus inventory --json
 The CLI command is an explicit fresh inventory. The picker instead consumes
 cached prepared views; browsing starts no collection or service and does not
 fall back to a fresh read on failure. Exact lifecycle argv and guards are in
-[Tmux Session v1](docs/TMUX_SESSION_V1.md).
+[Tmux Session v1](docs/reference/tmux-session-v1.md).
 
 ## Ownership and operation
 
@@ -50,8 +50,8 @@ independent action validation. Mesh supplies configured routes/cached delivery.
 Tmux Plus owns presentation and explicit intent. These remain generic tmux tools;
 Agent Plus independently enters native provider managers without Tmux.
 
-See [component boundaries](docs/observer-boundaries.md) and
-[Mesh selection](docs/mesh-integration.md) for runtime and deployment ownership.
+See [component boundaries](docs/reference/architecture.md) and
+[Mesh selection](docs/guides/mesh-integration.md) for runtime and deployment ownership.
 Source, installed, graphical, recovery and physical acceptance remain separate.
 
 ## Develop and read further
@@ -61,6 +61,7 @@ PATH="$PWD/.venv/bin:$PATH" ./scripts/check
 ```
 
 Create that environment with the exact producer and declared tools first using
-[development](docs/development.md). The [documentation index](docs/README.md)
-separates current contracts from [history](docs/history/README.md).
+[development](docs/maintenance/development.md). The [documentation index](docs/README.md) links maintained guides and contracts.
 Shared presentation lives at [Fleet Plus](https://dev.byebyebryan.com/fleet-plus/).
+
+Current guides are organized in the [documentation index](docs/README.md).

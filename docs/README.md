@@ -1,22 +1,29 @@
 # Tmux Plus documentation
 
-| Guide | Purpose |
+Start with [getting started](getting-started.md). The [repository README](../README.md)
+is the short project entry point; [Fleet Plus](https://dev.byebyebryan.com/fleet-plus/)
+carries the shared showcase and project relationships.
+
+## Guides
+
+| Read | Purpose |
 | --- | --- |
-| [Getting started](getting-started.md) | Bundle/producer prerequisites, CLI and prepared picker setup |
-| [Usage](usage.md) | Views, keys, confirmations and full launcher invocation |
-| [Interaction design](DESIGN.md) | Current row, selection and failure semantics |
-| [Tmux Session v1](TMUX_SESSION_V1.md) | Canonical public inventory/lifecycle contract |
-| [Client boundaries](observer-boundaries.md) | Prepared reads versus explicit actions and desktop evidence |
-| [Mesh integration](mesh-integration.md) | Producer setup, role selections and operations ownership |
-| [Development](development.md) | Exact Observer guard, source/package and native checks |
+| [Usage](guides/usage.md) | Views, keys, confirmation and launcher invocation |
+| [Mesh integration](guides/mesh-integration.md) | Prepared producer setup and selection ownership |
 
-[Fleet Plus](https://dev.byebyebryan.com/fleet-plus/projects/tmux-plus/) provides
-the showcase and ecosystem explanations. The [repository README](../README.md)
-is the short source entry point.
+## Reference
 
-The [history index](history/README.md) groups release notes, migration plans,
-picker studies and performance qualification. Earlier pins and future-tense
-steps retain their own scope. [`evidence/`](evidence/) and frozen contract inputs
-keep their original bytes; short forwarding pages preserve existing links.
-Current managed readiness/recovery belongs to the linked Observer/deployment
-owners, separately from source, graphical and physical acceptance.
+| Read | Purpose |
+| --- | --- |
+| [Interaction](reference/interaction.md) | Current row, selection and failure behavior |
+| [Architecture](reference/architecture.md) | Prepared reads versus explicit actions |
+| [Tmux Session v1](reference/tmux-session-v1.md) | Public inventory/lifecycle CLI |
+
+## Maintenance
+
+| Read | Purpose |
+| --- | --- |
+| [Development](maintenance/development.md) | Exact producer guard, source and native checks |
+
+These pages describe maintained behavior. Superseded plans, status notes and
+old receipts are kept in Git rather than in this documentation tree.

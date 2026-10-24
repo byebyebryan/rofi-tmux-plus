@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Enforce shallow maintained documentation and validate local Markdown links."""
+
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+LINK = re.compile(r'\[[^\]]+\]\(([^\s)]+)(?:\s+"[^"]*")?\)')
+FOLDERS = {"guides", "reference", "maintenance", "assets"}
+NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\.[a-z0-9]+\Z")
+
+
+def prose(text: str) -> str:
+    return re.sub(r"^(`{3,}|~{3,}).*?^\1[^\n]*$", "", text, flags=re.MULTILINE | re.DOTALL)
+
+
+def anchors(path: Path) -> set[str]:
+    text = path.read_text()
+    result = set(re.findall(r'<a\s+(?:id|name)=["\x27]([^"\x27]+)', text))
+    counts: dict[str, int] = {}
+    for heading in re.findall(r"^#{1,6}\s+(.+?)\s*#*\s*$", prose(text), re.MULTILINE):
+        heading = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", heading)
+        base = re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
+        count = counts.get(base, 0)
+        result.add(base + (f"-{count}" if count else ""))
+        counts[base] = count + 1
+    return result
+
+
+def main() -> int:
+    names = (
+        subprocess.check_output(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=ROOT
+        )
+        .decode()
+        .split("\0")
+    )
+    errors = []
+    allowed = {"README.md", "getting-started.md"}
+    lock = ROOT / "contracts/LOCK.json"
+    if lock.is_file():
+        allowed.update(
+            name.removeprefix("docs/")
+            for name in json.loads(lock.read_text()).get("normativeDigests", {})
+            if name.startswith("docs/") and name.count("/") == 1
+        )
+    for name in ("README.md", "getting-started.md"):
+        if not (ROOT / "docs" / name).is_file():
+            errors.append(f"docs/{name}: required entry point is missing")
+    count = links = 0
+    for name in sorted(set(names)):
+        path = ROOT / name
+        if not path.is_file():
+            continue
+        if name.startswith("docs/"):
+            relative = path.relative_to(ROOT / "docs")
+            if len(relative.parts) > 2:
+                errors.append(f"{name}: use one shallow topic folder")
+            elif len(relative.parts) == 1 and relative.name not in allowed:
+                errors.append(f"{name}: docs root is reserved for entry points and locked inputs")
+            elif len(relative.parts) == 2 and relative.parts[0] not in FOLDERS:
+                errors.append(f"{name}: expected guides, reference, maintenance or assets")
+            if relative.name != "README.md" and not NAME.fullmatch(relative.name):
+                errors.append(f"{name}: use lowercase kebab-case filenames")
+        if path.suffix != ".md" or name.startswith(("contracts/", "reference/")):
+            # Frozen bundles/vendor excerpts retain their original bytes and
+            # source-relative links; they are not maintained documentation.
+            continue
+        count += 1
+        for match in LINK.finditer(prose(path.read_text())):
+            target = urlsplit(match.group(1).strip("<>"))
+            if target.scheme or target.netloc:
+                continue
+            dest = (path.parent / unquote(target.path)).resolve() if target.path else path
+            links += 1
+            if not dest.is_relative_to(ROOT) or not dest.exists():
+                errors.append(f"{name}: missing local target {match.group(1)}")
+            elif (
+                target.fragment
+                and dest.suffix == ".md"
+                and unquote(target.fragment) not in anchors(dest)
+            ):
+                errors.append(f"{name}: missing heading {match.group(1)}")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"PASS: shallow docs, naming, {count} Markdown files and {links} local links/anchors")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
