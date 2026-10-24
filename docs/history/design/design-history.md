@@ -1,10 +1,12 @@
 # Product design history
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Historical product and CLI milestones through the original picker refinement.
 The text below is preserved from the previous `DESIGN.md`; descriptions of
 private collection, caches, plugins and remote requirements belong to their
-original checkpoints. Use [current product design](DESIGN.md) and the
-[documentation index](README.md) for the selected implementation.
+original checkpoints. Use [current product design](../../DESIGN.md) and the
+[documentation index](../../README.md) for the selected implementation.
 
 ---
 
@@ -12,8 +14,8 @@ original checkpoints. Use [current product design](DESIGN.md) and the
 
 This document retains the original product/CLI implementation milestones.
 Current Observer-backed read behavior is recorded in
-[migration](observer-migration.md) and the [0.7.0a2 repair](tmux-plus-0.7.0a2.md).
-The next UI/action separation is defined by [observer boundaries](observer-boundaries.md).
+[migration](observer-migration.md) and the [0.7.0a2 repair](../delivery/tmux-plus-0.7.0a2.md).
+The next UI/action separation is defined by [observer boundaries](../../observer-boundaries.md).
 The selected Tmux tuple is owned by chezmoi's
 [`tmux-observer-operations.md`](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md);
 the older suite ledger referenced below retains its historical checkpoint.
@@ -192,7 +194,7 @@ The project owns generic tmux inventory and lifecycle:
 
 It does not identify Codex, Claude Code, or OpenCode sessions or decide how
 those providers resume. `rofi-agent-plus` owns that policy and consumes the
-generic [Tmux Session Contract v1](TMUX_SESSION_V1.md).
+generic [Tmux Session Contract v1](../../TMUX_SESSION_V1.md).
 
 Remote hosts come from the implemented
 [Host Mesh Contract v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md).
@@ -535,15 +537,15 @@ has Starship graphical acceptance and Snap headless acceptance; 0.7.0a2 repaired
 browse renewal, with later graphical attempts blocked by the display-idle overlay.
 These statements apply only to their recorded artifacts.
 
-- [Original release captures](evidence/2026-10-07-tmux-release/README.md).
-- [Managed rollout captures](evidence/2026-10-08-managed-rollout/), including suite compatibility and distinct host screenshots.
-- [Browse renewal captures](evidence/2026-10-08-browse-renewal/managed.json).
+- [Original release captures](../../evidence/2026-10-07-tmux-release/README.md).
+- [Managed rollout captures](../../evidence/2026-10-08-managed-rollout), including suite compatibility and distinct host screenshots.
+- [Browse renewal captures](../../evidence/2026-10-08-browse-renewal/managed.json).
 - [Original component ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md#tmux-plus-060-remembered-context-and-independent-refresh), for dated release identities, manual limits and prior selection history.
 
 The paired boundary, local, fleet and CPU resource records now live with
 [Tmux Observer](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md).
 They retain their own frozen frontend versions, resource budgets and acceptance
-limits. Current product behavior remains [DESIGN](DESIGN.md), while independent
+limits. Current product behavior remains [DESIGN](../../DESIGN.md), while independent
 native release/hardening records certify only their stated artifacts. All seven
 transferred screenshots are retained: equal pixels with different host labels do
 not establish equal host acceptance.

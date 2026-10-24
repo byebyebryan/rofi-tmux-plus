@@ -1,5 +1,7 @@
 # Tmux Plus picker candidate validation
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Date: 2026-10-06. Candidate: `0.6.0a1`. Baseline: `0.5.1`,
 `5b02f84fc0e18215426c652acfa942cdbae4cbcb`. The source pass is complete;
 ordinary managed promotion remained a release step at this capture. No release was published,
@@ -7,7 +9,7 @@ no fleet pins or ordinary launchers were changed, and Agent Plus / Observer
 pilot selections were preserved.
 
 This is the historical candidate record. The subsequent `0.6.0` review and
-managed promotion are recorded in [the release review](tmux-plus-0.6.0-release.md).
+managed promotion are recorded in [the release review](../delivery/tmux-plus-0.6.0-release.md).
 
 ## Result
 
@@ -72,7 +74,7 @@ visibility; it is not a measured multi-peer graphical transport latency.
 The baseline was collected before changing the refresh code. Each endpoint has
 20 warm frames and five cold/refresh samples. Timings are monotonic, headless,
 and use isolated cache/state roots. Counts, samples, observed p95, maxima, and
-phase events are in [evidence](evidence/2026-10-06-picker/). Candidate timing
+phase events are in [evidence](../../evidence/2026-10-06-picker). Candidate timing
 samples precede final launcher one-shot hardening and unavailable-row label
 precedence. Those changes do not alter the healthy timing path and have
 separate source/native/installed checks. Session populations can change during
@@ -134,7 +136,7 @@ Build/install the candidate wheel into an isolated environment, then use its
 The isolated candidate environments and local GUI artifacts are recorded in
 the evidence reports; they are temporary test installations.
 
-The prepared [managed launcher patch](evidence/2026-10-06-picker/managed-launcher.patch)
+The prepared [managed launcher patch](../../evidence/2026-10-06-picker/managed-launcher.patch)
 adds the wrapper link and changes Mod+G. It passes `git apply --check
 --unidiff-zero` against the current chezmoi checkout and an isolated symlink
 apply dry-run. Apply it only together with a published candidate/release archive

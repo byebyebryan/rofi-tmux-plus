@@ -1,5 +1,7 @@
 # Tmux Plus 0.7.0a2 browse renewal repair
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Cycling views could mark every session unavailable and empty Open/Attached even
 while both Observer services were healthy. The callbacks reused a persisted
 presentation whose original owner/desktop leases had expired. Quiet watch
@@ -17,7 +19,7 @@ metadata cannot renew expired owner or desktop authority.
 The runtime freeze is `388ee6e466ef5321797f495792dac52ab83d230d`. Observer remains
 the accepted `0.1.0a1` wheel. The native library remains byte-identical to the
 previously accepted `0.7.0a1` integration. The immutable
-[candidate descriptor](evidence/2026-10-08-browse-renewal/frontend-candidate.json)
+[candidate descriptor](../../evidence/2026-10-08-browse-renewal/frontend-candidate.json)
 retains `built_unaccepted`; the checks below are separate scoped evidence.
 
 The full source gate passes 281 tests, compile, canonical bundles, Ruff,
@@ -26,7 +28,7 @@ both action directions, adoption after quiet renewal, persisted new leases,
 expired facts despite healthy watch metadata, failed reader access, and frozen
 confirmations. Source [CI passes](https://github.com/byebyebryan/rofi-tmux-plus/actions/runs/37848734418).
 
-The [native fleet reproduction](evidence/2026-10-08-browse-renewal/live-renewal.json)
+The [native fleet reproduction](../../evidence/2026-10-08-browse-renewal/live-renewal.json)
 holds a presentation for 12 seconds with an owned read-only watch. On Snap the
 old implementation renders 15 warning rows despite healthy current services.
 The repaired source on Snap and installed candidate wheel on Starship retain
@@ -34,7 +36,7 @@ all 15 healthy rows and correct Open/Attached membership after view cycling.
 Starship's watch sequence remains unchanged across the hold, directly exercising
 quiet renewal. Preferences/cache are isolated; ordinary sessions are untouched.
 
-The [Starship checkpoint](evidence/2026-10-08-browse-renewal/starship-checkpoint.json)
+The [Starship checkpoint](../../evidence/2026-10-08-browse-renewal/starship-checkpoint.json)
 passes 100 headless installed frames at p95 127.22 ms, below the 150 ms target.
 Two graphical attempts stop before input because DMS's display-idle overlay holds
 exclusive focus. Temporary idle inhibition is restored. Fresh graphical

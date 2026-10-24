@@ -1,15 +1,11 @@
 # Product and interaction design
 
-This guide describes presentation and user intent. Its 2026-10-11 a6/a6
-interaction baseline was retained by later wiring releases; the current managed
-cohort is Plus **0.12.0a8** / Observer **0.6.0a9** with Tmux reader/bridge Mesh
-**0.1.0a24**. Generic shared CLI selection remains independent. The earlier
-[a6 headless acceptance](evidence/2026-10-11-mesh-sdk-adoption/README.md)
-does not extend earlier graphical evidence to new artifacts.
-[Mesh selection](mesh-integration.md) and
-[managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
-own exact installed selection. [Product design history](design-history.md)
-preserves the earlier P6–P11 implementation milestones and retired cache model.
+This guide owns current presentation and explicit intent. Installation,
+selection and recovery belong to [getting started](getting-started.md),
+[Mesh integration](mesh-integration.md) and the linked deployment owner.
+[Product history](history/design/design-history.md) preserves earlier interaction
+milestones and acceptance limits; a new wiring release does not inherit a
+previous graphical proof automatically.
 
 ## Product boundary
 
@@ -190,7 +186,7 @@ service health; remote fresh/lifecycle operations retain Host Mesh v1 routing.
 [Current Mesh evidence](mesh-integration.md) records exact headless frames/callbacks,
 native passivity, resources, installed recovery and paired rollback.
 Those passes do not establish graphical appearance/input or physical suspend.
-Earlier [migration](observer-migration.md) and [release records](README.md#historical-records)
+Earlier [migration](history/design/observer-migration.md) and [release records](history/README.md)
 retain their own graphical artifact/endpoint scope.
 
 Native tmux events and broader compositor/terminal support require separate

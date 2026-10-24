@@ -1,5 +1,7 @@
 # Attachment-driven local display candidate
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Tmux Plus 0.9.0a1 consumes the additive `bindings-v1` producer contract. A local
 match is retained for a current native client incarnation and displays as
 `open here?`. Its discovery time does not advance with native receipts. Remote

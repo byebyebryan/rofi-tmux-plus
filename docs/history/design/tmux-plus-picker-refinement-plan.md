@@ -1,8 +1,10 @@
 # Tmux Plus picker refinement plan
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Status: Implemented in `0.6.0`. See the historical
 [candidate validation](tmux-plus-picker-validation.md) and
-[release review](tmux-plus-0.6.0-release.md) for the managed rollout boundary.
+[release review](../delivery/tmux-plus-0.6.0-release.md) for the managed rollout boundary.
 Baseline: `0.5.1`, source
 `5b02f84fc0e18215426c652acfa942cdbae4cbcb`. Date: 2026-10-06.
 
@@ -254,7 +256,7 @@ artifact and launcher route for rollback.
 
 ## Related records
 
-- [Current product and interaction design](DESIGN.md)
-- [Public Tmux Session v1 contract](TMUX_SESSION_V1.md)
+- [Current product and interaction design](../../DESIGN.md)
+- [Public Tmux Session v1 contract](../../TMUX_SESSION_V1.md)
 - [Agent Plus remembered context and initial selection design](https://github.com/byebyebryan/rofi-agent-plus/blob/3caa6120fa42715206c1708b63f90ddbb484e334/docs/agent-plus-picker-navigation-plan.md)
 - [Managed Rofi Plus deployment ledger](https://github.com/byebyebryan/dotfiles/blob/5ff8b412a45b69cac64b8eb356444e6cf0705012/docs/rofi-plus-status.md)

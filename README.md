@@ -1,147 +1,66 @@
 # Tmux Plus
 
-A Rofi picker and public CLI for local and remote tmux sessions.
-Browse sessions, reopen the last useful context, focus or attach with Open,
-and use guarded Kill confirmation. Tmux Plus remains useful for generic/manual
-tmux management. Agent Plus now enters native provider managers directly and
-has no Tmux Plus dependency. Native provider session control stays with those
-managers; this picker continues to serve its independent tmux workflows.
+A Rofi picker and public CLI for local and remote tmux sessions. Browse prepared
+views, focus or attach with Open, and use explicit guarded lifecycle actions.
 
-[Project walkthrough](https://dev.byebyebryan.com/fleet-plus/projects/tmux-plus/) ·
-[Documentation](docs/README.md) · [Development](docs/development.md)
+[Project showcase](https://dev.byebyebryan.com/fleet-plus/projects/tmux-plus/) ·
+[Get started](docs/getting-started.md) · [Documentation](docs/README.md)
 
-Published [**0.12.0a8**](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a8)
-is a bundle-only prerelease, paired with the exact publicly released Tmux Observer
-0.6.0a9 wheel. The release preserves the qualified bundle bytes and complete
-Observer module/hash guard. See the [supply preparation](docs/evidence/2026-10-23-public-delivery/README.md)
-and subsequent [public closeout](https://github.com/byebyebryan/mesh-plus/blob/b306d44c329c6289781cc4db14f939ed2a4d20c2/docs/evidence/2026-10-23-public-delivery/README.md).
-Earlier release passages remain in [README history](docs/readme-history.md).
+## Install and start
 
-## Current selection
+The published [0.12.0a8 prerelease](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a8)
+is a native/source bundle paired with the exact Tmux Observer 0.6.0a9 artifact.
+Use [getting started](docs/getting-started.md) for prerequisites and the full
+launcher invocation. A standalone Plus wheel is not published for this release.
 
-The managed cohort selects **Tmux Plus 0.12.0a8**, **Tmux Observer 0.6.0a9**
-and Tmux reader/bridge **Mesh 0.1.0a24**, with full-view delivery. The generic
-shared CLI retains its independent a15 selection. Owner
-[deployment manifests](https://github.com/byebyebryan/dotfiles/blob/main/deployments/tmux-observer.json)
-determine host selection. The
-[2026-10-20 acceptance](https://github.com/byebyebryan/tmux-observer/blob/a71a4d55bb6f428fc142caf6422f60424425173b/docs/evidence/2026-10-20-mesh-a24-full-view/README.md)
-records Snap/Starship's installed/recovery scope; later host inventory does not
-expand that acceptance. View-feed and semantic delta remain unselected.
+The graphical picker needs the qualified native mode/Rofi tuple and already
+running prepared services. Installing Python packages alone is insufficient.
+For checkout work, follow [development](docs/development.md); arbitrary Observer
+source bytes fail the intentional complete-module artifact guard.
 
-The preceding **2026-10-12** acceptance covered Plus **0.12.0a7**, Observer
-**0.6.0a7** and reader/shared bridge **0.1.0a15**.
+## Browse or inspect
 
-The [Mesh selection guide](docs/mesh-integration.md) and
-[accepted publisher record](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
-bind the exact packages, headless/native checks, resource/capacity limits and
-managed recovery/paired rollback. The
-[managed operations ledger](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md)
-owns installed selection. Earlier graphical acceptance keeps its original
-artifact and endpoint scope; graphical presentation/input and physical suspend
-were optional and unrun for these Mesh wiring releases.
-
-## Browse sessions
-
-| Key | Behavior |
+| Key | Action |
 | --- | --- |
 | Up / Down | Select a row |
-| Left / Right | Cycle views, preserving the filter |
-| Tab / Shift+Tab | Cycle Open and Kill |
-| Enter | Open, or begin Kill confirmation |
+| Left / Right | Cycle views while preserving the filter |
+| Tab / Shift+Tab | Cycle Open / Kill |
+| Enter | Open, or begin explicit Kill confirmation |
 | Alt+R | Request bounded passive refresh |
 | Escape / Ctrl+G | Close the picker |
-| Ctrl+B / Ctrl+F | Move the text cursor |
 
-The view ring is **Open → Attached → All → Local → configured remote hosts**.
-Without remotes, All and Local collapse to Local. Empty and unavailable
-configured hosts retain their place in the ring.
-
-| View | Meaning |
-| --- | --- |
-| Open | Fresh confirmed or qualified viewer presence on this desktop |
-| Attached | Fresh positive tmux client counts, including clients on other desktops |
-| All / Local / host | Session inventory, with retained unavailable rows marked explicitly |
-
-`open here?` is qualified display evidence. Open and Attached supply no verified
-close handle or provider lifecycle authority. Unknown membership remains explicit;
-use All or Local to inspect sessions excluded from a filtered view.
-
-Each new dialog starts with an empty filter and Open selected. The launcher
-restores the remembered view and last successfully opened complete session
-reference once at startup. Later updates preserve the current selection.
-Kill confirmation freezes its exact target and starts on Cancel.
-
-See the [product and interaction guide](docs/DESIGN.md) for row states, freshness,
-selection, confirmation and failure behavior.
-
-## Components
-
-```mermaid
-flowchart LR
-    T[Native tmux] --> O[Observer owner publisher]
-    H[Mesh Plus host catalog] --> M[Mesh Plus state delivery]
-    O --> M
-    M --> F[Observer fleet and desktop composition]
-    D[This desktop's viewer evidence] --> F
-    F -->|Prepared Fleet v1 and watch| U[Tmux Plus UI]
-    U -->|Explicit intent| A[Observer action client]
-    A -->|Fresh route and target validation| T
-    C[Tmux Plus public CLI] -->|Fresh inventory or lifecycle facade| OI[Observer direct and action clients]
-```
-
-Mesh owns reusable state networking. Observer owns passive native facts,
-source receipts, desktop associations and prepared composition. Its separate
-action package owns native lifecycle, terminal launch and window actions.
-Tmux Plus owns presentation and user intent. Explicit refresh remains a bounded
-Observer control path; fresh inventory and actions use independent validated paths.
-
-The picker reads prepared local views and watch updates. Startup and browsing
-start no service and perform no tmux, SSH or desktop collection. A missing or
-incompatible prepared reader is a visible failure. See
-[component boundaries](docs/observer-boundaries.md) and
-[Observer runtime architecture](https://github.com/byebyebryan/tmux-observer/blob/main/docs/runtime-architecture.md).
-
-## Use the public CLI
-
-With the installed public command:
+The view ring is Open → Attached → All → Local → configured remote hosts.
+Open/Attached use different evidence; neither grants a close handle or provider
+lifecycle authority. Unknown and unavailable state stays visible.
+See [usage](docs/usage.md) for detailed views, selection and confirmation.
 
 ```sh
 rofi-tmux-plus inventory --json
-rofi-tmux-plus inventory --json --with-viewers
 ```
 
-Inventory is an explicit fresh operation. The optional viewer extension reports
-this caller's `open`, `none` or `unknown` evidence without changing owner facts
-or providing action handles. The public CLI also exposes `open`, `create`,
-`rename`, `kill`, `viewers` and `close-viewer`; their exact argv, guards and
-JSON are defined by [Tmux Session v1](docs/TMUX_SESSION_V1.md).
+The CLI command is an explicit fresh inventory. The picker instead consumes
+cached prepared views; browsing starts no collection or service and does not
+fall back to a fresh read on failure. Exact lifecycle argv and guards are in
+[Tmux Session v1](docs/TMUX_SESSION_V1.md).
 
-Remote fresh inventory and lifecycle routes consume Host Mesh v1 through the
-public SSH Plus command. They target the default tmux server, preserve complete
-identities and independently validate actions. Prepared Mesh reads are a separate
-interface; an outage never silently changes a cached read into fresh collection.
+## Ownership and operation
 
-## Launch the picker
+Tmux Observer owns passive facts, prepared fleet/desktop composition and
+independent action validation. Mesh supplies configured routes/cached delivery.
+Tmux Plus owns presentation and explicit intent. These remain generic tmux tools;
+Agent Plus independently enters native provider managers without Tmux.
 
-Use the accepted Observer installation, running prepared services and packaged
-native mode for the supported Rofi binary. The source launcher invocation is:
+See [component boundaries](docs/observer-boundaries.md) and
+[Mesh selection](docs/mesh-integration.md) for runtime and deployment ownership.
+Source, installed, graphical, recovery and physical acceptance remain separate.
+
+## Develop and read further
 
 ```sh
-./bin/rofi-tmux-plus-rofi -show tmux-plus -modes tmux-plus \
-  -kb-custom-1 Alt+r -kb-custom-2 Right -kb-custom-3 Left \
-  -kb-custom-7 Tab -kb-custom-8 ISO_Left_Tab \
-  -kb-element-next "" -kb-element-prev "" \
-  -kb-accept-custom "" -kb-delete-entry "" \
-  -kb-cancel Escape,Control+g \
-  -kb-move-char-forward Control+f -kb-move-char-back Control+b \
-  -eh 2
+PATH="$PWD/.venv/bin:$PATH" ./scripts/check
 ```
 
-The launcher verifies the native mode and Rofi binary tuple, prepares the initial
-selection and owns its watch/process cleanup. Unsupported or drifted integration
-produces a bounded error display. Package installation and service startup are
-separate operational steps.
-
-For checkout setup and the source gate, use [development](docs/development.md).
-The [documentation index](docs/README.md) links current contracts, configuration,
-selection and historical release evidence.
+Create that environment with the exact producer and declared tools first using
+[development](docs/development.md). The [documentation index](docs/README.md)
+separates current contracts from [history](docs/history/README.md).
+Shared presentation lives at [Fleet Plus](https://dev.byebyebryan.com/fleet-plus/).

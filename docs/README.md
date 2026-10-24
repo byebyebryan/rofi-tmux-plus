@@ -1,46 +1,22 @@
 # Tmux Plus documentation
 
-Start with the [project overview](../README.md) and
-[current product/interaction design](DESIGN.md). Current selections are owned by [dotfiles deployments/tmux-observer.json](https://github.com/byebyebryan/dotfiles/blob/main/deployments/tmux-observer.json); artifact and release evidence remain independent.
-
-## Current guidance
-
-| Read | Purpose |
+| Guide | Purpose |
 | --- | --- |
-| [Product and interaction design](DESIGN.md) | Views, keys, remembered context, rows, freshness, actions and configuration |
-| [Development](development.md) | Exact Observer pin, checkout setup and source/contract checks |
-| [Public delivery preparation](evidence/2026-10-23-public-delivery/README.md) | Exact a8 bundle-only assets, Observer prerequisite and provenance |
-| [Mesh selection](mesh-integration.md) | Current tuple, separate networking/control paths and accepted evidence |
-| [Tmux Session v1](TMUX_SESSION_V1.md) | Public CLI argv, guards, strict JSON and compatibility |
-| [Observer boundaries](observer-boundaries.md) | Consumer responsibilities and extraction history |
-| [Observer runtime architecture](https://github.com/byebyebryan/tmux-observer/blob/main/docs/runtime-architecture.md) | Core, owner, Mesh, desktop, action and UI ownership |
-| [Host Mesh v1](https://github.com/byebyebryan/rofi-ssh-plus/blob/main/docs/HOST_MESH_V1.md) | Public fresh/lifecycle route contract |
-| [Managed operations](https://github.com/byebyebryan/tmux-observer/blob/main/docs/managed-operations.md) | Installed tuple, source pins, scoped recovery and rollback |
+| [Getting started](getting-started.md) | Bundle/producer prerequisites, CLI and prepared picker setup |
+| [Usage](usage.md) | Views, keys, confirmations and full launcher invocation |
+| [Interaction design](DESIGN.md) | Current row, selection and failure semantics |
+| [Tmux Session v1](TMUX_SESSION_V1.md) | Canonical public inventory/lifecycle contract |
+| [Client boundaries](observer-boundaries.md) | Prepared reads versus explicit actions and desktop evidence |
+| [Mesh integration](mesh-integration.md) | Producer setup, role selections and operations ownership |
+| [Development](development.md) | Exact Observer guard, source/package and native checks |
 
-The [full-view cohort receipt](https://github.com/byebyebryan/tmux-observer/blob/a71a4d55bb6f428fc142caf6422f60424425173b/docs/evidence/2026-10-20-mesh-a24-full-view/README.md)
-records the newer installed/recovery scope. The
-[earlier publisher evidence](https://github.com/byebyebryan/tmux-observer/blob/main/docs/evidence/2026-10-12-publisher-integration/README.md)
-retains its native, headless, resource/capacity and rollback acceptance.
-The [Plus artifact record](evidence/2026-10-12-publisher-integration/README.md)
-binds its exact wheel/bundle and independent source/headless gates.
-Source success, installed bytes and graphical acceptance remain distinct.
+[Fleet Plus](https://dev.byebyebryan.com/fleet-plus/projects/tmux-plus/) provides
+the showcase and ecosystem explanations. The [repository README](../README.md)
+is the short source entry point.
 
-## Historical records
-
-| Record | Original scope |
-| --- | --- |
-| [Previous SDK adoption](evidence/2026-10-11-mesh-sdk-adoption/README.md) | Plus a6 / Observer a6 / reader SDK a13 / retained bridge a10 |
-| [CPU performance](cpu-performance.md) | Plus 0.11.0a1 / Observer 0.5.0a1 |
-| [Fleet performance](fleet-performance.md) | Plus 0.10.0a2 / Observer 0.4.0a1 |
-| [Local performance](local-performance.md) / [0.9.0a1](tmux-plus-0.9.0a1.md) | Attachment-driven retained local association |
-| [0.8.0a1](tmux-plus-0.8.0a1.md) | Independent actions, native/resource/consumer gates and managed selection |
-| [0.7.0a2](tmux-plus-0.7.0a2.md) | Browse renewal repair |
-| [Observer migration](observer-migration.md) | Initial prepared/native picker and v1 facade migration |
-| [0.6.0 release](tmux-plus-0.6.0-release.md) | Remembered context and Open/Attached refinement |
-| [Picker refinement plan](tmux-plus-picker-refinement-plan.md) / [validation](tmux-plus-picker-validation.md) | Original finite-refresh implementation and measurements |
-| [Product design history](design-history.md) | P6–P11 milestones and superseded private collection/cache design |
-| [Frozen test baseline](../tests/reference_frontend/README.md) | Retired frontend implementation retained for historical regressions |
-
-Historical records keep original pins, rejected runs and endpoint-specific
-graphical evidence. Their future tense and older “current” candidates describe
-the checkpoint at which they were written; use current guidance for operation.
+The [history index](history/README.md) groups release notes, migration plans,
+picker studies and performance qualification. Earlier pins and future-tense
+steps retain their own scope. [`evidence/`](evidence/) and frozen contract inputs
+keep their original bytes; short forwarding pages preserve existing links.
+Current managed readiness/recovery belongs to the linked Observer/deployment
+owners, separately from source, graphical and physical acceptance.

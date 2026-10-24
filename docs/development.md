@@ -72,7 +72,7 @@ PYTHONPATH=. .venv/bin/python bin/rofi-tmux-plus inventory --json
 
 That command performs an explicit fresh read. Source picker use additionally
 requires the accepted native mode, supported Rofi binary and running prepared
-services; see the [launcher invocation](../README.md#launch-the-picker).
+services; see the [launcher invocation](usage.md#launch-the-picker).
 
 ## Package and acceptance boundaries
 
@@ -110,3 +110,11 @@ collision guards and baseline preservation. Run it only for authorized lifecycle
 acceptance; pure relocation does not need it. SSH probes no legacy custom-connect
 mutation. Source/synthetic, installed, provider actions, graphical/focus and
 physical acceptance remain separate.
+
+## Documentation maintenance
+
+Keep setup/usage, interaction, client boundaries and contracts linked from
+[the index](README.md). Move completed release/performance/migration ledgers to
+[history](history/README.md). Preserve evidence and frozen bundle/artifact bytes;
+retain old forwarding paths where immutable receipts or consumers need them.
+Shared product presentation belongs to Fleet Plus.

@@ -1,5 +1,7 @@
 # Fleet performance consumer acceptance
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 2026-10-09. Tmux Plus 0.10.0a1 changes only its package version and exact
 Observer pin. Picker state, actions, qualification, watches and seven producer
 contracts remain unchanged. The producer implements checked admission, cached
@@ -18,13 +20,13 @@ The managed bundle has 287 files plus its manifest, SHA-256
 Later documentation commits do not replace these accepted runtime artifacts.
 
 The independent source gate passes 293 tests and contract/style checks. The
-[installed frozen picker](evidence/2026-10-09-fleet-performance/picker-snap.json)
+[installed frozen picker](../../evidence/2026-10-09-fleet-performance/picker-snap.json)
 passes all 23 Snap cases: prepared startup, cycling after the original lease
 expires, retained local Open, native attach/detach updates, explicit terminal
 refresh tickets, typing/selection, native keys mode/cancel, confirmation
 preservation and reader loss/replacement. No ordinary preferences or sessions
 were changed; owned processes/runtime were removed and previous focus restored.
-The [renewed-view screenshot](evidence/2026-10-09-fleet-performance/tmux-fleet-fp3-picker-snap-renewed-views.png)
+The [renewed-view screenshot](../../evidence/2026-10-09-fleet-performance/tmux-fleet-fp3-picker-snap-renewed-views.png)
 shows current normal rows after cycling beyond the original lease.
 
 Producer native/resource gates and scoped paired managed rollout are separate.
@@ -51,8 +53,8 @@ Its managed bundle has 299 files plus the manifest, SHA-256
 Published downloads match the accepted artifacts. The source gate again passes
 293 tests; [main CI](https://github.com/byebyebryan/rofi-tmux-plus/actions/runs/37900339676)
 and [a2 tag CI](https://github.com/byebyebryan/rofi-tmux-plus/actions/runs/37900557585)
-pass. Both the [installed wheel](evidence/2026-10-09-fleet-performance/picker-a2-snap.json)
-and [managed Mod+G path](evidence/2026-10-09-fleet-performance/managed-picker-a2-snap.json)
+pass. Both the [installed wheel](../../evidence/2026-10-09-fleet-performance/picker-a2-snap.json)
+and [managed Mod+G path](../../evidence/2026-10-09-fleet-performance/managed-picker-a2-snap.json)
 pass all 23 Snap graphical cases, with isolated preferences and owned fixtures.
 
 Both hosts select Observer 0.4.0a1 / Plus 0.10.0a2 through scoped chezmoi.

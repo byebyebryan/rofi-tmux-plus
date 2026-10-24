@@ -1,5 +1,7 @@
 # Tmux Plus 0.9.0a1 retained local Open
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 The picker consumes Observer's additive retained local binding contract. Stable
 Kitty clients keep a qualified `open here?` association while their native
 attachment lease is current; receipt renewal never changes discovery time or
@@ -22,7 +24,7 @@ Repeated consumer wheels and managed bundles match exactly. The
 `02c24ecc6c3802120c9ee03ca69b5039e9066b748f86c9fee2ee51dc54950cb0`;
 it has 265 manifested files plus its manifest. Native mode ABI 7 and the exact
 Rofi binary/source pins remain unchanged. The
-[candidate descriptor](evidence/2026-10-08-local-performance/frontend-candidate.json)
+[candidate descriptor](../../evidence/2026-10-08-local-performance/frontend-candidate.json)
 retains `built_unaccepted`; these independent gates establish acceptance.
 
 The full source gate passes 293 tests, including pure-contract integration,
@@ -31,7 +33,7 @@ quiet renewals and reference-only action selection. Thirty installed CLI cases
 on Snap/Starship pass fresh/cached/routed/action/absence/preservation behavior.
 No Starship foreground input is sent.
 
-The [Snap graphical record](evidence/2026-10-08-local-performance/snap-picker.json)
+The [Snap graphical record](../../evidence/2026-10-08-local-performance/snap-picker.json)
 passes 23 cases. An actual Kitty association remains qualified in Open after its
 original native lease expires and is renewed, then leaves Open through native
 detach when Kitty closes. Existing remembered-view, typing/caret, confirmation,
@@ -52,11 +54,11 @@ passes scoped selection, all installed bytes/controls, native/fresh/prepared
 parity, restart recovery and actual paired rollback/reselection on both hosts.
 Ordinary session references/generations/hooks and unrelated controls survive.
 
-The [managed Snap picker](evidence/2026-10-08-local-performance/managed-picker-snap.json)
+The [managed Snap picker](../../evidence/2026-10-08-local-performance/managed-picker-snap.json)
 passes the same 23 cases with the actual installed Mod+G arguments. Managed
 retained Open and confirmation screenshots are inspected; owned fixture cleanup
 restores focus. Warm-frame p95 is 100.40 ms; the owned Refresh notice clears in
 582.21 ms, 11.95 ms after observed service completion, with the same callback
 timing limits. Starship still receives no graphical input. The
-[design note](local-performance.md) records the retained-display boundary and
+[design note](../performance/local-performance.md) records the retained-display boundary and
 limitations.

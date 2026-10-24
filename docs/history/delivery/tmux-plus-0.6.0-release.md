@@ -1,8 +1,10 @@
 # Tmux Plus 0.6.0 release review
 
+> Historical record. This document preserves its original checkpoint and may describe retired providers, interfaces or plans. Use the [current documentation](../../README.md) for supported setup and behavior.
+
 Date: 2026-10-07. This release promotes the remembered-context, Open/Attached,
 and independent-refresh pass described in the
-[implementation plan](tmux-plus-picker-refinement-plan.md).
+[implementation plan](../design/tmux-plus-picker-refinement-plan.md).
 
 Review found a private-cache validation gap: `lastAttemptAt: null` was accepted
 and could break refresh arithmetic. The release rejects null, boolean, string,
@@ -16,7 +18,7 @@ Attached only filter observed sessions; they add no provider semantics or
 close authority. Refresh uses finite independent jobs and progressive owner
 publication. Persistent push/watch is a future pass.
 
-The [candidate evidence](tmux-plus-picker-validation.md) retains its original
+The [candidate evidence](../design/tmux-plus-picker-validation.md) retains its original
 `0.6.0a1` version, sample counts, private wheel identity, and Snap graphical
 acceptance. Those measurements are historical samples rather than release
 deployment evidence. Starship graphical acceptance remains unrun.
