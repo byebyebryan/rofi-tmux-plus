@@ -50,7 +50,7 @@ the installed module pin and wheel digest are different verification scopes.
 
 ## Test the prepared client process interface
 
-In a development checkout, set `ROFI_TMUX_PLUS_OBSERVER_CLIENT` to the absolute
+With Tmux Plus a10, set `ROFI_TMUX_PLUS_OBSERVER_CLIENT` to the absolute
 path of an independently installed, trusted `tmux-observer-client` executable.
 For example, with a prepared reader already running in this desktop context:
 
@@ -64,6 +64,13 @@ refresh through Fleet v1. The picker checks the returned scope and continues
 to expire cached evidence locally. An unavailable or incompatible executable
 makes the selected prepared route unavailable. Fresh inventory and guarded
 actions still use the pinned Python payload.
+
+The [a10 release](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a10)
+was built from [`34dbd52`](https://github.com/byebyebryan/rofi-tmux-plus/commit/34dbd5215a9f2daca7dc6745de754641affdfeef).
+The packaged picker passed snapshot, watch, Alt+R, reader reconnect and Escape
+in an isolated X11 display with independently installed Observer 0.6.0a7 and
+0.6.0a9 client processes. The default route passed the installed Mesh headless
+gate with its paired Observer a9. The release provenance records these checks.
 
 ## Run the source gate
 
