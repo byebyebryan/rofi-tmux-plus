@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * First-party notification mode pinned to one accepted Rofi binary/Mode ABI 7.
+ * First-party notification mode for Rofi Mode ABI 7 and its refresh functions.
  * Delegate presentation and action policy to the fixed packaged script helper.
  * Feed metadata wakes callback 28 only; it chooses no command or session action.
  */
@@ -16,12 +16,16 @@
 #include <unistd.h>
 
 #if ABI_VERSION != 7
-#error "This integration requires the accepted Rofi Mode ABI 7 layout."
+#error "This integration requires the Rofi Mode ABI 7 layout."
 #endif
+
+typedef struct RofiViewState RofiViewState;
+enum { ROFI_SCOPE_GLOBAL = 0 };
 
 typedef struct {
     Mode *script;
     guint timer;
+    guint refresh_action;
     int root;
     uint64_t sequence, expired, last_callback;
     gboolean observed;
@@ -30,12 +34,12 @@ typedef struct {
 typedef struct { uint64_t sequence, received, expiry, pid, ready; } Record;
 
 static Mode *(*script_setup)(const char *);
-static void *(*active_view)(void);
-static Mode *(*view_mode)(void *);
-static int (*completed_view)(void *);
-static void (*update_view)(void *);
-static void (*trigger_action)(void *, int, unsigned int);
-static unsigned int (*action_from_name)(const char *);
+static RofiViewState *(*active_view)(void);
+static Mode *(*view_mode)(RofiViewState *);
+static guint (*completed_view)(const RofiViewState *);
+static void (*update_view)(RofiViewState *);
+static void (*trigger_action)(RofiViewState *, guint, guint);
+static guint (*action_from_name)(const char *);
 
 static uint64_t now_ms(void) {
     struct timespec value;
@@ -88,7 +92,7 @@ static gboolean read_record(NotifyState *data, Record *record) {
 
 static gboolean notify_tick(gpointer context) {
     Mode *sw = context;
-    void *view = active_view();
+    RofiViewState *view = active_view();
     g_debug("Tmux Plus notify: active=%d selected-mode=%d", view != NULL, view && view_mode(view) == sw);
     if (!view || view_mode(view) != sw) { return G_SOURCE_CONTINUE; }
     if (completed_view(view)) { update_view(view); }
@@ -119,7 +123,7 @@ static gboolean notify_tick(gpointer context) {
             data->observed = TRUE;
             if (record.expiry > 0 && now >= record.expiry) { data->expired = record.expiry; }
         }
-        trigger_action(view, 0, action_from_name("kb-custom-19"));
+        trigger_action(view, ROFI_SCOPE_GLOBAL, data->refresh_action);
         update_view(view);
         /* Do not access data/view after this call: delegate lifetime may end. */
     }
@@ -144,7 +148,12 @@ static int initialize(Mode *sw) {
     action_from_name = dlsym(RTLD_DEFAULT, "key_binding_get_action_from_name");
     if (!script_setup || !active_view || !view_mode || !completed_view ||
         !update_view || !trigger_action || !action_from_name) {
-        g_warning("Tmux Plus: accepted private Rofi symbols are unavailable");
+        g_warning("Tmux Plus: this Rofi lacks the native refresh functions");
+        close(fd); return FALSE;
+    }
+    guint refresh_action = action_from_name("kb-custom-19");
+    if (refresh_action == G_MAXUINT) {
+        g_warning("Tmux Plus: this Rofi lacks the native refresh action");
         close(fd); return FALSE;
     }
     Dl_info location;
@@ -156,6 +165,7 @@ static int initialize(Mode *sw) {
     g_free(directory); g_free(helper); g_free(quoted);
     NotifyState *data = g_new0(NotifyState, 1);
     data->root = fd;
+    data->refresh_action = refresh_action;
     data->script = script_setup(specification);
     g_free(specification);
     if (!data->script || !mode_init(data->script)) {

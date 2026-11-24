@@ -13,8 +13,8 @@ is a native/source bundle paired with the exact Tmux Observer 0.6.0a9 artifact.
 Use [getting started](docs/getting-started.md) for prerequisites and the full
 launcher invocation. A standalone Plus wheel is not published for this release.
 
-The graphical picker needs the qualified native mode/Rofi tuple and already
-running prepared services. Installing Python packages alone is insufficient.
+The graphical picker needs the packaged native mode, a compatible Rofi, and
+already running prepared services. Installing Python packages alone is insufficient.
 For checkout work, follow [development](docs/maintenance/development.md); arbitrary Observer
 source bytes fail the intentional complete-module artifact guard.
 

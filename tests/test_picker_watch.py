@@ -314,12 +314,13 @@ finally:
             self.assertFalse(watch.thread.is_alive())
 
 
-class NativeTupleTests(unittest.TestCase):
-    def test_drift_or_unsupported_binary_refuses_before_any_native_mode_load(self):
+class NativeArtifactTests(unittest.TestCase):
+    def test_rofi_build_digest_is_provenance_but_mode_bytes_must_match(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             binary = root / "rofi"
             binary.write_bytes(b"fixture binary")
+            binary.chmod(0o755)
             files = {}
             for name in ("tmux-plus.so", "tmux-plus-notify.c", "rofi-tmux-plus-mode"):
                 path = root / name
@@ -339,9 +340,13 @@ class NativeTupleTests(unittest.TestCase):
                     verify_native(directory=root, executable=binary), (str(binary), root)
                 )
                 binary.write_bytes(b"changed binary")
-                with self.assertRaisesRegex(ContractError, "binary differs"):
+                self.assertEqual(
+                    verify_native(directory=root, executable=binary), (str(binary), root)
+                )
+                binary.chmod(0o644)
+                with self.assertRaisesRegex(ContractError, "not a regular executable"):
                     verify_native(directory=root, executable=binary)
-                binary.write_bytes(b"fixture binary")
+                binary.chmod(0o755)
                 (root / "tmux-plus.so").write_bytes(b"changed mode")
                 with self.assertRaisesRegex(ContractError, "bytes differ"):
                     verify_native(directory=root, executable=binary)

@@ -6,15 +6,16 @@ service does not switch the picker into fresh collection.
 
 ## Prerequisites and artifacts
 
-Use Linux, Python 3.11+, tmux, Rofi and the supported native-mode/Rofi binary
-tuple. Remote use additionally requires configured SSH Plus Host Mesh routes
+Use Linux, Python 3.11+, tmux and Rofi with Mode ABI 7 and the native refresh
+interface described in [development](maintenance/development.md#package-and-acceptance-boundaries).
+Remote use additionally requires configured SSH Plus Host Mesh routes
 and the owning host helpers/services. Each endpoint's catalog is directional.
 
 The [v0.12.0a8 release](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a8)
 publishes the qualified bundle, checksums and provenance, paired with exact
 Observer 0.6.0a9 bytes. It is bundle-only, with no separately published Plus
-wheel. Preserve the bundle's producer and native tuple; installing an arbitrary
-same-version Observer checkout is insufficient.
+wheel. Preserve the bundle's exact producer and mode files. The published a8
+launcher also checks the Rofi executable digest from its build record.
 
 For a checkout environment, [development](maintenance/development.md#install-the-pinned-producer)
 gives a complete hash-verified producer install and source gate. Native bundle

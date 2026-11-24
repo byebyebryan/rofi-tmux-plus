@@ -166,9 +166,9 @@ the prepared picker does not use it to change owner polling, leases or Mesh
 cadence. Observer services own those schedules.
 
 Unknown keys, malformed values and a present invalid file are visible errors.
-The launcher validates its packaged native Rofi mode and supported binary tuple,
-prepares initial selection, owns the watch and stops only its owned children.
-Unsupported or drifted native integration produces a bounded error display.
+The launcher validates its packaged native mode, prepares initial selection,
+owns the watch and stops only its owned children. Rofi enforces Mode ABI
+compatibility, and the mode checks its refresh functions and action at startup.
 
 Prepared browsing requires already running owner/fleet services and a configured
 Mesh source. The generic fleet command defaults to legacy; managed controls

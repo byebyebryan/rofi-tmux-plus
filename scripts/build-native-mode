@@ -13,11 +13,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ROFI_SHA = "4f8dcd3a87d4c41af3e7c5f3ab4891a0926f21ab659072e5471e7332cf30a1ca"
-HEADERS = {
-    "mode.h": "292355951931209c898ee31c33d9a76ea8d0e8a104e0cad88bd5201c5dd2ef48",
-    "mode-private.h": "9b4b0148c1feae2bae7e4afc30e848fa5ee11d56d9eecdffecad4c00eadee55b",
-}
+HEADERS = ("mode.h", "mode-private.h")
 SYMBOLS = (
     "script_mode_parse_setup",
     "rofi_view_get_active",
@@ -43,16 +39,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-directory", type=Path, required=True)
     args = parser.parse_args()
-    executable = Path(shutil.which("rofi") or "/absent/rofi").resolve()
-    if platform.machine() != "x86_64" or digest(executable) != ROFI_SHA:
-        raise SystemExit(
-            "unsupported Rofi binary; rebuild and renew native acceptance before selection"
-        )
-    for name, expected in HEADERS.items():
-        if digest(Path("/usr/include/rofi") / name) != expected:
-            raise SystemExit("unsupported Rofi Mode headers")
+    binary = shutil.which("rofi")
+    if binary is None or platform.machine() != "x86_64":
+        raise SystemExit("building the native mode requires Rofi on x86_64")
+    executable = Path(binary).resolve(strict=True)
+    headers = {name: digest(Path("/usr/include/rofi") / name) for name in HEADERS}
     exported = {
-        line.split()[-1] for line in run(["nm", "-D", str(executable)]).splitlines() if line.split()
+        line.split()[-1]
+        for line in run(["nm", "-D", "--defined-only", str(executable)]).splitlines()
+        if line.split()
     }
     if not set(SYMBOLS) <= exported:
         raise SystemExit("required private Rofi symbols are absent")
@@ -74,9 +69,9 @@ def main():
         "acceptanceState": "built_unaccepted",
         "modeAbi": 7,
         "architecture": platform.machine(),
-        "rofiSha256": ROFI_SHA,
+        "rofiSha256": digest(executable),
         "rofiVersion": run([str(executable), "-version"]),
-        "headers": HEADERS,
+        "headers": headers,
         "requiredPrivateSymbols": list(SYMBOLS),
         "sourceCommit": run(["git", "rev-parse", "HEAD"]),
         "sourceTreeDirty": bool(run(["git", "status", "--porcelain"])),

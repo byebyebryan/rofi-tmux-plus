@@ -71,7 +71,7 @@ PYTHONPATH=. .venv/bin/python bin/rofi-tmux-plus inventory --json
 ```
 
 That command performs an explicit fresh read. Source picker use additionally
-requires the accepted native mode, supported Rofi binary and running prepared
+requires the packaged native mode, compatible Rofi and running prepared
 services; see the [launcher invocation](../guides/usage.md#launch-the-picker).
 
 ## Package and acceptance boundaries
@@ -79,6 +79,14 @@ services; see the [launcher invocation](../guides/usage.md#launch-the-picker).
 `scripts/candidate-artifact` builds frozen committed-source candidates.
 `scripts/release-bundle` assembles the verified native/source managed bundle.
 Neither operation accepts or selects a runtime merely by building it.
+
+`scripts/build-native-mode` compiles against Mode ABI 7 and checks the required
+refresh symbols. It records Rofi and header digests for build provenance. The
+launcher verifies the packaged mode and helper bytes. At load time Rofi checks
+the plugin ABI and the module verifies its required refresh functions and
+`kb-custom-19` action. These private functions can change independently of the
+public Mode ABI. Qualify their behavior on Rofi updates with a private picker
+that exercises an initial frame, watch refresh, and input during refresh.
 
 `scripts/accept-headless-picker` exercises actual installed frames and callbacks
 with isolated preferences/cache and owned disposable sessions.

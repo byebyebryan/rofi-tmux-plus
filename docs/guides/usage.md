@@ -59,8 +59,8 @@ interface; an outage never silently changes a cached read into fresh collection.
 
 ## Launch the picker
 
-Use the accepted Observer installation, running prepared services and packaged
-native mode for the supported Rofi binary. The source launcher invocation is:
+Use the accepted Observer installation, running prepared services, and Rofi
+with the packaged native mode. The source launcher invocation is:
 
 ```sh
 ./bin/rofi-tmux-plus-rofi -show tmux-plus -modes tmux-plus \
@@ -73,10 +73,10 @@ native mode for the supported Rofi binary. The source launcher invocation is:
   -eh 2
 ```
 
-The launcher verifies the native mode and Rofi binary tuple, prepares the initial
-selection and owns its watch/process cleanup. Unsupported or drifted integration
-produces a bounded error display. Package installation and service startup are
-separate operational steps.
+The source launcher verifies the packaged mode files, prepares initial
+selection and owns its watch/process cleanup. Rofi checks the plugin ABI and
+the mode checks the functions and action it uses to refresh the picker.
+Package installation and service startup are separate operational steps.
 
 For checkout setup and the source gate, use [development](../maintenance/development.md).
 The [documentation index](../README.md) links current contracts, configuration,

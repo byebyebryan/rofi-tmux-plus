@@ -1,4 +1,4 @@
-"""Verify the selected native integration tuple before Rofi loads its mode."""
+"""Verify packaged mode payloads before handing compatibility checks to Rofi."""
 
 from __future__ import annotations
 
@@ -41,18 +41,19 @@ def verify_native(*, directory=None, executable=None):
             or {path.name for path in root.glob("*.so")} != {"tmux-plus.so"}
         ):
             raise ValueError("unsupported native integration descriptor")
-        if (
-            binary is None
-            or hashlib.sha256(file_bytes(binary, limit=16 * 1024 * 1024)).hexdigest()
-            != record["rofiSha256"]
-        ):
-            raise ValueError("Rofi binary differs from the accepted integration tuple")
+        if binary is None:
+            raise ValueError("Rofi executable was not found")
+        binary = Path(binary).resolve(strict=True)
+        if not binary.is_file() or not os.access(binary, os.X_OK):
+            raise ValueError("Rofi executable is not a regular executable file")
         for name, expected in record["files"].items():
             if hashlib.sha256(file_bytes(root / name, limit=1024 * 1024)).hexdigest() != expected:
                 raise ValueError("native integration bytes differ from their descriptor")
         if not os.access(root / "rofi-tmux-plus-mode", os.X_OK):
             raise ValueError("native script helper is not executable")
-        return str(Path(binary).resolve()), root.resolve()
+        # The recorded Rofi digest is build provenance. Rofi's loader checks
+        # Mode ABI, and the module checks its refresh capabilities at init.
+        return str(binary), root.resolve()
     except (OSError, ValueError, KeyError, TypeError) as error:
         raise ContractError(
             "operation_failed", "Tmux Plus native mode unavailable: " + str(error)

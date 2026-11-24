@@ -166,7 +166,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         binary = shutil.which("rofi")
         if binary is not None:
             # Public error display loads no candidate mode. Desktop bindings
-            # otherwise hide stderr when a binary/artifact tuple is unsupported.
+            # otherwise hide stderr when the packaged mode cannot be verified.
             try:
                 subprocess.run(
                     [binary, "-no-config", "-e", message],
