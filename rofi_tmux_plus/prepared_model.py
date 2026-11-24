@@ -13,7 +13,8 @@ from .errors import ContractError, clean_message
 from .observer_client import observer_api
 from .picker_model import PickerModel
 from .picker_notify import WATCH_REQUIRED_ENV, delivery_current, read_notification
-from .picker_runtime import read_private, runtime_root, write_private
+from .picker_runtime import clock_domain, read_private, runtime_root, write_private
+from .prepared_process import select_process
 
 RUNTIME_ENV = "ROFI_TMUX_PLUS_RUNTIME"
 CONTEXT_ENV = "ROFI_TMUX_PLUS_CONTEXT_ID"
@@ -26,17 +27,14 @@ def boottime_ms() -> int:
     return time.clock_gettime_ns(time.CLOCK_BOOTTIME) // 1000000
 
 
-def clock_domain() -> dict[str, str]:
-    # Cached presentation leases belong to this boot and time namespace.
-    with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as stream:
-        boot = stream.read(128).strip()
-    namespace = os.readlink("/proc/self/ns/time").replace("[", "").replace("]", "")
-    return {"bootId": boot, "timeNamespace": namespace}
-
-
-def local_scope(environ=None):
+def local_scope(environ=None, *, process=None):
     environment = os.environ if environ is None else environ
-    context = observer_api().prepared.desktop_context_id(environment)
+    process = process or select_process(environment)
+    context = (
+        process.context
+        if process is not None
+        else observer_api().prepared.desktop_context_id(environment)
+    )
     selected = environment.get(CONTEXT_ENV)
     if selected is not None and selected != context:
         raise ValueError("picker desktop context changed")
@@ -98,7 +96,7 @@ def apply_expiry(payload: Mapping, *, now=None, scope=None) -> dict:
     return value
 
 
-def project_frame(frame: dict, *, now: int, scope) -> dict:
+def project_frame(frame: dict, *, now: int, scope, bindings_admitted=False) -> dict:
     """Translate validated Fleet v1 into private presentation facts, never v1 IPC."""
     view = frame["snapshot"]
     if view is None:
@@ -149,13 +147,22 @@ def project_frame(frame: dict, *, now: int, scope) -> dict:
         bindings = host.get("localBindings")
         if bindings is not None:
             try:
-                observer_api().bindings_contract.validate_fleet_bindings(
-                    bindings,
-                    host,
-                    context_id=view["contextId"],
-                    clock_value=view["clock"],
-                    now=now,
-                )
+                if bindings_admitted:
+                    # The CLI validated the Fleet frame, including binding scope
+                    # and coverage. A lease can expire between that read and render.
+                    receipt = bindings["receipt"]
+                    if bindings["encodedAt"] > now or (
+                        receipt["state"] == "ready" and receipt["expiresAt"] <= now
+                    ):
+                        raise ValueError("local binding lease is no longer current")
+                else:
+                    observer_api().bindings_contract.validate_fleet_bindings(
+                        bindings,
+                        host,
+                        context_id=view["contextId"],
+                        clock_value=view["clock"],
+                        now=now,
+                    )
             except (ImportError, ValueError, TypeError, KeyError) as error:
                 raise ContractError(
                     "operation_failed", "Prepared local bindings are invalid"
@@ -266,15 +273,23 @@ class PreparedModelService:
 
     prepared = True
 
-    def __init__(self, config=None, *, environ=None, api=None, now=boottime_ms, scope=local_scope):
+    def __init__(self, config=None, *, environ=None, api=None, now=boottime_ms, scope=None):
         self.environment = dict(os.environ if environ is None else environ)
-        self.api = observer_api().prepared if api is None else api
+        self.process = select_process(self.environment) if api is None else None
+        self.api = api if api is not None else self.process or observer_api().prepared
         self.now = now
-        self.scope = scope
-        self.context = self.api.desktop_context_id(self.environment)
+        self.scope = scope or self._scope
+        self.context = (
+            self.process.context
+            if self.process is not None
+            else self.api.desktop_context_id(self.environment)
+        )
         if self.environment.get(CONTEXT_ENV, self.context) != self.context:
             raise ContractError("operation_failed", "picker desktop context changed")
         self.runtime = self.environment.get(RUNTIME_ENV)
+
+    def _scope(self, environment):
+        return local_scope(environment, process=self.process)
 
     def _record(self):
         if self.runtime is None:
@@ -312,7 +327,12 @@ class PreparedModelService:
         return record
 
     def _model(self, frame, record=None):
-        payload = project_frame(frame, now=self.now(), scope=self.scope(self.environment))
+        payload = project_frame(
+            frame,
+            now=self.now(),
+            scope=self.scope(self.environment),
+            bindings_admitted=self.process is not None,
+        )
         if self.environment.get(WATCH_REQUIRED_ENV) == "1":
             if self.runtime is None:
                 raise ContractError("operation_failed", "picker watch has no owned runtime")

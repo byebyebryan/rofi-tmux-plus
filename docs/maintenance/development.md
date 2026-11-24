@@ -7,7 +7,7 @@ establish installed/graphical acceptance.
 
 ## Install the pinned producer
 
-Tmux Plus verifies Observer's version, complete Python module coverage and
+By default, Tmux Plus verifies Observer's version, complete Python module coverage and
 module hashes before loading prepared, direct or action clients. The source of
 truth is [observer-artifact.json](../../rofi_tmux_plus/observer-artifact.json).
 Installing an arbitrary Observer checkout can fail this check even when its
@@ -47,6 +47,23 @@ deliberately updating it, derive the filename from the pin and repeat the
 producer's independent gates before consumer selection. Keep the wheel available
 for explicit package acceptance;
 the installed module pin and wheel digest are different verification scopes.
+
+## Test the prepared client process interface
+
+In a development checkout, set `ROFI_TMUX_PLUS_OBSERVER_CLIENT` to the absolute
+path of an independently installed, trusted `tmux-observer-client` executable.
+For example, with a prepared reader already running in this desktop context:
+
+```sh
+ROFI_TMUX_PLUS_OBSERVER_CLIENT=/absolute/observer-env/bin/tmux-observer-client \
+  bin/rofi-tmux-plus-rofi
+```
+
+The selected executable provides desktop context, cached snapshot, watch and
+refresh through Fleet v1. The picker checks the returned scope and continues
+to expire cached evidence locally. An unavailable or incompatible executable
+makes the selected prepared route unavailable. Fresh inventory and guarded
+actions still use the pinned Python payload.
 
 ## Run the source gate
 

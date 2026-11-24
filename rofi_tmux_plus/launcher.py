@@ -93,10 +93,10 @@ def termination_cleanup():
 @termination_cleanup()
 def main(argv: Sequence[str] | None = None) -> int:
     from .native_mode import verify_native
-    from .observer_client import observer_api
     from .picker_notify import WATCH_REQUIRED_ENV
     from .picker_watch import OwnedWatch
-    from .prepared_model import CONTEXT_ENV, RUNTIME_ENV
+    from .prepared_model import CONTEXT_ENV, RUNTIME_ENV, local_scope
+    from .prepared_process import CLIENT_ENV, select_process
     from .rofi import run_rofi
 
     arguments = list(sys.argv[1:] if argv is None else argv)
@@ -119,7 +119,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments.extend((f"-kb-{key}", value))
         arguments.extend(("-eh", "2"))
         arguments.extend(("-theme-str", 'entry { placeholder: "Filter sessions"; }'))
-    environment = {key: value for key, value in os.environ.items() if not key.startswith("ROFI_")}
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith("ROFI_") or key == CLIENT_ENV
+    }
     output = io.StringIO()
     try:
         executable, native = verify_native()
@@ -129,9 +133,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         with TemporaryDirectory(prefix="rofi-tmux-plus-launch-") as temporary:
             environment[RUNTIME_ENV] = temporary
-            environment[CONTEXT_ENV] = observer_api().prepared.desktop_context_id(environment)
+            process = select_process(environment)
+            _, environment[CONTEXT_ENV] = local_scope(environment, process=process)
             environment[WATCH_REQUIRED_ENV] = "1"
-            with OwnedWatch(temporary, environment[CONTEXT_ENV], environment):
+            with OwnedWatch(temporary, environment[CONTEXT_ENV], environment, process=process):
                 with redirect_stdout(output):
                     run_rofi(dict(environment, ROFI_RETV="0"))
                 frame = output.getvalue()

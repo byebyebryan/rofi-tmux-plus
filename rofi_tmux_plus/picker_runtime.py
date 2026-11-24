@@ -9,6 +9,14 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
+def clock_domain() -> dict[str, str]:
+    """Identify the boot and time namespace that own prepared presentation leases."""
+    with open("/proc/sys/kernel/random/boot_id", encoding="ascii") as stream:
+        boot = stream.read(128).strip()
+    namespace = os.readlink("/proc/self/ns/time").replace("[", "").replace("]", "")
+    return {"bootId": boot, "timeNamespace": namespace}
+
+
 @contextmanager
 def runtime_root(path: str | Path):
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)

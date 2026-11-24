@@ -16,6 +16,7 @@ from .observer_client import observer_api
 from .owned_process import PARENT_GUARD
 from .picker_notify import write_notification
 from .prepared_model import boottime_ms, clock_domain
+from .prepared_process import FRAME_LIMIT, decode_frame, select_process
 
 WATCH_ENTRY = (
     PARENT_GUARD
@@ -107,12 +108,27 @@ def notification_material(frame, now):
 class OwnedWatch:
     """Reconnect only this read-only subscription; never activate a service."""
 
-    def __init__(self, runtime, context, environment, *, command=None, api=None):
+    def __init__(self, runtime, context, environment, *, command=None, api=None, process=None):
         self.runtime, self.context = runtime, context
-        self.api = observer_api() if api is None else api
+        process = process or (select_process(environment) if api is None else None)
+        if process is not None:
+            self.environment = process.environment
+            self.frame_limit = FRAME_LIMIT
+            self.decode_frame = decode_frame
+            self.command = command or process.watch_command(context)
+        else:
+            self._configure_pinned_watch(environment, command, api)
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.child = None
+        self.sequence = 0
+        self.last_material = None
+
+    def _configure_pinned_watch(self, environment, command, api):
+        api = observer_api() if api is None else api
         self.environment = dict(environment)
         # A managed frozen-wheel root is not necessarily on child sys.path.
-        self.environment["PYTHONPATH"] = str(Path(self.api.prepared.__file__).resolve().parents[1])
+        self.environment["PYTHONPATH"] = str(Path(api.prepared.__file__).resolve().parents[1])
         self.command = command or [
             sys.executable,
             "-c",
@@ -121,13 +137,17 @@ class OwnedWatch:
             "watch",
             "--json",
             "--context-id",
-            context,
+            self.context,
         ]
-        self.stop_event = threading.Event()
-        self.thread = None
-        self.child = None
-        self.sequence = 0
-        self.last_material = None
+        protocol = api.protocol
+        self.frame_limit = protocol.FRAME_LIMIT
+
+        def decode(raw):
+            value = protocol.decode_document(raw, limit=self.frame_limit)
+            protocol.validate_fleet_frame(value)
+            return value
+
+        self.decode_frame = decode
 
     def _publish(self, *, received, expiry=0, ready=False):
         write_notification(
@@ -216,10 +236,7 @@ class OwnedWatch:
                         while b"\n" in partial:
                             line, _, remainder = partial.partition(b"\n")
                             partial = bytearray(remainder)
-                            value = self.api.protocol.decode_document(
-                                bytes(line) + b"\n", limit=self.api.protocol.FRAME_LIMIT
-                            )
-                            self.api.protocol.validate_fleet_frame(value)
+                            value = self.decode_frame(bytes(line) + b"\n")
                             if (
                                 value["clock"] != clock_domain()
                                 or value["contextId"] != self.context
@@ -245,7 +262,7 @@ class OwnedWatch:
                                 self.sequence += 1
                                 self.last_material = material
                             self._publish(received=now, expiry=expiry, ready=True)
-                        if len(partial) >= self.api.protocol.FRAME_LIMIT:
+                        if len(partial) >= self.frame_limit:
                             raise ValueError("picker watch frame exceeded its bound")
                         if not partial:
                             partial_started = None
