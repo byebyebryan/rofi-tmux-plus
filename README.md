@@ -8,7 +8,7 @@ views, focus or attach with Open, and use explicit guarded lifecycle actions.
 
 ## Install and start
 
-The published [0.12.0a8 prerelease](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a8)
+The published [0.12.0a9 prerelease](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a9)
 is a native/source bundle paired with the exact Tmux Observer 0.6.0a9 artifact.
 Use [getting started](docs/getting-started.md) for prerequisites and the full
 launcher invocation. A standalone Plus wheel is not published for this release.

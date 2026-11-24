@@ -88,6 +88,15 @@ the plugin ABI and the module verifies its required refresh functions and
 public Mode ABI. Qualify their behavior on Rofi updates with a private picker
 that exercises an initial frame, watch refresh, and input during refresh.
 
+The [a9 release](https://github.com/byebyebryan/rofi-tmux-plus/releases/tag/v0.12.0a9)
+binds the bundle from runtime source
+[`0dd3a55`](https://github.com/byebyebryan/rofi-tmux-plus/commit/0dd3a55706c97cf9c3fa928d7f93a34c1092a022)
+to its checks and their limits. The packaged module passed the isolated input
+and watch checks on Rofi 2.0.0 and 2.1.1. The nested Wayland gate passed the
+interaction, recovery and cleanup cases before its final F12 capture timed out.
+A separate compositor capture and cancellation check covered the unavailable
+reader surface. These fixtures establish behavior in the named environments.
+
 `scripts/accept-headless-picker` exercises actual installed frames and callbacks
 with isolated preferences/cache and owned disposable sessions.
 `scripts/accept-native-picker` adds the separate graphical scope and requires an
